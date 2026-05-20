@@ -1,6 +1,8 @@
-import config, {placeholders, numericFilterLabels, publicQueries, QueryName, Envri} from '../config';
-import {Int} from "../types";
-import {UrlStr} from "../backend/declarations";
+import config, {
+	placeholders, numericFilterLabels, publicQueries, type QueryName, type Envri
+} from '../config';
+import {type Int} from "../types";
+import {type UrlStr} from "../backend/declarations";
 
 
 const titles = {
@@ -14,20 +16,20 @@ const titles = {
 	textFilters: "Advanced: Text filters"
 };
 
-type HelpId = HelpItemName | UrlStr
-type HelpDict = {[key in HelpId]?: HelpItem}
+type HelpId = HelpItemName | UrlStr;
+type HelpDict = Partial<Record<HelpId, HelpItem>>;
 
 export default class HelpStorage {
 	private readonly helpItems: HelpDict;
 	private readonly visible: HelpId | undefined;
 
-	constructor(helpStorage?: HelpDict, visible?: HelpId){
+	constructor(helpStorage?: HelpDict, visible?: HelpId) {
 		this.helpItems = helpStorage ?? toDict(initItems);
 		this.visible = visible;
 	}
 
-	get serialize(){
-		return Object.assign({}, this);
+	get serialize() {
+		return {...this};
 	}
 
 	static deserialize(json: HelpStorage) {
@@ -39,11 +41,11 @@ export default class HelpStorage {
 		return this.helpItems[id];
 	}
 
-	get visibleHelpItem(): HelpItem | undefined{
+	get visibleHelpItem(): HelpItem | undefined {
 		return this.visible ? this.helpItems[this.visible] : undefined;
 	}
 
-	isActive(id: HelpId): boolean{
+	isActive(id: HelpId): boolean {
 		return id === this.visible;
 	}
 
@@ -61,7 +63,6 @@ export default class HelpStorage {
 			? this
 			: new HelpStorage(newStorage, newVisibility);
 	}
-
 }
 
 function toDict(items: HelpItem[]): HelpDict {
@@ -75,12 +76,12 @@ export type HelpStorageListEntry = {
 	label?: Int | string
 	comment?: string
 	webpage?: UrlStr
-}
+};
 
-export interface Documentation {
-	txt: string,
+export type Documentation = {
+	txt: string
 	url: UrlStr
-}
+};
 
 export type HelpItemName = keyof typeof titles;
 export type EnvrifiedHelpMain = Record<Envri, string>;
@@ -92,7 +93,7 @@ export class HelpItem {
 		readonly url?: UrlStr,
 		readonly list?: HelpStorageListEntry[],
 		readonly documentation?: Documentation[]
-	){}
+	) {}
 
 	get id(): HelpItemName | UrlStr {
 		return this.url ?? this.name;
@@ -103,36 +104,36 @@ export class HelpItem {
 	}
 
 	get shouldFetchList(): boolean {
-		return this.list !== undefined && this.list.length === 0;
+		return this.list?.length === 0;
 	}
 
 	get shouldUseExternalList(): boolean {
 		return this.list === undefined;
 	}
 
-	withList(list: HelpStorageListEntry[]){
+	withList(list: HelpStorageListEntry[]) {
 		return new HelpItem(this.name, this.main, this.url, list, this.documentation);
 	}
 
-	static clone(item: HelpItem): HelpItem{
+	static clone(item: HelpItem): HelpItem {
 		return new HelpItem(item.name, item.main, item.url, item.list, item.documentation);
 	}
 }
 
 const {envri} = config;
 
-const projectDescr: { [E in Envri]: string } = {
+const projectDescr: Record<Envri, string> = {
 	ICOS: 'In addition to the official ICOS data, Carbon Portal also stores data from various partner projects:',
 	SITES: 'SITES Data Portal stores data from the following projects:',
 	ICOSCities: 'ICOS Cities stores data from the following projects:'
-}
+};
 
-const projectStrings: { [E in Envri]: string } = {
+const projectStrings: Record<Envri, string> = {
 	ICOS: 'the Carbon Portal',
 	SITES: 'SITES',
 	ICOSCities: 'ICOS Cities'
-}
-const projectStr = projectStrings[envri]
+};
+const projectStr = projectStrings[envri];
 
 const numberFilterList = [
 	{
@@ -163,7 +164,7 @@ const initItems: HelpItem[] = [
 		[{
 			label: 'ICOS',
 			comment: 'Proper ICOS station (ICOS class 1 or 2)'
-		},{
+		}, {
 			label: 'Associated',
 			comment: 'Associated with ICOS, but the data does not have the ICOS "quality stamp" (even if the data belongs to ICOS project)'
 		}, {
@@ -239,10 +240,10 @@ const initItems: HelpItem[] = [
 					comment: 'All kinds of elaborated products by scientific communities that rely on ICOS data products are called Level 3 data.',
 				}
 			],
-			[{ txt: 'Read more about data levels', url: 'https://www.icos-cp.eu/data-services/data-collection/data-levels-quality' }]
+		[{txt: 'Read more about data levels', url: 'https://www.icos-cp.eu/data-services/data-collection/data-levels-quality'}]
 	),
 
-	new HelpItem('keywordFilter', 'Keywords associated with the data objects. Note that, unlike other filter selections, keyword selection will find ' + 
+	new HelpItem('keywordFilter', 'Keywords associated with the data objects. Note that, unlike other filter selections, keyword selection will find ' +
 		'data objects containing ALL keywords (boolean "AND"), not those containing ANY keyword (boolean "OR").'),
 
 	new HelpItem('format', 'Technical file format, indicating which software module is needed to read the data'),
@@ -263,8 +264,8 @@ const initItems: HelpItem[] = [
 	new HelpItem(
 		'quantityKind',
 		'A general kind of physical quantity, for example volume, length, concentration. Can be basic or derived, standard or non-standard. ' +
-			'Implies an associated physical quantity dimension but does not have a fixed unit of measurement. ' +
-			nonStrictnessWarning(titles.quantityKind),
+		'Implies an associated physical quantity dimension but does not have a fixed unit of measurement. ' +
+		nonStrictnessWarning(titles.quantityKind),
 		undefined,
 		[]
 	),
@@ -301,7 +302,7 @@ const initItems: HelpItem[] = [
 	new HelpItem(
 		'samplingHeight',
 		'Only applicable for data sampled at various heights (mostly atmospheric data). The filter accepts decimal numbers, using "." as decimal character and' +
-			' can be specified in three different ways. All filtering is inclusive. The filter "<50" will return data objects sampled at height 50 or less.',
+		' can be specified in three different ways. All filtering is inclusive. The filter "<50" will return data objects sampled at height 50 or less.',
 		undefined,
 		numberFilterList
 	),
@@ -309,7 +310,7 @@ const initItems: HelpItem[] = [
 	new HelpItem(
 		'fileSize',
 		'The filter accepts decimal numbers, using "." as decimal character and can be specified in three different ways. All filtering is inclusive. ' +
-			'The filter "<50000" will return data objects with a file size of 50 000 or less.',
+		'The filter "<50000" will return data objects with a file size of 50 000 or less.',
 		undefined,
 		numberFilterList
 	),
@@ -328,16 +329,16 @@ const initItems: HelpItem[] = [
 		[{
 			label: 'full CSV',
 			comment: 'if column information is excluded from the URL, all the columns described in the metadata will be downloaded'
-		},{
+		}, {
 			label: 'multi-preview',
 			comment: 'in the case of multiple-dataset preview, the URL will only provide data from one of the datasets'
-		},{
+		}, {
 			label: 'licencing',
 			comment: 'you can only download the tabular data as CSV if you are logged in with the portal and have accepted the license agreement in your user profile'
-		},{
+		}, {
 			label: 'disclaimer',
 			comment: `CSV download is an extra service offered by ${projectStr} on a best-effort basis; ` +
-			'the CSV is typically an abridged (some columns may not be available) and transformed version of the original (even if the latter is a CSV)'
+				'the CSV is typically an abridged (some columns may not be available) and transformed version of the original (even if the latter is a CSV)'
 		}]
 	),
 
@@ -353,11 +354,11 @@ const initItems: HelpItem[] = [
 		[{
 			label: 'Data object PID',
 			comment: `Paste in ${envri} Data Portal's PID of a data object, either complete with prefix, or just the suffix (24 characters).` +
-			'Full URLs including the PID web resolver gateway (hdl.handle.net) are permitted as well.'
-		},{
+				'Full URLs including the PID web resolver gateway (hdl.handle.net) are permitted as well.'
+		}, {
 			label: 'Collection PID',
 			comment: `Paste in ${envri} Data Portal's PID of a collection, either complete with prefix, or just the suffix (24 characters).` +
-			'Full URLs including the PID web resolver gateway (hdl.handle.net) are permitted as well.'
+				'Full URLs including the PID web resolver gateway (hdl.handle.net) are permitted as well.'
 		}, {
 			label: 'File name',
 			comment: 'Paste in a complete filename, with extension. This filter does not search for partial filenames.'
@@ -365,7 +366,7 @@ const initItems: HelpItem[] = [
 	),
 ];
 
-function nonStrictnessWarning(title: String): string{
+function nonStrictnessWarning(title: string): string {
 	return `Note that ${title} selection does not filter data objects strictly, there may be false positives in the results. ` +
 		`To avoid them, also filter by either ${titles.valType} or ${titles.variable}.`;
 }
