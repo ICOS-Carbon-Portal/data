@@ -95,7 +95,7 @@ export default class CartItem {
 	}
 
 	get size() {
-		return Number.parseInt(this._dataobject?.size || '0');
+		return Number.parseInt(this._dataobject?.size ?? '0', 10);
 	}
 
 	get item() {
@@ -156,9 +156,9 @@ export default class CartItem {
 
 	getNewUrl(keyVal: Record<string, string | undefined>) {
 		const newKeyVal = Object.assign(this._keyValPairs, keyVal);
-		if (newKeyVal.hasOwnProperty('y2')
+		if (Object.hasOwn(newKeyVal, 'y2')
 			&& newKeyVal.y2 !== undefined
-			&& newKeyVal.hasOwnProperty('legendLabels')
+			&& Object.hasOwn(newKeyVal, 'legendLabels')
 			&& newKeyVal.legendLabels !== undefined) {
 			Object.assign(newKeyVal, {legendLabelsY2: newKeyVal.legendLabels});
 		}

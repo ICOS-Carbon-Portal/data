@@ -2,7 +2,7 @@ import Select from 'ol/interaction/Select';
 import * as condition from 'ol/events/condition';
 import {type Collection, type Feature} from 'ol';
 import {
-	type LabelLookup, type MapProps, State, type StationPos4326Lookup
+	type LabelLookup, type MapProps, type StationPos4326Lookup
 } from './State';
 import {type UrlStr} from '../backend/declarations';
 import {difference, throwError} from '../utils';
@@ -32,7 +32,6 @@ import {
 	type SupportedSRIDs
 } from "icos-cp-ol";
 import type VectorSource from 'ol/source/Vector';
-import type Geometry from 'ol/geom/Geometry';
 
 
 export type UpdateMapSelectedSRID = (srid: SupportedSRIDs) => void;
@@ -87,9 +86,7 @@ export default class InitMap {
 		this.allStations = props.allStations;
 		this.selectedStations = props.selectedStations;
 
-		const srid = persistedMapProps.srid === undefined
-			? olMapSettings.defaultSRID
-			: persistedMapProps.srid;
+		const srid = persistedMapProps.srid ?? olMapSettings.defaultSRID;
 		this.appEPSGCode = `EPSG:${srid}`;
 		const projection = getProjection(this.appEPSGCode) ?? throwError(`Projection ${this.appEPSGCode} not found`);
 

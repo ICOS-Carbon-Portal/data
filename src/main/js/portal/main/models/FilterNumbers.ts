@@ -1,4 +1,4 @@
-import {type NumberFilterCategories, numberFilterKeys} from "../config";
+import {type NumberFilterCategories} from "../config";
 import {defaultState} from "./State";
 
 
@@ -132,7 +132,7 @@ const validate = (category: NumberFilterCategories, value: string): NumberFilter
 			txt: value,
 			type: 'span',
 			isValid: true,
-			vals: [Number.parseFloat(range[1]), Number.parseFloat(range[2])].sort((a, b) => a - b),
+			vals: [Number.parseFloat(range[1]), Number.parseFloat(range[2])].toSorted((a, b) => a - b),
 			cmp: ['>=', '<=']
 		};
 	}
@@ -158,7 +158,7 @@ const validate = (category: NumberFilterCategories, value: string): NumberFilter
 					txt: value,
 					type: 'list',
 					isValid: acc.isValid,
-					vals: acc.vals.concat(Number.parseFloat(num[1])),
+					vals: [...acc.vals, Number.parseFloat(num[1])],
 					cmp: [...acc.cmp, '=']
 				};
 			}

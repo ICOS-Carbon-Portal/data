@@ -137,10 +137,10 @@ export default class SpecTable<T extends string = string> {
 			colNames.every(
 				colName => {
 					const filter: Filter = filters[colName] ?? null;
-					return filter == null || filter.includes(row[colName]);
+					return filter === null || filter.includes(row[colName]);
 				}
 			) && (
-				eFilter == null || eFilter.includes(row[SPECCOL])
+				eFilter === null || eFilter.includes(row[SPECCOL])
 			));
 	}
 

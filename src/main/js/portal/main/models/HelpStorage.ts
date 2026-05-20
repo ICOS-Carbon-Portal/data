@@ -1,7 +1,6 @@
 import config, {
 	placeholders, numericFilterLabels, publicQueries, type QueryName, type Envri
 } from '../config';
-import {type Int} from "../types";
 import {type UrlStr} from "../backend/declarations";
 
 
@@ -73,7 +72,7 @@ function toDict(items: HelpItem[]): HelpDict {
 }
 
 export type HelpStorageListEntry = {
-	label?: Int | string
+	label?: number | string
 	comment?: string
 	webpage?: UrlStr
 };
@@ -198,45 +197,45 @@ const initItems: HelpItem[] = [
 		envri === 'SITES'
 			? [
 				{
-					label: 0 as Int,
+					label: 0,
 					comment: 'Unprocessed instrument or digtalized data at full time resolution with all available supplemental information to be used in' +
 						` subsequent processing. Stored internally but not distributed by ${projectStr}.Data are in physical units either directly provided` +
 						' by the instruments or converted from engineer units.'
 				},
 				{
-					label: 1 as Int,
+					label: 1,
 					comment: 'Calibrated, quality filtered internal working data in physical units. In case L0 data are already calibrated, L0 and L1 are' +
 						' identical. L1 is internal working data that is generated as intermediate steps in the data processing for Level 2. Level 1 data is of' +
 						` intended for internal use  and normally not distributed by ${projectStr}.`
 				},
 				{
-					label: 2 as Int,
+					label: 2,
 					comment: 'Quality checked SITES data product. It is calibrated, quality filtered data in physical units, a aggregated to appropariate,' +
 						` and within SITES community agreed, spatial and temporal output units and resolution. Distributed by ${projectStr}.`
 				},
 				{
-					label: 3 as Int,
+					label: 3,
 					comment: 'Environmental variables or products produced by SITES or anywere in the scientific community. The product is derived from' +
 						` SITES L1 or L2 data  Distributed by ${projectStr}.`
 				}
 			]
 			: [
 				{
-					label: 0 as Int,
+					label: 0,
 					comment: 'Data in physical units either directly provided by the instruments or converted from engineer units (e.g. mV, mA, Ω) to' +
 						' physical units at the Thematic Centre. They may have been filtered by a quality check (e.g. thresholds).',
 				},
 				{
-					label: 1 as Int,
+					label: 1,
 					comment: 'Near Real Time Data (NRT) or Internal Work data (IW).',
 				},
 				{
-					label: 2 as Int,
+					label: 2,
 					comment: `The final quality checked ICOS RI data set, published by the CFs, to be distributed through ${projectStr}. This level is` +
 						' the ICOS-data product and free available for users.',
 				},
 				{
-					label: 3 as Int,
+					label: 3,
 					comment: 'All kinds of elaborated products by scientific communities that rely on ICOS data products are called Level 3 data.',
 				}
 			],
@@ -272,7 +271,7 @@ const initItems: HelpItem[] = [
 
 	new HelpItem(
 		'preview',
-		'How \"Preview\" and \"Add to cart\" buttons work:',
+		'How "Preview" and "Add to cart" buttons work:',
 		undefined,
 		[
 			{
@@ -294,7 +293,7 @@ const initItems: HelpItem[] = [
 			},
 			{
 				label: 'adding to cart (logged-in users)',
-				comment: 'select one or more data objects, click the \"Add to cart\" button; all the objects on the page can be selected using the \"Select all\" tickbox'
+				comment: 'select one or more data objects, click the "Add to cart" button; all the objects on the page can be selected using the \"Select all\" tickbox'
 			}
 		]
 	),

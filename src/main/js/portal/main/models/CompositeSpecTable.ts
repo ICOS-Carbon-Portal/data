@@ -121,7 +121,7 @@ export default class CompositeSpecTable {
 		];
 
 		function specFilterJoin(excludedIdx: number): Filter {
-			const chosenFilts = specFilters.filter((_, idx) => idx != excludedIdx);
+			const chosenFilts = specFilters.filter((_, idx) => idx !== excludedIdx);
 			const specFilter0 = Filter.and(chosenFilts);
 			return specFilter0 === null
 				? null

@@ -24,12 +24,12 @@ export default class Paging {
 
 	constructor({objCount, offset, limit, pageCount, filtersEnabled, cacheOffset, isDataEndReached}: Props) {
 		this._objCount = objCount;
-		this._offset = offset || 0;
+		this._offset = offset ?? 0;
 		this._pageCount = pageCount ?? config.stepsize;
 		this._limit = limit ?? config.stepsize;
-		this._filtersEnabled = filtersEnabled || false;
+		this._filtersEnabled = filtersEnabled ?? false;
 		this._cacheOffset = cacheOffset ?? this._offset;
-		this._isDataEndReached = isDataEndReached || false;
+		this._isDataEndReached = isDataEndReached ?? false;
 	}
 
 	get serialize() {

@@ -1,18 +1,16 @@
 // Modelled after Web Storage API: https://developer.mozilla.org/en-US/docs/Web/API/Storage
 
 import {type IdxSig} from "../backend/declarations";
-import {type Int, isInt} from "../types";
 
 export default class Storage {
 	private state: IdxSig<any> = {};
 
 	get length() {
-		const t = this.key(2 as Int);
 		return Object.keys(this.state).length;
 	}
 
-	key(n: Int) {
-		return isInt(n) && n >= 0 && n < Object.keys(this.state).length
+	key(n: number) {
+		return Number.isInteger(n) && n >= 0 && n < Object.keys(this.state).length
 			? Object.keys(this.state)[n]
 			: null;
 	}

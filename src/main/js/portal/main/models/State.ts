@@ -70,7 +70,7 @@ export type Profile = {
 
 export type WhoAmI = {email: string | null};
 export type User = {
-	profile: Profile | {}
+	profile: Profile | object
 } & WhoAmI;
 
 export type KnownDataObject = {
@@ -171,7 +171,7 @@ export type State = {
 	baseDobjStats: SpecTable<OriginsColNames> // without spatial filtering
 	mapProps: MapProps
 	extendedDobjInfo: ExtendedDobjInfo[]
-	formatToRdfGraph: {}
+	formatToRdfGraph: object
 	objectsTable: KnownDataObject[]
 	sorting: {
 		varName: string
@@ -182,11 +182,11 @@ export type State = {
 	priorCart: Cart | undefined
 	id: UrlStr | undefined
 	metadata?: MetaData | MetaDataWStats
-	station: {} | undefined
+	station: object | undefined
 	preview: Preview
 	previewSettings: PreviewSettings
 	itemsToAddToCart: Sha256Str[] | undefined
-	toasterData: {} | undefined
+	toasterData: object | undefined
 	batchDownloadStatus: {
 		isAllowed: boolean
 		ts: number
@@ -507,9 +507,7 @@ const storeOverwatch = (store: Store, stateKeys: (keyof State)[], onChange: Func
 
 	const handleChange = () => {
 		const nextState = pick(store.getState(), ...stateKeys);
-		if (currentState === undefined) {
-			currentState = nextState;
-		}
+		currentState ??= nextState;
 
 		const changes = stateKeys.reduce<Partial<typeof nextState>>((acc, key) => {
 			if (!deepequal(currentState[key], nextState[key])) {
@@ -612,7 +610,7 @@ const managePrefixes = (state: State | Partial<StateSerialized> = ({}), transfor
 
 const reduceState = (state: Record<string, any>) => Object.keys(state).reduce((acc: Record<string, any>, key: string) => {
 	const val = state[key];
-	if (val == null) {
+	if (val === null) {
 		return acc;
 	}
 

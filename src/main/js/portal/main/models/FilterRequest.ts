@@ -1,6 +1,5 @@
 import {type NumberFilterCategories, numberFilterKeys} from "../config";
 import {type FilterNumber} from "./FilterNumbers";
-import {UrlStr} from "../backend/declarations";
 
 export type FilterRequest = PidFilterRequest | TemporalFilterRequest | DeprecatedFilterRequest |
 	NumberFilterRequest | VariableFilterRequest | KeywordFilterRequest | GeoFilterRequest;

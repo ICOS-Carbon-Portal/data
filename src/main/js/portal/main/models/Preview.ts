@@ -1,12 +1,12 @@
 import CartItem, {type CartItemSerialized} from './CartItem';
-import {getNewTimeseriesUrl, getLastSegmentInUrl, isDefined} from '../utils';
+import {getNewTimeseriesUrl, getLastSegmentInUrl} from '../utils';
 import config, {type PreviewType} from "../config";
 import deepEqual from 'deep-equal';
 import {type PreviewInfo} from "./PreviewLookup";
 import type PreviewLookup from "./PreviewLookup";
 import type Cart from "./Cart";
-import {ExtendedDobjInfo, type KnownDataObject} from "./State";
-import {IdxSig, type Sha256Str, type UrlStr} from "../backend/declarations";
+import {type KnownDataObject} from "./State";
+import {type Sha256Str, type UrlStr} from "../backend/declarations";
 import {type Value} from './SpecTable';
 
 
@@ -41,7 +41,7 @@ const previewSettingsKeys = [
 ] as const;
 
 function isPreviewSetting(key: string): key is keyof PreviewSettings {
-	return previewSettingsKeys.includes(key as keyof PreviewSettings);
+	return (previewSettingsKeys as readonly string[]).includes(key);
 }
 
 export type PreviewSettings = Record<typeof previewSettingsKeys[number], string | undefined>;
@@ -116,7 +116,7 @@ export default class Preview {
 					? lookup.forDataObjSpec(cart.item(id)!.spec)
 					: undefined);
 
-			const options: OptionWithType = previewInfo == undefined
+			const options: OptionWithType = previewInfo === undefined
 				? {type: undefined, options: []}
 				: (previewInfo.type === "TIMESERIES"
 					? previewInfo
@@ -129,7 +129,7 @@ export default class Preview {
 		});
 
 		const options = objects[0].options;
-		objects.map(object => {
+		objects.forEach(object => {
 			if (!deepEqual(options, object.options)) {
 				throw new Error('Cannot preview differently structured objects');
 			}
