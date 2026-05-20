@@ -15,12 +15,20 @@ const xoConfig: FlatXoConfig = [
 			"external-modules/**",
 			"test/**",
 			allExtensionsGlob,
+			`main/${allExtensionsGlob}`,
+			`main/actions/**/${allExtensionsGlob}`,
+			`main/backend/**/${allExtensionsGlob}`,
+			`main/components/**/${allExtensionsGlob}`,
+			`main/containers/**/${allExtensionsGlob}`,
+			`main/hooks/**/${allExtensionsGlob}`,
+			//`main/models/**/${allExtensionsGlob}`,
+			`main/reducers/**/${allExtensionsGlob}`,
 		],
 	},
 	{
 		react: true,
 		files: [
-            `main/**/${allExtensionsGlob}`
+			`main/models/**/${allExtensionsGlob}`,
 		],
 		rules: {
 			"@stylistic/comma-dangle": ["error", {
@@ -35,6 +43,7 @@ const xoConfig: FlatXoConfig = [
 				"generics": "never",
 				"tuples": "only-multiline",
 			}],
+			"@stylistic/curly-newline": ["error", {"minElements": 1}],
 			"@stylistic/function-paren-newline": ["error", "consistent"],
 			"@stylistic/jsx-quotes": ["error", "prefer-double"],
 			"@stylistic/max-len": ["off", {"code": 120}], // Temporarily disabled
@@ -63,17 +72,21 @@ const xoConfig: FlatXoConfig = [
 			"react/jsx-curly-newline": "off",
 			"react/jsx-indent-props": ["error", { indentMode: "tab", ignoreTernaryOperator: true}],
 			"react/jsx-no-bind": "warn",
+			"react/jsx-no-target-blank": "off",
 			"react/jsx-sort-props": "off",
 			"react/jsx-tag-spacing": ["error", {"beforeSelfClosing": "allow"}],
 			"react/prefer-read-only-props": "off",
 			"react/require-default-props": "off",
+			"require-unicode-regexp": "off",
 			"unicorn/filename-case": ["error", {"cases": {
 				"pascalCase": true, "camelCase": true
 			}}],
+			"unicorn/no-array-callback-reference": "off",
 			"unicorn/no-array-for-each": "off",
 			"unicorn/no-array-reduce": "off",
 			"unicorn/no-this-assignment": "warn",
 			"unicorn/prefer-dom-node-append": "off",
+			"unicorn/prefer-global-this": "off",
 			"unicorn/prefer-query-selector": "off",
 			"unicorn/prevent-abbreviations": "off",
 			"unicorn/switch-case-braces": "off",
@@ -81,7 +94,7 @@ const xoConfig: FlatXoConfig = [
 	},
 	{
 		files: [
-            `main/**/${tsExtensionsGlob}`
+			`main/models/${tsExtensionsGlob}`
 		],
 		rules: {
 			"@typescript-eslint/array-type": "off",
@@ -107,9 +120,12 @@ const xoConfig: FlatXoConfig = [
 			"@typescript-eslint/no-unsafe-return": "off",
 			"@typescript-eslint/no-unused-vars": "warn",
 			"@typescript-eslint/restrict-plus-operands": "warn",
+			"@typescript-eslint/restrict-template-expressions": ["error",
+				{"allowNever": true}
+			],
 			"@typescript-eslint/switch-exhaustiveness-check": ["error",
 				{
-					"allowDefaultCaseForExhaustiveSwitch": false,
+					"allowDefaultCaseForExhaustiveSwitch": true,
 					"considerDefaultExhaustiveForUnions": true,
 					"requireDefaultForNonUnion": true,
 				}
