@@ -6,9 +6,9 @@ export default class Cart {
 	readonly _ts: string;
 
 	constructor(name?: string, items?: CartItem[]) {
-		this._name = name || '';
-		this._items = items || [];
-		this._ts = (items ? Date.now() + '' : '0');
+		this._name = name ?? '';
+		this._items = items ?? [];
+		this._ts = (items ? String(Date.now()) : '0');
 	}
 
 	get serialize() {
@@ -20,7 +20,7 @@ export default class Cart {
 	}
 
 	addItem(cartItem: CartItem[]) {
-		return new Cart(this._name, this._items.concat(cartItem));
+		return new Cart(this._name, [...this._items, ...cartItem]);
 	}
 
 	removeItems(ids: string[]) {
@@ -56,7 +56,7 @@ export default class Cart {
 	}
 
 	hasItem(id: string) {
-		return Boolean(this._items.find(item => item.dobj === id));
+		return this._items.some(item => item.dobj === id);
 	}
 
 	get name() {
@@ -72,12 +72,13 @@ export default class Cart {
 	}
 }
 
-export const restoreCart = (jsonCart: {cart: any}) => {
+type RestoreCartInput = {cart: {_name: string, _items?: {_id: string}[]}};
+
+export const restoreCart = (jsonCart: RestoreCartInput) => {
 	const name: string = jsonCart.cart._name;
-	const items: CartItem[] = jsonCart.cart._items?.map((i: {_id: any}) => new CartItem(i._id));
+	const items: CartItem[] | undefined = jsonCart.cart._items?.map(i => new CartItem(i._id));
 
 	return new Cart(name, items);
 };
 
-const emptyJsonCart = new Cart().serialize;
-export type JsonCart = typeof emptyJsonCart;
+export type JsonCart = Cart['serialize'];

@@ -278,7 +278,7 @@ const updateAndSave = (state: State, updates: any) => {
 	const newState = update(state, updates);
 
 	portalHistoryState.replaceState(serialize(newState), window.location.href).then(
-		_ => _,
+		result => result,
 		error => console.error(`Failed to add value to indexed database because ${error}`)
 	);
 
@@ -343,9 +343,9 @@ const parseHash = (hash: string) => {
 	}
 };
 
-const hashToState = () => {
+const hashToState = (): {route?: Route} => {
 	try {
-		return JSON.parse(getCurrentHash());
+		return JSON.parse(getCurrentHash()) as {route?: Route};
 	} catch {
 		return {};
 	}
@@ -432,7 +432,7 @@ const jsonToState = (state0: JsonHashState) => {
 		}
 	} catch (error) {
 		console.error({state, state0, err: error});
-		throw new Error("Could not convert json to state");
+		throw new Error("Could not convert json to state", {cause: error});
 	}
 
 	return state;
@@ -490,19 +490,26 @@ const hashUpdater = (store: Store) => () => {
 		newHash = newHash === '' ? '' : "#" + encodeURIComponent(newHash);
 		if (state.route === hashToState().route) {
 			portalHistoryState.replaceState(serialize(state), window.location.href.split('#')[0] + newHash).then(
-				_ => _,
+				result => result,
 				error => console.log(`Failed to add value to indexed database because ${error}`)
 			);
 		} else {
 			portalHistoryState.pushState(serialize(state), window.location.href.split('#')[0] + newHash).then(
-				_ => _,
+				result => result,
 				error => console.log(`Failed to add value to indexed database because ${error}`)
 			);
 		}
 	}
 };
 
-const storeOverwatch = (store: Store, stateKeys: (keyof State)[], onChange: Function) => {
+type StoreOverwatchOnChange = (
+	current: Partial<State>,
+	next: Partial<State>,
+	changes: Partial<State>,
+	picker: (state: State) => Partial<State>
+) => void;
+
+const storeOverwatch = (store: Store, stateKeys: (keyof State)[], onChange: StoreOverwatchOnChange) => {
 	let currentState: State;
 
 	const handleChange = () => {
@@ -539,7 +546,7 @@ const stateToHash = (state: State) => {
 };
 
 const shortenUrls = (state: Partial<StateSerialized> = ({})) => managePrefixes(state,
-	(prefix: any, value: string) => {
+	(prefix: CategPrefix, value: string) => {
 		if (Array.isArray(prefix)) {
 			// TODO: remove prefix handling since wdcgg is no longer present
 			const prefixObj = prefix.find(p => value.startsWith(p.value) || p.prefix === 'i');
@@ -570,7 +577,7 @@ const extendUrls = (state: State) => managePrefixes(state,
 		}
 	});
 
-const managePrefixes = (state: State | Partial<StateSerialized> = ({}), transform: (pref: CategPrefix, value: string) => string) => {
+const managePrefixes = (state: State | Partial<StateSerialized>, transform: (pref: CategPrefix, value: string) => string) => {
 	if (Object.keys(state).length === 0) {
 		return state;
 	}
@@ -609,7 +616,7 @@ const managePrefixes = (state: State | Partial<StateSerialized> = ({}), transfor
 };
 
 const reduceState = (state: Record<string, any>) => Object.keys(state).reduce((acc: Record<string, any>, key: string) => {
-	const val = state[key];
+	const val: unknown = state[key];
 	if (val === null) {
 		return acc;
 	}
@@ -621,12 +628,12 @@ const reduceState = (state: Record<string, any>) => Object.keys(state).reduce((a
 	} else if (Array.isArray(val) && val.length > 0) {
 		acc[key] = val;
 	} else if (typeof val === 'object') {
-		const part = reduceState(val);
+		const part = reduceState(val as Record<string, any>);
 
 		if (Object.keys(part).length > 0) {
 			acc[key] = part;
 		}
-	} else if (state.route === 'metadata' && key === 'id' && val && val.length > 0) {
+	} else if (state.route === 'metadata' && key === 'id' && typeof val === 'string' && val.length > 0) {
 		acc[key] = getLastSegmentInUrl(val);
 	} else if (typeof val === 'string') {
 		acc[key] = val;

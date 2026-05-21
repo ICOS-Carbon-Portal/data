@@ -1,4 +1,4 @@
-import {IdxSig, type UrlStr} from "../backend/declarations";
+import {type UrlStr} from "../backend/declarations";
 import {type PreviewType, themeUris} from "../config";
 import {type KnownDataObject} from "./State";
 

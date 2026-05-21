@@ -59,8 +59,6 @@ export default class FilterTemporal {
 		if (dates === undefined) {
 			return this;
 		} else {
-			const self = this;
-
 			return Object.keys(dates).reduce<FilterTemporal>((acc, key) => {
 				switch (key) {
 					case 'df':
@@ -76,9 +74,9 @@ export default class FilterTemporal {
 						return acc.withSubmissionTo(new Date(dates[key]!));
 
 					default:
-						return self;
+						return this;
 				}
-			}, self);
+			}, this);
 		}
 	}
 

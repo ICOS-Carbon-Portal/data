@@ -1,4 +1,3 @@
-import {type NumberFilterCategories, numberFilterKeys} from "../config";
 import {type FilterNumber} from "./FilterNumbers";
 
 export type FilterRequest = PidFilterRequest | TemporalFilterRequest | DeprecatedFilterRequest |
@@ -47,7 +46,7 @@ export function isTemporalFilter(filter: FilterRequest): filter is TemporalFilte
 }
 
 export function isNumberFilter(filter: FilterRequest): filter is NumberFilterRequest {
-	return numberFilterKeys.includes(filter.category as NumberFilterCategories);
+	return filter.category === "samplingHeight" || filter.category === "fileSize";
 }
 
 export function isDeprecatedFilter(filter: FilterRequest): filter is DeprecatedFilterRequest {

@@ -176,7 +176,7 @@ export class StationFilterControl extends Control {
 	}
 
 	private addDrawFeature(ev: DrawEvent) {
-		ev.feature.setProperties({id: Symbol(), type: 'stationFilterRect'});
+		ev.feature.setProperties({id: Symbol('stationFilterRect'), type: 'stationFilterRect'});
 		this.addDeleteFilterRectBtn(ev.feature);
 		const drawFeature = featureToDrawFeature(ev.feature);
 		this.drawFeatures.push(drawFeature);
@@ -242,7 +242,7 @@ export class StationFilterControl extends Control {
 		this.deleteRectBtnSource.addFeature(iconFeature);
 	}
 
-	private onBtnClick(ev: MouseEvent) {
+	private onBtnClick() {
 		this.setActiveState(!this.isActive);
 		this.updatePersistedMapProps({isStationFilterCtrlActive: this.isActive});
 		this.setTooltip();

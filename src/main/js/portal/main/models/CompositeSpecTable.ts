@@ -21,20 +21,17 @@ export type SpecTableSerialized = {
 	columnMeta: TableSerialized<VariableMetaColNames>
 	origins: TableSerialized<OriginsColNames>
 };
+type CompositeSpecTableArray = [SpecTable<BasicsColNames>, SpecTable<VariableMetaColNames>, SpecTable<OriginsColNames>];
 
 export default class CompositeSpecTable {
 	public readonly id: symbol;
 
 	constructor(readonly basics: SpecTable<BasicsColNames>, readonly columnMeta: SpecTable<VariableMetaColNames>, readonly origins: SpecTable<OriginsColNames>) {
-		this.id = Symbol();
+		this.id = Symbol('CompositeSpecTable');
 	}
 
-	static fromTables(tables: SpecTable[]) {
-		return new CompositeSpecTable(
-			tables[0] as SpecTable<BasicsColNames>,
-			tables[1] as SpecTable<VariableMetaColNames>,
-			tables[2] as SpecTable<OriginsColNames>
-		);
+	static fromTables(tables: CompositeSpecTableArray) {
+		return new CompositeSpecTable(tables[0], tables[1], tables[2]);
 	}
 
 	get serialize(): SpecTableSerialized {
@@ -55,8 +52,19 @@ export default class CompositeSpecTable {
 		return new CompositeSpecTable(basicsTbl, columnMetaTbl, originsTbl).withFilterReflection;
 	}
 
-	get tables() {
+	get tables(): CompositeSpecTableArray {
 		return [this.basics, this.columnMeta, this.origins];
+	}
+
+	mapTables(
+		callback: <K extends ColNames>(element: SpecTable<K>, index: number, array: CompositeSpecTableArray) => SpecTable<K>
+	): CompositeSpecTableArray {
+		const tables = this.tables;
+		return [
+			callback(this.basics, 0, tables),
+			callback(this.columnMeta, 1, tables),
+			callback(this.origins, 2, tables)
+		];
 	}
 
 	getTable(name: TableNames): SpecTable {
@@ -101,6 +109,8 @@ export default class CompositeSpecTable {
 			(tbl.colNames as ColNames[]).includes(columnName));
 	}
 
+	/* TODO: This function is probably somewhat broken because colName could exist on multiple SpecTables within the composite spec table;
+	 * in that case, only the first table would have the filter applied. */
 	withFilter(colName: ColNames, filter: Filter): CompositeSpecTable {
 		const table = this.findTable(colName);
 		if (table === undefined) {
@@ -108,29 +118,29 @@ export default class CompositeSpecTable {
 		}
 
 		return CompositeSpecTable.fromTables(
-			this.tables.map(tbl => tbl === table ? table.withFilter(colName, filter) : tbl)
+			this.mapTables(<K extends ColNames>(tbl: SpecTable<K>) => tbl === table ? tbl.withFilter(colName as K, filter) : tbl)
 		).withFilterReflection;
 	}
 
 	get withFilterReflection(): CompositeSpecTable {
-		const self = this;
 		const specFilters = [
 			this.basics.ownSpecFilter,
 			this.columnMeta.ownSpecFilter,
 			this.origins.implicitOwnSpecFilter // origins is special, affected by continuous-var filters
 		];
+		const specsCount = this.basics.specsCount;
 
-		function specFilterJoin(excludedIdx: number): Filter {
+		const specFilterJoin = (excludedIdx: number): Filter => {
 			const chosenFilts = specFilters.filter((_, idx) => idx !== excludedIdx);
 			const specFilter0 = Filter.and(chosenFilts);
 			return specFilter0 === null
 				? null
-				: (specFilter0.length < self.basics.specsCount
+				: (specFilter0.length < specsCount
 					? specFilter0
 					: null);
-		}
+		};
 
-		const reflectedTables = this.tables.map((t, idx) => t.withExtraSpecFilter(specFilterJoin(idx)));
+		const reflectedTables = this.mapTables((t, idx) => t.withExtraSpecFilter(specFilterJoin(idx)));
 		return CompositeSpecTable.fromTables(reflectedTables);
 	}
 

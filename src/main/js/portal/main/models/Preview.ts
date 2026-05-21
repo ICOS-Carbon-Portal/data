@@ -101,7 +101,7 @@ export default class Preview {
 		return new Preview(items, options, type);
 	}
 
-	initPreview(lookup: PreviewLookup, cart: Cart, ids: UrlStr[], objectsTable: KnownDataObject[], yAxis?: string, y2Axis?: string) {
+	initPreview(lookup: PreviewLookup, cart: Cart, ids: UrlStr[], objectsTable: KnownDataObject[]) {
 		const objects = ids.map(id => {
 			const objInfo = objectsTable.find(ot => ot.dobj.endsWith(id));
 

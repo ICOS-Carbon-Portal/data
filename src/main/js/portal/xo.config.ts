@@ -101,7 +101,7 @@ const xoConfig: FlatXoConfig = [
 			"@typescript-eslint/default-param-last": "warn",
 			"@typescript-eslint/member-ordering": "off",
 			"@typescript-eslint/naming-convention": ["warn", 
-				{"selector": "default", "format": ["camelCase", "PascalCase"]},
+				{"selector": "default", "format": ["camelCase", "PascalCase"], "leadingUnderscore": "allow"},
 				{"selector": "typeLike", "format": ["PascalCase"]},
 				{"selector": "memberLike", "format": ["camelCase"], "modifiers":["private"], "leadingUnderscore": "allow"},
 				{"selector": "memberLike", "format": ["camelCase"], "modifiers":["readonly"], "leadingUnderscore": "allow"},
