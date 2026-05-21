@@ -3,7 +3,7 @@
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <filter class="se.lu.nateko.cp.data.RestheartEtagWarningFilter"/>
     <encoder>
-      <pattern>%date{ISO8601} %-5level [%thread] %X{akkaSource} - %msg%n</pattern>
+      <pattern>%date{ISO8601} %-5level [%thread] %X{akkaSource} - %msg %replace(%kvp{}){'(.+)', '[$1]'}%n</pattern>
     </encoder>
   </appender>
 
