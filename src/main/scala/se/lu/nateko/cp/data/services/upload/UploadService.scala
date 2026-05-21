@@ -44,7 +44,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 	val folder = File(config.folder)
 	private val readonlyFolder: Option[File] = config.readonlyFolder.map(new File(_))
 
-	private[this] val objLock = new ObjectLock("is currently already being uploaded")
+	private[this] val objLock = new ObjectLock
 
 	if(!folder.exists) {
 		assert(folder.mkdirs(), "Failed to create directory " + folder.getAbsolutePath)

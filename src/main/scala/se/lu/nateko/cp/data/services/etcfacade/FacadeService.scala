@@ -10,6 +10,7 @@ import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import org.slf4j.LoggerFactory
 import se.lu.nateko.cp.data.EtcFacadeConfig
 import se.lu.nateko.cp.data.api.ChecksumError
 import se.lu.nateko.cp.data.api.CpDataException
@@ -83,6 +84,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 
 	private val metaClient = upload.meta
 	private val log = upload.log
+	private val structuredLog = LoggerFactory.getLogger(getClass)
 
 	Files.createDirectories(Paths.get(config.folder))
 
@@ -203,11 +205,16 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 		.flatMap{etcMeta =>
 			val srcPath = getObjectSource(fn.station, etcMeta.hashSum)
 			Files.move(file, srcPath, REPLACE_EXISTING)
-			uploadDataObject(srcPath, fn.station, etcMeta.hashSum, "live")
+			uploadDataObject(srcPath, fn.station, etcMeta.hashSum, UploadSource.Live)
 		}
 
-	private def uploadDataObject(srcPath: Path, station: StationId, hash: Sha256Sum, source: String): Future[Done] =
-		log.info(s"ETC facade internal upload attempt source=$source station=${station.id} hash=${hash.id} path=${srcPath.getFileName}")
+	private def uploadDataObject(srcPath: Path, station: StationId, hash: Sha256Sum, source: UploadSource): Future[Done] =
+		structuredLog.atInfo()
+			.addKeyValue("source", source.name)
+			.addKeyValue("station", station.id)
+			.addKeyValue("hash", hash.id)
+			.addKeyValue("path", srcPath.getFileName)
+			.log("ETC facade internal upload attempt")
 		upload
 		.getEtcSink(hash)
 		.flatMap(FileIO.fromPath(srcPath).runWith)
@@ -219,12 +226,15 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 		}
 		.transform(
 			ok => {Files.delete(srcPath); ok},
-			err => new Exception(s"ETC facade failure during internal object upload. source=$source station=$station, object $hash", err)
+			{
+				case err: UploadAlreadyInProgress => err
+				case err => new Exception(s"ETC facade failure during internal object upload. source=${source.name} station=$station, object $hash", err)
+			}
 		)
 
 	private[etcfacade] def uploadDataObjectHandleErrors(station: StationId, hash: Sha256Sum): Future[Done] =
 		val srcPath = getObjectSource(station, hash)
-		uploadDataObject(srcPath, station, hash, "retry").andThen(
+		uploadDataObject(srcPath, station, hash, UploadSource.Retry).andThen(
 			handleErrors(hash.base64Url)
 		)
 
@@ -261,12 +271,11 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 	}
 
 	private def handleErrors(uploadedObj: String): PartialFunction[Try[Done], Unit] =
+		case Failure(_: UploadAlreadyInProgress) =>
+			log.info(s"ETC facade upload for $uploadedObj is already in progress, skipping duplicate attempt")
 		case Failure(err) =>
-			if FacadeService.isAlreadyUploading(err) then
-				log.info(s"ETC facade upload for $uploadedObj is already in progress, skipping duplicate attempt")
-			else
-				appendError(s"Error while uploading $uploadedObj : " + UploadResult.extractMessage(err))
-				log.error(err, s"ETC facade error while uploading $uploadedObj")
+			appendError(s"Error while uploading $uploadedObj : " + UploadResult.extractMessage(err))
+			log.error(err, s"ETC facade error while uploading $uploadedObj")
 
 end FacadeService
 
@@ -278,6 +287,10 @@ object FacadeService:
 
 	val ForceEcUploadTime = LocalTime.of(4, 0) //is to be interpreted as UTC time
 	val OldFileMaxAge = Duration.ofDays(30)
+
+	private enum UploadSource(val name: String):
+		case Live extends UploadSource("live")
+		case Retry extends UploadSource("retry")
 
 	def getUploadMeta(file: EtcFilename, hashSum: Sha256Sum) = EtcUploadMetadata(
 		hashSum = hashSum,
@@ -360,10 +373,5 @@ object FacadeService:
 
 	private def packageIsComplete(pack: DailyPackage): Boolean =
 		pack.keysIterator.flatMap(_.slot).toSet.size == 48
-
-	def isAlreadyUploading(err: Throwable): Boolean = err match
-		case null => false
-		case _: UploadAlreadyInProgress => true
-		case _ => isAlreadyUploading(err.getCause)
 
 end FacadeService

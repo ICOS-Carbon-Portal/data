@@ -82,7 +82,7 @@ lazy val data = (project in file("."))
 
 		libraryDependencies ++= Seq(
 			"com.typesafe.akka"  %% "akka-slf4j"                         % akkaVersion cross CrossVersion.for3Use2_13,
-			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
+			"ch.qos.logback"      % "logback-classic"                    % "1.4.14",
 			"io.sentry"           % "sentry"                             % sentryVersion,
 			"io.sentry"           % "sentry-logback"                     % sentryVersion,
 			"eu.icoscp"          %% "georestheart"                       % "0.1.1",
