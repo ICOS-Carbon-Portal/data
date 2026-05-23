@@ -107,6 +107,11 @@ lazy val data = (project in file("."))
 			"org.scalatest"      %% "scalatest"        % "3.2.11" % "test"
 		),
 
+		assembly / assemblyMergeStrategy := {
+			case "module-info.class" => MergeStrategy.discard
+			case x => (assembly / assemblyMergeStrategy).value(x)
+		},
+
 		Test /run / fork := true,
 
 		Test / logBuffered := false,
