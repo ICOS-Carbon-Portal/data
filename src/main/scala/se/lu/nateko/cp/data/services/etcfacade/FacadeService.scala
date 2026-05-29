@@ -53,6 +53,7 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 import scala.util.Using
+import scala.util.control.NonFatal
 
 /**
  * Encodes the behaviour and logic of the ETC logger data upload facade.
@@ -143,6 +144,9 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 
 	def cleanupVeryOldFiles(station: StationId): Unit =
 		deleteOldEtcFiles(getStationFolder(station))
+
+	def logFilenameParseError(fileName: String, station: StationId, err: Throwable): Unit =
+		appendError(s"Invalid ETC upload filename from ${station.id}: $fileName : ${UploadResult.extractMessage(err)}")
 
 
 	private[etcfacade] def performUploadIfNotTest(file: Path, fn: EtcFilename, forceDaily: Boolean): Future[Done] =
@@ -264,17 +268,21 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 	private def appendError(msg: String): Unit = appendLogMsgToFile(msg, "errorLog.txt")
 	private def logExternalUpload(fn: EtcFilename): Unit = appendLogMsgToFile(fn.toString, "externalUploadsLog.txt")
 
-	private def appendLogMsgToFile(msg: String, fileName: String): Unit = {
-		val msgFile = Paths.get(config.folder, fileName)
-		val msgBytes = s"${Instant.now}\t$msg\n".getBytes(StandardCharsets.UTF_8)
-		Files.write(msgFile, msgBytes, StandardOpenOption.APPEND, StandardOpenOption.CREATE)
-	}
+	private def appendLogMsgToFile(msg: String, fileName: String): Unit =
+		try
+			val msgFile = Paths.get(config.folder, fileName)
+			val msgBytes = s"${Instant.now}\t$msg\n".getBytes(StandardCharsets.UTF_8)
+			Files.write(msgFile, msgBytes, StandardOpenOption.APPEND, StandardOpenOption.CREATE)
+		catch case NonFatal(err) =>
+			log.error(err, s"Could not append ETC facade message to $fileName")
 
 	private def handleErrors(uploadedObj: String): PartialFunction[Try[Done], Unit] =
 		case Failure(_: UploadAlreadyInProgress) =>
 			log.info(s"ETC facade upload for $uploadedObj is already in progress, skipping duplicate attempt")
 		case Failure(err) =>
-			appendError(s"Error while uploading $uploadedObj : " + UploadResult.extractMessage(err))
+			try appendError(s"Error while uploading $uploadedObj : " + UploadResult.extractMessage(err))
+			catch case NonFatal(logErr) =>
+				log.error(logErr, s"Could not append ETC upload error for $uploadedObj to errorLog.txt")
 			log.error(err, s"ETC facade error while uploading $uploadedObj")
 
 end FacadeService
