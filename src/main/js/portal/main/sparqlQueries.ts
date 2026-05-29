@@ -76,7 +76,7 @@ where{
 
 export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "count", "station" | "countryCode" | "ecosystem" | "location" | "site" | "stationclass" | "stationNetwork">
 
-export const envriFilteringFromClauses = config.envriFilteringFromGraphs.map(g => `from <${g}>`).join("\n")
+export const envriFilteringFromClauses = ""
 
 export function dobjOriginsAndCounts(filters: FilterRequest[]): DobjOriginsAndCountsQuery {
 	let siteQueries: string
@@ -304,7 +304,7 @@ export function filteredObjectsQuery(params: QueryParameters, selections: string
 	// because the FROM clauses do not include the RDF graph that the object's own triples belong to;
 	// in contrast, the magic part of query execution uses the FROM clauses solely to determine the ENVRI
 	const hasKnownObjects = params.filters.filter(isPidFilter).flatMap(f => f.pids || []).length > 0
-	const fromClauses = hasKnownObjects ? '' : (envriFilteringFromClauses + '\n')
+	const fromClauses = ""
 
 	return `
 prefix cpmeta: <${config.cpmetaOntoUri}>
