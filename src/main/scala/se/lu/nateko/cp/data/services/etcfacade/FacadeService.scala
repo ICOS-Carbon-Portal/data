@@ -53,6 +53,7 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 import scala.util.Using
+import scala.util.control.NonFatal
 
 /**
  * Encodes the behaviour and logic of the ETC logger data upload facade.
@@ -143,6 +144,11 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 
 	def cleanupVeryOldFiles(station: StationId): Unit =
 		deleteOldEtcFiles(getStationFolder(station))
+
+	def logFilenameParseError(fileName: String, station: StationId, err: Throwable): Unit =
+		try appendError(s"Invalid ETC upload filename from ${station.id}: $fileName : ${UploadResult.extractMessage(err)}")
+		catch case NonFatal(logErr) =>
+			log.error(logErr, s"Could not append ETC filename parse error for $fileName to errorLog.txt")
 
 
 	private[etcfacade] def performUploadIfNotTest(file: Path, fn: EtcFilename, forceDaily: Boolean): Future[Done] =
@@ -274,7 +280,9 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 		case Failure(_: UploadAlreadyInProgress) =>
 			log.info(s"ETC facade upload for $uploadedObj is already in progress, skipping duplicate attempt")
 		case Failure(err) =>
-			appendError(s"Error while uploading $uploadedObj : " + UploadResult.extractMessage(err))
+			try appendError(s"Error while uploading $uploadedObj : " + UploadResult.extractMessage(err))
+			catch case NonFatal(logErr) =>
+				log.error(logErr, s"Could not append ETC upload error for $uploadedObj to errorLog.txt")
 			log.error(err, s"ETC facade error while uploading $uploadedObj")
 
 end FacadeService

@@ -71,6 +71,7 @@ class EtcUploadRouting(
 						EtcFilename.parse(fileNameStr) match
 
 							case Failure(err) =>
+								facade.logFilenameParseError(fileNameStr, station, err)
 								gracefulBadReq(err.getMessage)
 
 							case Success(file) =>
