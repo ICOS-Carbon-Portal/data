@@ -188,14 +188,14 @@ export function fetchFilteredDataObjects(options: QueryParameters){
 const fetchAndParseDataObjects = (query: ObjInfoQuery) => {
 	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
 		dobj: sparqlParsers.fromUrl(b.dobj),
-		hasNextVersion: sparqlParsers.fromBoolean(b.hasNextVersion),
+		hasNextVersion: false,
 		spec: sparqlParsers.fromUrl(b.spec),
 		fileName: sparqlParsers.fromString(b.fileName),
 		size: sparqlParsers.fromLong(b.size),
 		submTime: sparqlParsers.fromDateTime(b.submTime),
 		timeStart: sparqlParsers.fromDateTime(b.timeStart),
 		timeEnd: sparqlParsers.fromDateTime(b.timeEnd),
-		hasVarInfo: sparqlParsers.fromBoolean(b.hasVarInfo)
+		hasVarInfo: false
 	}));
 };
 
@@ -314,7 +314,7 @@ export const getExtendedDataObjInfo = (dobjs: UrlStr[]): Promise<ExtendedDobjInf
 		specComments: sparqlParsers.fromString(b.specComments),
 		columnNames: b.columnNames ? JSON.parse(b.columnNames.value) as string[] : undefined,
 		site: b.site?.value,
-		hasVarInfo: sparqlParsers.fromBoolean(b.hasVarInfo),
+		hasVarInfo: false,
 		dois: b.dois && b.dois.value !== "" ? b.dois.value.split('|') : undefined,
 		biblioInfo: sparqlParsers.fromString(b.biblioInfo)
 	})).then(res => res.rows.map(
