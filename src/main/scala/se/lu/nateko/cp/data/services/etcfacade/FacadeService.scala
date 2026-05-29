@@ -146,9 +146,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 		deleteOldEtcFiles(getStationFolder(station))
 
 	def logFilenameParseError(fileName: String, station: StationId, err: Throwable): Unit =
-		try appendError(s"Invalid ETC upload filename from ${station.id}: $fileName : ${UploadResult.extractMessage(err)}")
-		catch case NonFatal(logErr) =>
-			log.error(logErr, s"Could not append ETC filename parse error for $fileName to errorLog.txt")
+		appendError(s"Invalid ETC upload filename from ${station.id}: $fileName : ${UploadResult.extractMessage(err)}")
 
 
 	private[etcfacade] def performUploadIfNotTest(file: Path, fn: EtcFilename, forceDaily: Boolean): Future[Done] =
@@ -270,11 +268,13 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 	private def appendError(msg: String): Unit = appendLogMsgToFile(msg, "errorLog.txt")
 	private def logExternalUpload(fn: EtcFilename): Unit = appendLogMsgToFile(fn.toString, "externalUploadsLog.txt")
 
-	private def appendLogMsgToFile(msg: String, fileName: String): Unit = {
-		val msgFile = Paths.get(config.folder, fileName)
-		val msgBytes = s"${Instant.now}\t$msg\n".getBytes(StandardCharsets.UTF_8)
-		Files.write(msgFile, msgBytes, StandardOpenOption.APPEND, StandardOpenOption.CREATE)
-	}
+	private def appendLogMsgToFile(msg: String, fileName: String): Unit =
+		try
+			val msgFile = Paths.get(config.folder, fileName)
+			val msgBytes = s"${Instant.now}\t$msg\n".getBytes(StandardCharsets.UTF_8)
+			Files.write(msgFile, msgBytes, StandardOpenOption.APPEND, StandardOpenOption.CREATE)
+		catch case NonFatal(err) =>
+			log.error(err, s"Could not append ETC facade message to $fileName")
 
 	private def handleErrors(uploadedObj: String): PartialFunction[Try[Done], Unit] =
 		case Failure(_: UploadAlreadyInProgress) =>
