@@ -146,7 +146,8 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 		deleteOldEtcFiles(getStationFolder(station))
 
 	def logFilenameParseError(fileName: String, station: StationId, err: Throwable): Unit =
-		appendError(s"Invalid ETC upload filename from ${station.id}: $fileName : ${UploadResult.extractMessage(err)}")
+		val msg = Option(err.getMessage).getOrElse(err.toString)
+		appendError(s"Invalid ETC upload filename from ${station.id}: $fileName : $msg")
 
 
 	private[etcfacade] def performUploadIfNotTest(file: Path, fn: EtcFilename, forceDaily: Boolean): Future[Done] =
@@ -280,9 +281,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 		case Failure(_: UploadAlreadyInProgress) =>
 			log.info(s"ETC facade upload for $uploadedObj is already in progress, skipping duplicate attempt")
 		case Failure(err) =>
-			try appendError(s"Error while uploading $uploadedObj : " + UploadResult.extractMessage(err))
-			catch case NonFatal(logErr) =>
-				log.error(logErr, s"Could not append ETC upload error for $uploadedObj to errorLog.txt")
+			appendError(s"Error while uploading $uploadedObj : " + UploadResult.extractMessage(err))
 			log.error(err, s"ETC facade error while uploading $uploadedObj")
 
 end FacadeService
