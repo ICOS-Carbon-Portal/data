@@ -93,7 +93,7 @@ lazy val data = (project in file("."))
 			"io.sentry"           % "sentry-logback"                     % sentryVersion,
 			"eu.icoscp"          %% "georestheart"                       % "0.1.1",
 			metaCoreModule,
-			"se.lu.nateko.cp"    %% "views-core"                         % "0.8.3",
+			"se.lu.nateko.cp"    %% "views-core"                         % "0.8.4",
 			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.10.1", //to force newer version
 			"org.postgresql"      % "postgresql"                         % "42.6.0",
 			"org.apache.commons"  % "commons-dbcp2"                      % "2.7.0",
