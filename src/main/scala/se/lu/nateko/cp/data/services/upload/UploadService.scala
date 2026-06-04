@@ -32,6 +32,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
+import scala.util.Try
 
 class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: MetaClient)(using Materializer) {
 
@@ -76,11 +77,11 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 		) yield sink
 	}
 
-	def getTryIngestSink(objSpec: Uri, nRows: Option[Int], varnames: Option[Seq[String]])(implicit envri: Envri): Future[TryIngestSink] = {
+	def getTryIngestSink(objSpec: Uri, nRows: Option[Int], varIds: Option[Seq[String]])(implicit envri: Envri): Future[TryIngestSink] = {
 		val origFile = Files.createTempFile("ingestionTest", null)
 		Files.delete(origFile)
 		meta.lookupObjSpec(objSpec).flatMap{spec =>
-			val ingReq = new IngestRequest(origFile.toFile, spec, nRows, varnames)
+			val ingReq = new IngestRequest(origFile.toFile, spec, nRows, varIds)
 			ingestionTaskFut(Left(ingReq))
 		}.map{task =>
 
@@ -235,11 +236,11 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 					Future.successful(DummyNoopTask)
 		else if spec.specificDatasetType == DatasetType.SpatioTemporal then
 			val varNames: Seq[String] = req.fold(
-				_.vars.toSeq.flatten,
+				_.vars.toSeq.flatten.map(varNameFromId),
 				_.specificInfo.left.toOption.flatMap(_.variables).toSeq.flatten.map(_.label)
 			)
 			if isTryIngest && varNames.isEmpty then
-				dataFail("Ingestion pointless: no variable names provided for validation")
+				dataFail("Ingestion pointless: no variable names or URIs provided for validation")
 			else
 				Future.successful(new NetCdfStatsTask(varNames, file, netcdfConf, isTryIngest))
 
@@ -281,6 +282,13 @@ object UploadService{
 	type TryIngestSink = Sink[ByteString, Future[IngestionMetadataExtract | String]]
 
 	class IngestRequest(val file: File, val spec: DataObjectSpec, val nRows: Option[Int], val vars: Option[Seq[String]])
+
+	def varNameFromId(id: String): String = Try(URI.create(id)).toOption
+		.flatMap: uri =>
+			Option(uri.getPath)
+				.flatMap(_.stripSuffix("/").split('/').lastOption.filter(_.nonEmpty))
+				.orElse(Option(uri.getFragment).filter(_.nonEmpty))
+		.getOrElse(id)
 
 	def fileName(hash: Sha256Sum): String = hash.id
 	def fileName(obj: StaticObject): String = fileName(obj.hash)

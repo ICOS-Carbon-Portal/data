@@ -90,9 +90,9 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 
 	private val tryIngest: Route = extractEnvri{
 		addAccessControlHeaders{
-			parameters("specUri".as[Uri], "nRows".as[Int].?, "varnames".as[List[String]].?){(specUri, nRowsOpt, varnames) =>
+			parameters("specUri".as[Uri], "nRows".as[Int].?, "varnames".as[List[String]].?){(specUri, nRowsOpt, varIds) =>
 				extractRequest { req =>
-					val resFut = uploadService.getTryIngestSink(specUri, nRowsOpt, varnames).flatMap(req.entity.dataBytes.runWith)
+					val resFut = uploadService.getTryIngestSink(specUri, nRowsOpt, varIds).flatMap(req.entity.dataBytes.runWith)
 					onComplete(resFut) {
 						case Success(metaExtract) => metaExtract match
 							case me: IngestionMetadataExtract => complete(me.toJson)
