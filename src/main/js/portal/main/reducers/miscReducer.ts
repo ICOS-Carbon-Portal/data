@@ -88,6 +88,11 @@ const handleMiscUpdateSearchOption = (state: State, payload: MiscUpdateSearchOpt
 const resetFilters = (state: State): Partial<State> => {
 	const specTable = state.specTable.withResetFilters();
 
+	// Keep the dual-view secondary table's count in sync when filters are cleared.
+	const secondarySpecTable = config.dualView
+		? state.secondarySpecTable.withResetFilters()
+		: state.secondarySpecTable;
+
 	return {
 		specTable,
 		mapProps: defaultState.mapProps,
@@ -97,7 +102,10 @@ const resetFilters = (state: State): Partial<State> => {
 		checkedObjectsInSearch: [],
 		filterTemporal: new FilterTemporal(),
 		filterNumbers: new FilterNumbers(numberFilterKeys.map(cat => new FilterNumber(cat))),
-		filterKeywords: []
+		filterKeywords: [],
+		secondarySpecTable,
+		secondaryObjectsTable: [],
+		secondaryPaging: new Paging({ objCount: getObjCount(secondarySpecTable) })
 	};
 };
 

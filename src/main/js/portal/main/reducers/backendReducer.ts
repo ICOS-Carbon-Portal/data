@@ -195,12 +195,21 @@ const handleSecondaryObjectsFetched = (state: State, payload: BackendSecondaryOb
 const handleSpecFilterUpdate = (state: State, payload: BackendUpdateSpecFilter) => {
 	const specTable = state.specTable.withFilter(payload.varName as ColNames, payload.filter);
 
+	// Categorical filters update counts client-side (no server refetch), so the
+	// dual-view secondary table must apply the same filter to keep its count in sync.
+	const secondarySpecTable = config.dualView
+		? state.secondarySpecTable.withFilter(payload.varName as ColNames, payload.filter)
+		: state.secondarySpecTable;
+
 	return stateUtils.update(state,{
 		specTable,
 		objectsTable: [],
 		...getNewPaging(state.paging, state.page, specTable, true),
 		filterCategories: Object.assign(state.filterCategories, {[payload.varName]: payload.filter}),
-		checkedObjectsInSearch: []
+		checkedObjectsInSearch: [],
+		secondarySpecTable,
+		secondaryObjectsTable: [],
+		secondaryPaging: new Paging({ objCount: getObjCount(secondarySpecTable) })
 	});
 };
 
