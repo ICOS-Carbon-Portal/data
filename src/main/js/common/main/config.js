@@ -16,13 +16,15 @@ const restheartDbUrls = {
 	ICOSCities: '//cityrestheart.icos-cp.eu/pauldb/'
 };
 
-// Optional second SPARQL endpoint for the dual-view comparison feature.
-// Set window.envriConfig.secondaryMetaHost to enable; left null otherwise.
+// Second SPARQL endpoint for the dual-view comparison feature. Enabled when
+// secondaryMetaHost is configured (cpdata.secondaryMetaHosts.<ENVRI> in
+// application.conf, injected into window.envriConfig); null disables the feature.
 const secondaryMetaHost = window.envriConfig.secondaryMetaHost;
+const secondarySparqlEndpoint = secondaryMetaHost ? `https://${secondaryMetaHost}/sparql` : null;
 
 export default {
 	sparqlEndpoint: metaBaseUri + '/sparql',
-	secondarySparqlEndpoint: secondaryMetaHost ? `https://${secondaryMetaHost}/sparql` : null,
+	secondarySparqlEndpoint,
 	restheartDbUrl: restheartDbUrls[envri],
 	restheartProfileBaseUrl: `${authBaseUri}/db/users`,
 	portalUseLogUrl: `${authBaseUri}/logs/portaluse`,

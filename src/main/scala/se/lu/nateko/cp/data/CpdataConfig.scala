@@ -111,7 +111,10 @@ case class CpdataConfig(
 	postgis: PostgisConfig,
 	etcFacade: EtcFacadeConfig,
 	sentry: SentryConfig,
-	mailing: EmailConfig
+	mailing: EmailConfig,
+	// Optional per-ENVRI host of a second metadata backend, used by the portal's
+	// dual-view comparison pane. Injected into window.envriConfig.secondaryMetaHost.
+	secondaryMetaHosts: Map[Envri, String]
 )
 
 object ConfigReader extends CommonJsonSupport{
@@ -149,7 +152,7 @@ object ConfigReader extends CommonJsonSupport{
 	import se.lu.nateko.cp.cpauth.core.JsonSupport.{given RootJsonFormat[EmailConfig]}
 	given RootJsonFormat[RestHeartConfig] = jsonFormat3(RestHeartConfig.apply)
 	given RootJsonFormat[SentryConfig] = jsonFormat2(SentryConfig.apply)
-	given RootJsonFormat[CpdataConfig] = jsonFormat11(CpdataConfig.apply)
+	given RootJsonFormat[CpdataConfig] = jsonFormat12(CpdataConfig.apply)
 
 	val appConfig: Config = {
 		val confFile = new java.io.File("application.conf").getAbsoluteFile

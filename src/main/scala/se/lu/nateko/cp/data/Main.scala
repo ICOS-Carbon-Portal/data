@@ -79,7 +79,7 @@ object Main extends App:
 	val integrityRoute = new IntegrityRouting(authRouting, config.upload, extractEnvri).route(integrityService)
 
 	val licenceRoute = new LicenceRouting(authRouting.userOpt, ConfigReader.metaCore.handleProxies).route
-	val staticRoute = new StaticRouting(config.sentry.portalDsn).route
+	val staticRoute = new StaticRouting(config.sentry.portalDsn, config.secondaryMetaHosts).route
 	val etcUploadRoute = new EtcUploadRouting(authRouting, config.etcFacade, uploadService).route
 
 	val statsRoute = new StatsRouting(postgisLogAnalyzer, ConfigReader.metaCore)
