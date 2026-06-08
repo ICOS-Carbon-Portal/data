@@ -52,10 +52,10 @@ const fetchSpecColumnMeta = () => {
 	}));
 };
 
-export const fetchDobjOriginsAndCounts = (filters: FilterRequest[]) => {
+export const fetchDobjOriginsAndCounts = (filters: FilterRequest[], endpoint: UrlStr = config.sparqlEndpoint) => {
 	const query = queries.dobjOriginsAndCounts(filters);
 
-	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
+	return sparqlFetchAndParse(query, endpoint, b => ({
 		spec: b.spec.value,
 		countryCode: b.countryCode?.value,
 		submitter: b.submitter.value,
@@ -171,17 +171,17 @@ export const fetchKnownDataObjects = (dobjs: string[]) => {
 		: Promise.resolve({colNames: [], rows: []});
 };
 
-export function fetchFilteredDataObjects(options: QueryParameters){
+export function fetchFilteredDataObjects(options: QueryParameters, endpoint: UrlStr = config.sparqlEndpoint){
 	return Filter.allowsNothing(options.specs) || Filter.allowsNothing(options.submitters) || Filter.allowsNothing(options.stations)
 		? Promise.resolve({
 			colNames: [],
 			rows: []
 		})
-		: fetchAndParseDataObjects(queries.listFilteredDataObjects(options));
+		: fetchAndParseDataObjects(queries.listFilteredDataObjects(options), endpoint);
 }
 
-const fetchAndParseDataObjects = (query: ObjInfoQuery) => {
-	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
+const fetchAndParseDataObjects = (query: ObjInfoQuery, endpoint: UrlStr = config.sparqlEndpoint) => {
+	return sparqlFetchAndParse(query, endpoint, b => ({
 		dobj: sparqlParsers.fromUrl(b.dobj),
 		hasNextVersion: false,
 		spec: sparqlParsers.fromUrl(b.spec),
@@ -291,12 +291,12 @@ export const getProfile = (email: string | null): Promise<User['profile']> => {
 		: Promise.resolve({});
 };
 
-export const getExtendedDataObjInfo = (dobjs: UrlStr[]): Promise<ExtendedDobjInfo[]> => {
+export const getExtendedDataObjInfo = (dobjs: UrlStr[], endpoint: UrlStr = config.sparqlEndpoint): Promise<ExtendedDobjInfo[]> => {
 	if (dobjs.length == 0) return Promise.resolve([]);
 
 	const query = queries.extendedDataObjectInfo(dobjs);
 
-	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
+	return sparqlFetchAndParse(query, endpoint, b => ({
 		dobj: sparqlParsers.fromUrl(b.dobj),
 		station: sparqlParsers.fromString(b.station),
 		stationId: sparqlParsers.fromString(b.stationId),

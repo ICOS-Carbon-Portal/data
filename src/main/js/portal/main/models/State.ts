@@ -202,6 +202,12 @@ export interface State {
 	scopedKeywords: string[]
 	filterKeywords: string[]
 	exportQuery: ExportQuery
+	// Dual-view comparison pane: results mirrored from the secondary SPARQL endpoint
+	// using the same (shared) filters. Empty/unused when config.dualView is false.
+	secondarySpecTable: CompositeSpecTable
+	secondaryObjectsTable: KnownDataObject[]
+	secondaryExtendedDobjInfo: ExtendedDobjInfo[]
+	secondaryPaging: Paging
 }
 
 export const emptyCompositeSpecTable = new CompositeSpecTable(
@@ -269,7 +275,11 @@ export const defaultState: State = {
 	exportQuery: {
 		isFetchingCVS: false,
 		sparqClientQuery: ''
-	}
+	},
+	secondarySpecTable: emptyCompositeSpecTable,
+	secondaryObjectsTable: [],
+	secondaryExtendedDobjInfo: [],
+	secondaryPaging: new Paging({objCount: 0})
 };
 
 const update = (state: State, updates: Partial<State>): State => {
@@ -296,6 +306,8 @@ const serialize = (state: State) => {
 		specTable: state.specTable.serialize,
 		baseDobjStats: state.baseDobjStats.serialize,
 		paging: state.paging.serialize,
+		secondarySpecTable: state.secondarySpecTable.serialize,
+		secondaryPaging: state.secondaryPaging.serialize,
 		cart: undefined,
 		priorCart: undefined,
 		preview: state.preview.serialize,
@@ -322,6 +334,8 @@ const deserialize = (jsonObj: StateSerialized, cart: Cart) => {
 		specTable,
 		baseDobjStats,
 		paging: Paging.deserialize(jsonObj.paging),
+		secondarySpecTable: CompositeSpecTable.deserialize(jsonObj.secondarySpecTable),
+		secondaryPaging: Paging.deserialize(jsonObj.secondaryPaging),
 		cart,
 		preview: preview,
 		previewSettings: preview.previewSettings,

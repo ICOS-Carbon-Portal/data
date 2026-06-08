@@ -13,7 +13,10 @@ import {
 	BackendBatchDownload,
 	BackendUpdateCart,
 	BackendUpdatePriorCart,
-	BackendExportQuery
+	BackendExportQuery,
+	BackendSecondaryOriginsTable,
+	BackendSecondaryObjectsFetched,
+	BackendSecondaryExtendedDataObjInfo
 } from "./actionpayloads";
 import stateUtils, {CategFilters, KnownDataObject, State} from "../models/State";
 import config, {CategoryType} from "../config";
@@ -64,6 +67,20 @@ export default function(state: State, payload: BackendPayload): State {
 	if (payload instanceof BackendKeywordsFetched){
 		return stateUtils.update(state, {
 			scopedKeywords: payload.scopedKeywords
+		});
+	}
+
+	if (payload instanceof BackendSecondaryOriginsTable){
+		return stateUtils.update(state, handleSecondaryOriginsTable(state, payload));
+	}
+
+	if (payload instanceof BackendSecondaryObjectsFetched){
+		return stateUtils.update(state, handleSecondaryObjectsFetched(state, payload));
+	}
+
+	if (payload instanceof BackendSecondaryExtendedDataObjInfo){
+		return stateUtils.update(state, {
+			secondaryExtendedDobjInfo: payload.extendedDobjInfo
 		});
 	}
 
@@ -139,6 +156,39 @@ const handleObjectsFetched = (state: State, payload: BackendObjectsFetched) => {
 	return {
 		objectsTable: extendedObjectsTable,
 		paging
+	};
+};
+
+// Dual-view: secondary endpoint mirrors the result list/counts using the shared
+// (primary) filters. We graft the secondary origins onto the primary basics/columnMeta
+// so the same count/availability helpers apply; primary state is never touched here.
+const handleSecondaryOriginsTable = (state: State, payload: BackendSecondaryOriginsTable): Pick<State, 'secondarySpecTable' | 'secondaryPaging'> => {
+	const secondarySpecTable = state.specTable.withOriginsTable(payload.table);
+	return {
+		secondarySpecTable,
+		secondaryPaging: new Paging({ objCount: getObjCount(secondarySpecTable) })
+	};
+};
+
+const handleSecondaryObjectsFetched = (state: State, payload: BackendSecondaryObjectsFetched): Pick<State, 'secondaryObjectsTable' | 'secondaryPaging'> => {
+	const objectsTable = payload.objectsTable as KnownDataObject[];
+	const extendedObjectsTable = objectsTable.map(ot => {
+		const spec = state.specTable.getTableRows('basics').find(r => r.spec === ot.spec);
+		return {...ot, ...spec};
+	});
+
+	const objCount = getObjCount(state.secondarySpecTable);
+	// Paging is shared with the primary pane, so mirror its offset for the window display.
+	const secondaryPaging = state.secondaryPaging.withObjCount({
+		objCount,
+		pageCount: payload.objectsTable.length,
+		filtersEnabled: false,
+		isDataEndReached: payload.isDataEndReached
+	}).withOffset(state.paging.offset);
+
+	return {
+		secondaryObjectsTable: extendedObjectsTable,
+		secondaryPaging
 	};
 };
 

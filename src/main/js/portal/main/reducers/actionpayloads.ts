@@ -116,6 +116,19 @@ export class BackendKeywordsFetched extends BackendPayload {
 	constructor(readonly scopedKeywords: string[]){super();}
 }
 
+// Dual-view: payloads carrying results from the secondary SPARQL endpoint
+export class BackendSecondaryOriginsTable extends BackendPayload{
+	constructor(readonly table: SpecTable<OriginsColNames>){super();}
+}
+
+export class BackendSecondaryObjectsFetched extends BackendPayload{
+	constructor(readonly objectsTable: ObjectsTableLike, readonly isDataEndReached: boolean){super();}
+}
+
+export class BackendSecondaryExtendedDataObjInfo extends BackendPayload{
+	constructor(readonly extendedDobjInfo: AsyncResult<typeof getExtendedDataObjInfo>){super();}
+}
+
 export class BackendExportQuery extends BackendPayload {
 	constructor(readonly isFetchingCVS: boolean, readonly sparqClientQuery: string) { super(); }
 }

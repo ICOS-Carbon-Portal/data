@@ -23,7 +23,10 @@ type IncomingActions = {
 	handleAddToCart: (objInfo: UrlStr[]) => void
 	handleAllCheckboxesChange: () => void
 }
-type OurProps = StateProps & DispatchProps & IncomingActions & {tabHeader: string};
+// 'secondary' makes the pane read its rows/counts from the secondary (dual-view) state slice
+export type PaneSource = 'primary' | 'secondary';
+type IncomingProps = IncomingActions & {tabHeader: string, paneSource?: PaneSource};
+type OurProps = StateProps & DispatchProps & IncomingProps;
 
 const dropdownLookup = {
 	fileName: 'File name',
@@ -153,18 +156,19 @@ function SearchResultRegular(props: OurProps) {
 	);
 }
 
-function stateToProps(state: State){
+function stateToProps(state: State, ownProps: IncomingProps){
+	const isSecondary = ownProps.paneSource === 'secondary';
 	return {
 		previewLookup: state.previewLookup,
 		labelLookup: state.labelLookup,
 		checkedObjectsInSearch: state.checkedObjectsInSearch,
-		objectsTable: state.objectsTable,
+		objectsTable: isSecondary ? state.secondaryObjectsTable : state.objectsTable,
 		preview: state.preview,
 		cart: state.cart,
-		paging: state.paging,
+		paging: isSecondary ? state.secondaryPaging : state.paging,
 		sorting: state.sorting,
 		searchOptions: state.searchOptions,
-		extendedDobjInfo: state.extendedDobjInfo,
+		extendedDobjInfo: isSecondary ? state.secondaryExtendedDobjInfo : state.extendedDobjInfo,
 		exportQuery: state.exportQuery,
 		user: state.user
 	};

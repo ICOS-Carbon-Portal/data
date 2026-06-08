@@ -18,7 +18,7 @@ export class CachedDataObjectsFetcher{
 	private cacheId?: {};
 	private linearCache? : LinearCache;
 
-	constructor(public readonly fetchLimit: number){
+	constructor(public readonly fetchLimit: number, private readonly endpoint?: string){
 		this.fetchLimit = fetchLimit;
 		this.cacheId = undefined;
 		this.linearCache = undefined;
@@ -34,7 +34,7 @@ export class CachedDataObjectsFetcher{
 				(offset: number, limit: number) => {
 					const opts = Object.assign({}, options, {paging:{offset, limit}});
 
-					return fetchFilteredDataObjects(opts).then((res: FetchFilteredDataObjects) => res.rows);
+					return fetchFilteredDataObjects(opts, this.endpoint).then((res: FetchFilteredDataObjects) => res.rows);
 				},
 				this.fetchLimit,
 				offset
@@ -50,8 +50,10 @@ export class CachedDataObjectsFetcher{
 }
 
 export class DataObjectsFetcher{
+	constructor(private readonly endpoint?: string){}
+
 	fetch(options: QueryParameters): FetchedDataObjs {
-		return fetchFilteredDataObjects(options).then(({rows}) => {
+		return fetchFilteredDataObjects(options, this.endpoint).then(({rows}) => {
 			return {
 				rows,
 				cacheSize: 0,

@@ -134,30 +134,62 @@ class Search extends Component<OurProps, OurState> {
 				</div>
 
 				<div className="col-sm-8 col-md-9">
-					<Tabs tabName="resultTab" selectedTabId={tabs.resultTab} switchTab={switchTab}>
-						<SearchResultRegular
-							tabHeader="Search results"
-							handlePreview={this.handlePreview.bind(this)}
-							handleAddToCart={this.handleAddToCart.bind(this)}
-							handleAllCheckboxesChange={this.handleAllCheckboxesChange.bind(this)}
-						/>
-						<SearchResultCompact
-							tabHeader="Compact view"
-							handlePreview={this.handlePreview.bind(this)}
-						/>
-						<SearchResultMap
-							key={srid}
-							tabHeader="Stations map"
-							persistedMapProps={this.persistedMapProps}
-							updatePersistedMapProps={this.updatePersistedMapProps.bind(this)}
-							updateMapSelectedSRID={this.updateMapSelectedSRID.bind(this)}
-						/>
-					</Tabs>
+					{config.dualView ? (
+						<div className="row">
+							<div className="col-lg-6 mb-3">
+								<EndpointLabel url={config.sparqlEndpoint} />
+								<SearchResultRegular
+									tabHeader="Search results"
+									paneSource="primary"
+									handlePreview={this.handlePreview.bind(this)}
+									handleAddToCart={this.handleAddToCart.bind(this)}
+									handleAllCheckboxesChange={this.handleAllCheckboxesChange.bind(this)}
+								/>
+							</div>
+							<div className="col-lg-6 mb-3">
+								<EndpointLabel url={config.secondarySparqlEndpoint ?? ''} />
+								<SearchResultRegular
+									tabHeader="Search results"
+									paneSource="secondary"
+									handlePreview={this.handlePreview.bind(this)}
+									handleAddToCart={this.handleAddToCart.bind(this)}
+									handleAllCheckboxesChange={this.handleAllCheckboxesChange.bind(this)}
+								/>
+							</div>
+						</div>
+					) : (
+						<Tabs tabName="resultTab" selectedTabId={tabs.resultTab} switchTab={switchTab}>
+							<SearchResultRegular
+								tabHeader="Search results"
+								handlePreview={this.handlePreview.bind(this)}
+								handleAddToCart={this.handleAddToCart.bind(this)}
+								handleAllCheckboxesChange={this.handleAllCheckboxesChange.bind(this)}
+							/>
+							<SearchResultCompact
+								tabHeader="Compact view"
+								handlePreview={this.handlePreview.bind(this)}
+							/>
+							<SearchResultMap
+								key={srid}
+								tabHeader="Stations map"
+								persistedMapProps={this.persistedMapProps}
+								updatePersistedMapProps={this.updatePersistedMapProps.bind(this)}
+								updateMapSelectedSRID={this.updateMapSelectedSRID.bind(this)}
+							/>
+						</Tabs>
+					)}
 				</div>
 			</div>
 		);
 	}
 }
+
+const EndpointLabel = ({ url }: { url: string }) => (
+	<div className="text-secondary small text-truncate mb-1" title={url} style={{ fontWeight: 600 }}>
+		<i className="fas fa-database" style={{ marginRight: 6 }} aria-hidden="true" />
+		{url}
+	</div>
+);
 
 function stateToProps(state: State){
 	return {

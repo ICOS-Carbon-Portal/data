@@ -174,6 +174,10 @@ export default {
 		PHENOCAM: '/imagezipview/'
 	},
 	restheartDbUrl: commonConfig.restheartDbUrl,
+	sparqlEndpoint: commonConfig.sparqlEndpoint,
+	secondarySparqlEndpoint: commonConfig.secondarySparqlEndpoint as string | null,
+	// Dual-view comparison pane is enabled when a second SPARQL endpoint is configured
+	dualView: !!commonConfig.secondarySparqlEndpoint,
 	stepsize: 20,
 	useDataObjectsCache: true,
 	dobjCacheFetchLimit: 60,

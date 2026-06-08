@@ -41,6 +41,7 @@ export default function bootstrapSearch(user: WhoAmI,tabs: TabsState): PortalThu
 		const filters = getFilters(getState());
 		dispatch(getBackendTables(filters)).then(_ => {
 			dispatch(getFilteredDataObjects);
+			dispatch(getSecondaryOriginsAndCounts);
 		});
 
 		dispatch(new Payloads.BootstrapRouteSearch());
@@ -55,7 +56,30 @@ const dataObjectsFetcher = config.useDataObjectsCache
 	? new CachedDataObjectsFetcher(config.dobjCacheFetchLimit)
 	: new DataObjectsFetcher();
 
+// Dual-view: a separate fetcher bound to the secondary endpoint, used to mirror
+// the result list with the same (shared) filters. Undefined when the feature is off.
+const secondaryDataObjectsFetcher = (config.dualView && config.secondarySparqlEndpoint)
+	? (config.useDataObjectsCache
+		? new CachedDataObjectsFetcher(config.dobjCacheFetchLimit, config.secondarySparqlEndpoint)
+		: new DataObjectsFetcher(config.secondarySparqlEndpoint))
+	: undefined;
+
 export const getOriginsThenDobjList: PortalThunkAction<void> = getDobjOriginsAndCounts(true);
+
+// Dual-view: fetch origins/counts from the secondary endpoint with the shared filters.
+// No-op when the feature is disabled.
+const getSecondaryOriginsAndCounts: PortalThunkAction<void> = (dispatch, getState) => {
+	if (!(config.dualView && config.secondarySparqlEndpoint)) return;
+
+	const filters = getFilters(getState());
+	fetchDobjOriginsAndCounts(filters, config.secondarySparqlEndpoint).then(
+		dobjOriginsAndCounts => {
+			const tbl = new SpecTable<OriginsColNames>(dobjOriginsAndCounts.colNames, dobjOriginsAndCounts.rows, {});
+			dispatch(new Payloads.BackendSecondaryOriginsTable(tbl));
+		},
+		failWithError(dispatch)
+	);
+};
 
 function getDobjOriginsAndCounts(fetchObjListWhenDone: boolean): PortalThunkAction<void> {
 	return (dispatch, getState) => {
@@ -70,6 +94,8 @@ function getDobjOriginsAndCounts(fetchObjListWhenDone: boolean): PortalThunkActi
 			},
 			failWithError(dispatch)
 		);
+
+		dispatch(getSecondaryOriginsAndCounts);
 
 	};
 }
@@ -97,6 +123,16 @@ export const getFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getSt
 		},
 		failWithError(dispatch)
 	);
+
+	if (secondaryDataObjectsFetcher) {
+		secondaryDataObjectsFetcher.fetch(options).then(
+			({rows, isDataEndReached}) => {
+				dispatch(fetchSecondaryExtendedDobjInfo(rows.map((d) => d.dobj)));
+				dispatch(new Payloads.BackendSecondaryObjectsFetched(rows, isDataEndReached));
+			},
+			failWithError(dispatch)
+		);
+	}
 
 	logPortalUsage(state);
 };
@@ -175,6 +211,16 @@ function fetchExtendedDataObjInfo(dobjs: UrlStr[]): PortalThunkAction<void> {
 	return (dispatch) => {
 		getExtendedDataObjInfo(dobjs).then(extendedDobjInfo => {
 				dispatch(new Payloads.BackendExtendedDataObjInfo(extendedDobjInfo));
+			},
+			failWithError(dispatch)
+		);
+	};
+}
+
+function fetchSecondaryExtendedDobjInfo(dobjs: UrlStr[]): PortalThunkAction<void> {
+	return (dispatch) => {
+		getExtendedDataObjInfo(dobjs, config.secondarySparqlEndpoint ?? undefined).then(extendedDobjInfo => {
+				dispatch(new Payloads.BackendSecondaryExtendedDataObjInfo(extendedDobjInfo));
 			},
 			failWithError(dispatch)
 		);
