@@ -1,5 +1,6 @@
 import { sparqlFetch, sparqlFetchAndParse } from './backend/SparqlFetch';
 import * as queries from './sparqlQueries';
+import * as virtuosoQueries from './sparqlQueriesVirtuoso';
 import commonConfig from '../../common/main/config';
 import localConfig from './config';
 import Cart, {JsonCart} from './models/Cart';
@@ -27,8 +28,11 @@ const tsSettingsStorage = new Storage();
 // The primary SPARQL endpoint currently runs on Virtuoso, which needs a few
 // query/parsing work-arounds (FROM clauses, distinct_keywords, boolean bindings).
 // The secondary endpoint (dual-view comparison pane) runs the original backend and
-// must use the original implementation. This predicate selects which to apply.
+// must use the original implementation. These selectors pick which to apply: the
+// virtuoso query module (sparqlQueriesVirtuoso) for the primary endpoint, the original
+// query module (sparqlQueries) for the secondary one.
 const isVirtuosoEndpoint = (endpoint: UrlStr) => endpoint === config.sparqlEndpoint;
+const queriesFor = (endpoint: UrlStr) => isVirtuosoEndpoint(endpoint) ? virtuosoQueries : queries;
 
 const fetchSpecBasics = () => {
 	const query = queries.specBasics();
@@ -59,7 +63,7 @@ const fetchSpecColumnMeta = () => {
 };
 
 export const fetchDobjOriginsAndCounts = (filters: FilterRequest[], endpoint: UrlStr = config.sparqlEndpoint) => {
-	const query = queries.dobjOriginsAndCounts(filters, isVirtuosoEndpoint(endpoint));
+	const query = queriesFor(endpoint).dobjOriginsAndCounts(filters);
 
 	return sparqlFetchAndParse(query, endpoint, b => ({
 		spec: b.spec.value,
@@ -183,7 +187,7 @@ export function fetchFilteredDataObjects(options: QueryParameters, endpoint: Url
 			colNames: [],
 			rows: []
 		})
-		: fetchAndParseDataObjects(queries.listFilteredDataObjects(options, isVirtuosoEndpoint(endpoint)), endpoint);
+		: fetchAndParseDataObjects(queriesFor(endpoint).listFilteredDataObjects(options), endpoint);
 }
 
 const fetchAndParseDataObjects = (query: ObjInfoQuery, endpoint: UrlStr = config.sparqlEndpoint) => {

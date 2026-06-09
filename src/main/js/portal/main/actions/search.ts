@@ -30,7 +30,8 @@ import {
 } from "./common";
 import {FilterNumber} from "../models/FilterNumbers";
 import Paging from "../models/Paging";
-import { listFilteredDataObjects } from '../sparqlQueries';
+// The export/SPARQL-client query targets the primary endpoint, which runs on Virtuoso.
+import { listFilteredDataObjects } from '../sparqlQueriesVirtuoso';
 import { sparqlFetchBlob } from "../backend";
 import {PersistedMapPropsExtended} from "../models/InitMap";
 import scopedKeywords from "../backend/scopedKeywords";
