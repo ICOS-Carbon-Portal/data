@@ -24,6 +24,12 @@ const config = Object.assign(commonConfig, localConfig);
 const tsSettingsStorageName = 'tsSettings';
 const tsSettingsStorage = new Storage();
 
+// The primary SPARQL endpoint currently runs on Virtuoso, which needs a few
+// query/parsing work-arounds (FROM clauses, distinct_keywords, boolean bindings).
+// The secondary endpoint (dual-view comparison pane) runs the original backend and
+// must use the original implementation. This predicate selects which to apply.
+const isVirtuosoEndpoint = (endpoint: UrlStr) => endpoint === config.sparqlEndpoint;
+
 const fetchSpecBasics = () => {
 	const query = queries.specBasics();
 
@@ -53,7 +59,7 @@ const fetchSpecColumnMeta = () => {
 };
 
 export const fetchDobjOriginsAndCounts = (filters: FilterRequest[], endpoint: UrlStr = config.sparqlEndpoint) => {
-	const query = queries.dobjOriginsAndCounts(filters);
+	const query = queries.dobjOriginsAndCounts(filters, isVirtuosoEndpoint(endpoint));
 
 	return sparqlFetchAndParse(query, endpoint, b => ({
 		spec: b.spec.value,
@@ -177,20 +183,23 @@ export function fetchFilteredDataObjects(options: QueryParameters, endpoint: Url
 			colNames: [],
 			rows: []
 		})
-		: fetchAndParseDataObjects(queries.listFilteredDataObjects(options), endpoint);
+		: fetchAndParseDataObjects(queries.listFilteredDataObjects(options, isVirtuosoEndpoint(endpoint)), endpoint);
 }
 
 const fetchAndParseDataObjects = (query: ObjInfoQuery, endpoint: UrlStr = config.sparqlEndpoint) => {
+	// Virtuoso work-around: these EXISTS-based boolean bindings misbehave on the primary
+	// endpoint, so force them to false there; the original backend parses them normally.
+	const virtuoso = isVirtuosoEndpoint(endpoint);
 	return sparqlFetchAndParse(query, endpoint, b => ({
 		dobj: sparqlParsers.fromUrl(b.dobj),
-		hasNextVersion: false,
+		hasNextVersion: virtuoso ? false : sparqlParsers.fromBoolean(b.hasNextVersion),
 		spec: sparqlParsers.fromUrl(b.spec),
 		fileName: sparqlParsers.fromString(b.fileName),
 		size: sparqlParsers.fromLong(b.size),
 		submTime: sparqlParsers.fromDateTime(b.submTime),
 		timeStart: sparqlParsers.fromDateTime(b.timeStart),
 		timeEnd: sparqlParsers.fromDateTime(b.timeEnd),
-		hasVarInfo: false
+		hasVarInfo: virtuoso ? false : sparqlParsers.fromBoolean(b.hasVarInfo)
 	}));
 };
 
@@ -296,6 +305,8 @@ export const getExtendedDataObjInfo = (dobjs: UrlStr[], endpoint: UrlStr = confi
 
 	const query = queries.extendedDataObjectInfo(dobjs);
 
+	// Virtuoso work-around: see fetchAndParseDataObjects; hasVarInfo is forced false on the primary endpoint.
+	const virtuoso = isVirtuosoEndpoint(endpoint);
 	return sparqlFetchAndParse(query, endpoint, b => ({
 		dobj: sparqlParsers.fromUrl(b.dobj),
 		station: sparqlParsers.fromString(b.station),
@@ -309,7 +320,7 @@ export const getExtendedDataObjInfo = (dobjs: UrlStr[], endpoint: UrlStr = confi
 		specComments: sparqlParsers.fromString(b.specComments),
 		columnNames: b.columnNames ? JSON.parse(b.columnNames.value) as string[] : undefined,
 		site: b.site?.value,
-		hasVarInfo: false,
+		hasVarInfo: virtuoso ? false : sparqlParsers.fromBoolean(b.hasVarInfo),
 		dois: b.dois && b.dois.value !== "" ? b.dois.value.split('|') : undefined,
 		biblioInfo: sparqlParsers.fromString(b.biblioInfo)
 	})).then(res => res.rows.map(

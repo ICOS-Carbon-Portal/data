@@ -76,9 +76,9 @@ where{
 
 export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "count", "station" | "countryCode" | "ecosystem" | "location" | "site" | "stationclass" | "stationNetwork">
 
-export const envriFilteringFromClauses = ""
+export const envriFilteringFromClauses = config.envriFilteringFromGraphs.map(g => `from <${g}>`).join("\n")
 
-export function dobjOriginsAndCounts(filters: FilterRequest[]): DobjOriginsAndCountsQuery {
+export function dobjOriginsAndCounts(filters: FilterRequest[], virtuoso: boolean = true): DobjOriginsAndCountsQuery {
 	let siteQueries: string
 	switch(config.envri){
 		case "SITES":
@@ -105,13 +105,16 @@ export function dobjOriginsAndCounts(filters: FilterRequest[]): DobjOriginsAndCo
 
 	}
 
+	// Virtuoso work-around: the primary endpoint must omit the ENVRI-filtering FROM clauses.
+	const fromClauses = virtuoso ? "" : envriFilteringFromClauses
+
 	const text = `# dobjOriginsAndCounts
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 prefix xsd: <http://www.w3.org/2001/XMLSchema#>
 prefix geo: <http://www.opengis.net/ont/geosparql#>
 select ?spec ?countryCode ?submitter ?count ?station ?ecosystem ?location ?site ?stationclass ?stationNetwork
-${envriFilteringFromClauses}
+${fromClauses}
 where{
 	{
 		select ?station ?site ?submitter ?spec (count(?dobj) as ?count) where{
@@ -289,7 +292,7 @@ export function objectFilterClauses(query: QueryParameters): String {
 	${getFilterClauses(filters, false)}`;
 }
 
-export function filteredObjectsQuery(params: QueryParameters, selections: string): string {
+export function filteredObjectsQuery(params: QueryParameters, selections: string, virtuoso: boolean = true): string {
 
 	const { sorting, paging } = params;
 	const orderBy = (sorting && sorting.varName)
@@ -304,7 +307,8 @@ export function filteredObjectsQuery(params: QueryParameters, selections: string
 	// because the FROM clauses do not include the RDF graph that the object's own triples belong to;
 	// in contrast, the magic part of query execution uses the FROM clauses solely to determine the ENVRI
 	const hasKnownObjects = params.filters.filter(isPidFilter).flatMap(f => f.pids || []).length > 0
-	const fromClauses = ""
+	// Virtuoso work-around: the primary endpoint must omit the FROM clauses entirely.
+	const fromClauses = virtuoso ? "" : (hasKnownObjects ? '' : (envriFilteringFromClauses + '\n'))
 
 	return `
 prefix cpmeta: <${config.cpmetaOntoUri}>
@@ -319,10 +323,10 @@ ${orderBy}
 offset ${paging.offset || 0} limit ${paging.limit || 20}`;
 }
 
-export function listFilteredDataObjects(params: QueryParameters): ObjInfoQuery {
+export function listFilteredDataObjects(params: QueryParameters, virtuoso: boolean = true): ObjInfoQuery {
 	const selections = `?dobj ?hasNextVersion ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd`;
 	return {
-		text: `# listFilteredDataObjects${filteredObjectsQuery(params, selections)}`
+		text: `# listFilteredDataObjects${filteredObjectsQuery(params, selections, virtuoso)}`
 	};
 };
 
