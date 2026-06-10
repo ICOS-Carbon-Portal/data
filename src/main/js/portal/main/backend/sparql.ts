@@ -22,12 +22,29 @@ function fromUrl(v: SparqlResultValue): UrlStr {
 	return v.value
 }
 
+function fromBoolean(v: SparqlResultValue): boolean {
+	if(!resultIsLiteralValue(v)) throw new Error(`SPARQL result parsing error, ${v} was not literal`)
+	// The standard backend serializes xsd:boolean results as "true"/"false", whereas Virtuoso
+	// serializes boolean-valued expressions (e.g. EXISTS bindings) as xsd:integer "1"/"0". Accept both.
+	switch(v.value.toLowerCase()){
+		case "true":
+		case "1":
+			return true
+		case "false":
+		case "0":
+			return false
+		default:
+			throw new Error(`SPARQL result parsing error, expected ${v.value} to be a boolean`)
+	}
+}
+
 export const sparqlParsers = {
 	fromInt: makeParser("http://www.w3.org/2001/XMLSchema#integer", parseInt),
 	fromLong: makeParser("http://www.w3.org/2001/XMLSchema#long", parseInt),
 	fromFloat: makeParser("http://www.w3.org/2001/XMLSchema#float", parseFloat),
 	fromDouble: makeParser("http://www.w3.org/2001/XMLSchema#double", parseFloat),
 	fromDateTime: makeParser("http://www.w3.org/2001/XMLSchema#dateTime", s => new Date(s)),
+	fromBoolean: liftToOptional(fromBoolean),
 	fromString: makeParser(undefined, s => s),
 	fromCommaSepListString: makeParser(undefined, s => s.split(',').map(s => s.trim())),
 	fromUrl: liftToOptional(fromUrl)
