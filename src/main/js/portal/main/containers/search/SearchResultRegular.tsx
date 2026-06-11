@@ -14,6 +14,7 @@ import SearchResultRegularRow from "../../components/searchResult/SearchResultRe
 import { addingToCartProhibition } from '../../models/CartItem';
 import DownloadButton from '../../components/buttons/DownloadButton';
 import { useDownloadInfo } from '../../hooks/useDownloadInfo';
+import { getLastSegmentInUrl } from '../../utils';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -25,7 +26,8 @@ type IncomingActions = {
 }
 // 'secondary' makes the pane read its rows/counts from the secondary (dual-view) state slice
 export type PaneSource = 'primary' | 'secondary';
-type IncomingProps = IncomingActions & {tabHeader: string, paneSource?: PaneSource};
+// showUniqueOnly filters the pane down to data objects (compared by hash) absent from the other pane
+type IncomingProps = IncomingActions & {tabHeader: string, paneSource?: PaneSource, showUniqueOnly?: boolean};
 type OurProps = StateProps & DispatchProps & IncomingProps;
 
 const dropdownLookup = {
@@ -40,7 +42,7 @@ function SearchResultRegular(props: OurProps) {
 	const {preview, objectsTable, previewLookup, paging, sorting, searchOptions,
 		toggleSort, requestStep, labelLookup, checkedObjectsInSearch, extendedDobjInfo,
 		updateCheckedObjects, handlePreview, handleAddToCart,
-		handleAllCheckboxesChange, getAllFilteredDataObjects, exportQuery, user } = props;
+		handleAllCheckboxesChange, getAllFilteredDataObjects, exportQuery, user, showUniqueOnly } = props;
 
 	const objectText = checkedObjectsInSearch.length <= 1 ? "object" : "objects";
 	const checkedUriSet = new Set<string>(checkedObjectsInSearch);
@@ -122,6 +124,14 @@ function SearchResultRegular(props: OurProps) {
 
 				</div>
 
+				{showUniqueOnly &&
+					<div className="text-secondary small mb-2">
+						{objectsTable.length === 1
+							? "1 entry on the current page is unique to this source"
+							: `${objectsTable.length} entries on the current page are unique to this source`}
+					</div>
+				}
+
 				<div>
 					{
 						objectsTable.map((objInfo: KnownDataObject, i) => {
@@ -156,13 +166,25 @@ function SearchResultRegular(props: OurProps) {
 	);
 }
 
+// The two endpoints serve dobj URLs with different hosts, so compare by the
+// data object hash (last URL segment) rather than by the full URL
+function filterUniqueByHash(own: KnownDataObject[], other: KnownDataObject[]): KnownDataObject[] {
+	const otherHashes = new Set(other.map(o => getLastSegmentInUrl(o.dobj)));
+	return own.filter(o => !otherHashes.has(getLastSegmentInUrl(o.dobj)));
+}
+
 function stateToProps(state: State, ownProps: IncomingProps){
 	const isSecondary = ownProps.paneSource === 'secondary';
+	const ownObjectsTable = isSecondary ? state.secondaryObjectsTable : state.objectsTable;
+	const otherObjectsTable = isSecondary ? state.objectsTable : state.secondaryObjectsTable;
+	const objectsTable = ownProps.showUniqueOnly
+		? filterUniqueByHash(ownObjectsTable, otherObjectsTable)
+		: ownObjectsTable;
 	return {
 		previewLookup: state.previewLookup,
 		labelLookup: state.labelLookup,
 		checkedObjectsInSearch: state.checkedObjectsInSearch,
-		objectsTable: isSecondary ? state.secondaryObjectsTable : state.objectsTable,
+		objectsTable,
 		preview: state.preview,
 		cart: state.cart,
 		paging: isSecondary ? state.secondaryPaging : state.paging,
