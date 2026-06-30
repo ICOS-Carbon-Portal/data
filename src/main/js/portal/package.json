@@ -56,7 +56,7 @@
     "icos-cp-ol": "4.2.2",
     "icos-cp-toaster": "0.7.2",
     "icos-cp-utils": "0.2.0",
-    "linkify-it": "4.0.1",
+    "linkify-it": "5.0.1",
     "ol": "9.1.0",
     "proj4": "^2.11.0",
     "react": "18.2.0",
