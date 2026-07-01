@@ -151,6 +151,7 @@ const getOptions = (state: State, customPaging?: Paging): QueryParameters => {
 		stations: null,
 		sites: null,
 		submitters: null,
+		filterCategories: {},
 		sorting,
 		paging: customPaging ?? paging,
 		filters
@@ -177,7 +178,8 @@ const getOptions = (state: State, customPaging?: Paging): QueryParameters => {
 			]),
 			stations: originsStationFilter,
 			sites: sitesFilters.some(f => specTable.origins.filteredColumns.includes(f)) ? specTable.getColumnValuesFilter('site') : null,
-			submitters: specTable.getFilter('submitter')
+			submitters: specTable.getFilter('submitter'),
+			filterCategories: state.filterCategories
 		};
 };
 
