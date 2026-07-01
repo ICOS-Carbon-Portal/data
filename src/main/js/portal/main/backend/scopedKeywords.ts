@@ -42,35 +42,37 @@ function getUniqueKeywords(query: QueryParameters, endpoint: UrlStr = commonConf
 		filteredKeywordsQuery(query, endpoint === commonConfig.sparqlEndpoint),
 		endpoint,
 		b => ({
-			keywords: sparqlParsers.fromCommaSepListString(b.keywords)
+			keyword: sparqlParsers.fromCommaSepListString(b.keyword)
 		})
-	).then(res => distinct(res.rows.flatMap(r => r.keywords)));
+	).then(res => distinct(res.rows.flatMap(r => r.keyword)));
 }
 
-function filteredKeywordsQuery(params: QueryParameters, virtuoso: boolean = true): Query<'keywords', never>{
-	// Virtuoso work-around: the cpmeta:distinct_keywords() magic function isn't available on the
-	// primary endpoint, so query the keywords directly there; the original backend uses the magic.
+function filteredKeywordsQuery(params: QueryParameters, virtuoso: boolean = true): Query<'keyword', never>{
+	const prefixes: string = `
+		prefix cpmeta: <${config.cpmetaOntoUri}>
+		prefix prov: <http://www.w3.org/ns/prov#>
+		prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+		prefix geo: <http://www.opengis.net/ont/geosparql#>`
+
 	if (virtuoso) {
-		return {text: `
-		prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
-		select distinct ?keywords where{
-			?dobj cpmeta:hasKeywords ?keywords .
-		}`
+		return {text:
+			`# filteredKeywordsQuery
+			${prefixes}
+			select distinct ?keyword
+			where {
+				${objectFilterClauses(params)} .
+				?dobj cpmeta:hasKeyword ?keyword
+			}`
+		};
+	} else {
+		return {text:
+			`# filteredKeywordsQuery
+			${prefixes}
+			select (cpmeta:distinct_keywords() as ?keyword)
+			${envriFilteringFromClauses}
+			where {
+				${objectFilterClauses(params)}
+			}`
 		};
 	}
-
-	const prefixes: string = `
-prefix cpmeta: <${config.cpmetaOntoUri}>
-prefix prov: <http://www.w3.org/ns/prov#>
-prefix xsd: <http://www.w3.org/2001/XMLSchema#>
-prefix geo: <http://www.opengis.net/ont/geosparql#>`
-
-	return {text: `# filteredKeywordsQuery
-${prefixes}
-select (cpmeta:distinct_keywords() as ?keywords)
-${envriFilteringFromClauses}
-where {
-	${objectFilterClauses(params)}
-}`
-	};
 }
