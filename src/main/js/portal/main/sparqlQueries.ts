@@ -12,8 +12,8 @@ import {
 	isNumberFilter, NumberFilterRequest,
 	VariableFilterRequest, isVariableFilter, isKeywordsFilter, isGeoFilter
 } from './models/FilterRequest';
-import { Value } from "./models/SpecTable";
 import { Sha256Str, UrlStr } from './backend/declarations';
+import type { CategFilters } from './models/State';
 
 
 const config = Object.assign(commonConfig, localConfig);
@@ -250,40 +250,158 @@ const getPidListFilter = (pidsList: (string | null)[]) => {
 	return `VALUES ?dobj { ${pidsList.map(fr => `<${config.cpmetaObjectUri}${fr}>`).join(" ")} }\n`;
 };
 
+const uriValues = (vals: string[]): string => vals.map(v => `<${v}>`).join(' ');
+const strValues = (vals: string[]): string =>
+	vals.map(v => `"${v.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`).join(' ');
+
+const activeValues = (cats: CategFilters, cat: keyof CategFilters): string[] | null => {
+	const vals = cats[cat];
+	return (vals != null && vals.length > 0) ? vals : null;
+};
+
+// Reproduces the computed ?stationclass BIND/IF from dobjOriginsAndCounts as a filter on the
+// acquisition station's cpmeta:hasStationClass (ICOS only). Selected values are the derived
+// strings "ICOS" / "Associated" / "Other".
+function stationClassClause(classes: string[]): string {
+	const conds = classes.map(cls => {
+		if (cls === "Associated")
+			return `EXISTS {?stationClassStation cpmeta:hasStationClass ?stationClass FILTER(strstarts(?stationClass, "Ass"))}`;
+		if (cls === "Other")
+			return `NOT EXISTS {?stationClassStation cpmeta:hasStationClass []}`;
+		// "ICOS" (any concrete station class not starting with "Ass")
+		return `EXISTS {?stationClassStation cpmeta:hasStationClass ?stationClass FILTER(!strstarts(?stationClass, "Ass"))}`;
+	});
+	const distinctConds = conds.filter((c, i) => conds.indexOf(c) === i);
+	return `?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?stationClassStation .
+	FILTER( ${distinctConds.join(' || ')} )`;
+}
+
+// Mirrors specColumnMeta's variable pattern: ?v is the column/variable node, ?vt its value type,
+// ${titleVar} its title. Applies whichever column-meta facets are active.
+function columnMetaPattern(titleVar: string, cats: CategFilters): string {
+	const variable = activeValues(cats, 'variable');
+	const valType = activeValues(cats, 'valType');
+	const quantityKind = activeValues(cats, 'quantityKind');
+	const quantityUnit = activeValues(cats, 'quantityUnit');
+
+	const lines: string[] = [
+		`?${SPECCOL} cpmeta:containsDataset ?ds .`,
+		`{ ?ds cpmeta:hasColumn ?v . ?v cpmeta:hasColumnTitle ${titleVar} } UNION { ?ds cpmeta:hasVariable ?v . ?v cpmeta:hasVariableTitle ${titleVar} }`,
+		`FILTER NOT EXISTS { ?v cpmeta:isQualityFlagFor [] }`,
+		`?v cpmeta:hasValueType ?vt .`
+	];
+	if (variable) lines.push(`VALUES ?v {${uriValues(variable)}}`);
+	if (valType) lines.push(`VALUES ?vt {${uriValues(valType)}}`);
+	if (quantityKind) lines.push(`?vt cpmeta:hasQuantityKind ?qk . VALUES ?qk {${uriValues(quantityKind)}}`);
+	if (quantityUnit) {
+		const naLabel = "(not applicable)";
+		const unitVals = quantityUnit.filter(u => u !== naLabel);
+		const hasNa = unitVals.length !== quantityUnit.length;
+		const alts: string[] = [];
+		if (unitVals.length) alts.push(`{ ?vt cpmeta:hasUnit ?unit . VALUES ?unit {${strValues(unitVals)}} }`);
+		if (hasNa) alts.push(`{ FILTER NOT EXISTS { ?vt cpmeta:hasUnit [] } }`);
+		if (alts.length) lines.push(alts.length > 1 ? `{ ${alts.join(' UNION ')} }` : alts[0]);
+	}
+	return lines.join('\n\t\t');
+}
+
+// Value-type / variable / quantity-kind / quantity-unit facets, reproducing exactly the original
+// two mechanisms: (1) the object's spec must contain a matching non-quality-flag variable, and
+// (2) when variable or valType is selected, the object's *actual* variables (cpmeta:hasVariableName)
+// must match too, with a UNION escape for objects lacking variable metadata (cf. getVarFilter).
+function columnMetaClause(cats: CategFilters): string {
+	const anyActive = (['variable', 'valType', 'quantityKind', 'quantityUnit'] as const)
+		.some(c => activeValues(cats, c));
+	if (!anyActive) return '';
+
+	const mech1 = `FILTER EXISTS {
+		${columnMetaPattern('?vTitle', cats)}
+	}`;
+
+	const coupled = activeValues(cats, 'variable') || activeValues(cats, 'valType');
+	if (!coupled) return mech1;
+
+	const mech2 = `{
+		{ FILTER NOT EXISTS { ?dobj cpmeta:hasVariableName [] } }
+		UNION
+		{
+			?dobj cpmeta:hasVariableName ?matchedVar .
+			FILTER EXISTS {
+		${columnMetaPattern('?matchedVar', cats)}
+			}
+		}
+	}`;
+	return `${mech1}\n\t${mech2}`;
+}
+
+// Builds all facet constraints directly from the raw UI selections, so the query is a pure
+// function of the selected filter values, independent of the client-side SpecTable.
+function categoryClauses(cats: CategFilters): string {
+	const clauses: string[] = [];
+
+	const type = activeValues(cats, 'type');
+	if (type) clauses.push(`VALUES ?${SPECCOL} {${uriValues(type)}}`);
+
+	const level = activeValues(cats, 'level');
+	if (level) clauses.push(`?${SPECCOL} cpmeta:hasDataLevel ?level . VALUES ?level {${level.map(l => `"${l}"^^xsd:integer`).join(' ')}}`);
+
+	const format = activeValues(cats, 'format');
+	if (format) clauses.push(`?${SPECCOL} cpmeta:hasFormat ?format . VALUES ?format {${uriValues(format)}}`);
+
+	const theme = activeValues(cats, 'theme');
+	if (theme) clauses.push(`?${SPECCOL} cpmeta:hasDataTheme ?theme . VALUES ?theme {${uriValues(theme)}}`);
+
+	const project = activeValues(cats, 'project');
+	if (project) clauses.push(`FILTER EXISTS {?${SPECCOL} cpmeta:hasAssociatedProject ?project . VALUES ?project {${uriValues(project)}}}`);
+
+	const station = activeValues(cats, 'station');
+	if (station) clauses.push(`?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station . VALUES ?station {${uriValues(station)}}`);
+
+	const submitter = activeValues(cats, 'submitter');
+	if (submitter) clauses.push(`?dobj cpmeta:wasSubmittedBy/prov:wasAssociatedWith ?submitter . VALUES ?submitter {${uriValues(submitter)}}`);
+
+	const countryCode = activeValues(cats, 'countryCode');
+	if (countryCode) clauses.push(`FILTER EXISTS {?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith/cpmeta:countryCode ?countryCode . VALUES ?countryCode {${strValues(countryCode)}}}`);
+
+	const stationNetwork = activeValues(cats, 'stationNetwork');
+	if (stationNetwork) clauses.push(`FILTER EXISTS {?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith/cpmeta:belongsToNetwork ?stationNetwork . VALUES ?stationNetwork {${uriValues(stationNetwork)}}}`);
+
+	const ecosystem = activeValues(cats, 'ecosystem');
+	if (ecosystem) {
+		const ecoArm = config.envri === "SITES" ? "cpmeta:wasPerformedAt" : "prov:wasAssociatedWith";
+		clauses.push(`FILTER EXISTS {?dobj cpmeta:wasAcquiredBy/${ecoArm}/cpmeta:hasEcosystemType ?ecosystem . VALUES ?ecosystem {${uriValues(ecosystem)}}}`);
+	}
+
+	const location = activeValues(cats, 'location');
+	if (location) clauses.push(`FILTER EXISTS {?dobj cpmeta:wasAcquiredBy/cpmeta:wasPerformedAt/cpmeta:hasSpatialCoverage ?location . VALUES ?location {${uriValues(location)}}}`);
+
+	const stationclass = activeValues(cats, 'stationclass');
+	if (stationclass) clauses.push(stationClassClause(stationclass));
+
+	const colMeta = columnMetaClause(cats);
+	if (colMeta) clauses.push(colMeta);
+
+	return clauses.join('\n\t');
+}
+
 export function objectFilterClauses(query: QueryParameters): String {
-	const { specs, stations, submitters, sites, filters } = query;
+	const { filters, filterCategories } = query;
 	const pidsList = filters.filter(isPidFilter).flatMap(filter => filter.pids);
 
 	const pidListFilter = getPidListFilter(pidsList);
 
-	const specsValues = specs == null
-		? `?${SPECCOL} cpmeta:hasDataLevel [] .
-	FILTER NOT EXISTS {?${SPECCOL} cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}`
-		: `VALUES ?${SPECCOL} {<${specs.join('> <')}>}`;
-
-	const submitterSearch = submitters == null ? ''
-		: `VALUES ?submitter {<${submitters.join('> <')}>}
-	?dobj cpmeta:wasSubmittedBy/prov:wasAssociatedWith ?submitter .`;
-
-	const stationSearch = stations == null || stations.filter(Value.isDefined).length === 0
-		? ''
-		: `VALUES ?station {<${stations.filter(Value.isDefined).join('> <')}>}
-	?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station .`;
-
-	const siteSearch = sites == null || sites.filter(Value.isDefined).length === 0
-		? ''
-		: `VALUES ?site {<${sites.filter(Value.isDefined).join('> <')}>}
-	?dobj cpmeta:wasAcquiredBy/cpmeta:wasPerformedAt ?site .`;
+	// value-type/variable coupling is reproduced relationally from filterCategories (columnMetaClause),
+	// so drop the reflection-derived variableNames filter here to avoid double-filtering
+	const nonVarFilters = filters.filter(f => !isVariableFilter(f));
 
 	return `
-	${pidListFilter}${specsValues}
-	?dobj cpmeta:hasObjectSpec ?${SPECCOL} .
+	${pidListFilter}?dobj cpmeta:hasObjectSpec ?${SPECCOL} .
+	?${SPECCOL} cpmeta:hasDataLevel [] .
+	FILTER NOT EXISTS {?${SPECCOL} cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
 	BIND(EXISTS{[] cpmeta:isNextVersionOf ?dobj} AS ?hasNextVersion)
-	${stationSearch}
-	${siteSearch}
-	${submitterSearch}
+	${categoryClauses(filterCategories)}
 	${standardDobjPropsDef}
-	${getFilterClauses(filters, false)}`;
+	${getFilterClauses(nonVarFilters, false)}`;
 }
 
 export function filteredObjectsQuery(params: QueryParameters, selections: string): string {
