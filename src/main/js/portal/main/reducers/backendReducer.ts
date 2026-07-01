@@ -16,7 +16,8 @@ import {
 	BackendExportQuery,
 	BackendSecondaryOriginsTable,
 	BackendSecondaryObjectsFetched,
-	BackendSecondaryExtendedDataObjInfo
+	BackendSecondaryExtendedDataObjInfo,
+	BackendResultsLoading
 } from "./actionpayloads";
 import stateUtils, {CategFilters, KnownDataObject, State} from "../models/State";
 import config, {CategoryType} from "../config";
@@ -82,6 +83,10 @@ export default function(state: State, payload: BackendPayload): State {
 		return stateUtils.update(state, {
 			secondaryExtendedDobjInfo: payload.extendedDobjInfo
 		});
+	}
+
+	if (payload instanceof BackendResultsLoading){
+		return stateUtils.update(state, handleResultsLoading());
 	}
 
 	if (payload instanceof BackendExportQuery) {
@@ -189,6 +194,20 @@ const handleSecondaryObjectsFetched = (state: State, payload: BackendSecondaryOb
 	return {
 		secondaryObjectsTable: extendedObjectsTable,
 		secondaryPaging
+	};
+};
+
+// Clear both panes' result lists and reset their counts to signal that a new
+// fetch (triggered by a filter change) is in progress. The fresh counts/results
+// arrive later via BackendOriginsTable/BackendObjectsFetched and their secondary
+// counterparts.
+const handleResultsLoading = (): Pick<State, 'objectsTable' | 'paging' | 'page' | 'secondaryObjectsTable' | 'secondaryPaging'> => {
+	return {
+		objectsTable: [],
+		paging: new Paging({ objCount: 0 }),
+		page: 0,
+		secondaryObjectsTable: [],
+		secondaryPaging: new Paging({ objCount: 0 })
 	};
 };
 

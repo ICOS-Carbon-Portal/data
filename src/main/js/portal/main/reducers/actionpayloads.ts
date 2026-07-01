@@ -129,6 +129,12 @@ export class BackendSecondaryExtendedDataObjInfo extends BackendPayload{
 	constructor(readonly extendedDobjInfo: AsyncResult<typeof getExtendedDataObjInfo>){super();}
 }
 
+// Emptied when filters change and a fresh fetch begins, so both panes visibly
+// clear their result lists and counts while the new results are loading.
+export class BackendResultsLoading extends BackendPayload{
+	constructor(){super();}
+}
+
 export class BackendExportQuery extends BackendPayload {
 	constructor(readonly isFetchingCVS: boolean, readonly sparqClientQuery: string) { super(); }
 }

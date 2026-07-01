@@ -84,6 +84,9 @@ const getSecondaryOriginsAndCounts: PortalThunkAction<void> = (dispatch, getStat
 
 function getDobjOriginsAndCounts(fetchObjListWhenDone: boolean): PortalThunkAction<void> {
 	return (dispatch, getState) => {
+		// Filters changed: clear both panes and reset counts so it's clear new results are loading
+		dispatch(new Payloads.BackendResultsLoading());
+
 		const filters = getFilters(getState());
 
 		fetchDobjOriginsAndCounts(filters).then(
@@ -329,6 +332,8 @@ export function updateAdvanced(filterText: string, filterType: AdvancedFilter): 
 export function updateSelectedPids(selectedPids: Sha256Str[] | null): PortalThunkAction<void> {
 	return (dispatch) => {
 		dispatch(new FiltersUpdatePids(selectedPids));
+		// Filters changed: clear both panes and reset counts so it's clear new results are loading
+		dispatch(new Payloads.BackendResultsLoading());
 		dispatch(getFilteredDataObjects);
 	};
 }
