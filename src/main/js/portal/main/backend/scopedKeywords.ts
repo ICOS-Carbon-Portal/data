@@ -6,6 +6,7 @@ import { sparqlParsers } from "./sparql";
 import { UrlStr } from "./declarations";
 import {distinct} from '../utils';
 import { envriFilteringFromClauses, objectFilterClauses } from "../sparqlQueries";
+import { objectFilterClauses as objectFilterClausesVirtuoso } from "../sparqlQueriesVirtuoso";
 import { QueryParameters } from "../actions/types";
 
 export type SpecLookupByKeyword = {[keyword: string]: UrlStr[] | undefined}
@@ -60,7 +61,7 @@ function filteredKeywordsQuery(params: QueryParameters, virtuoso: boolean = true
 			${prefixes}
 			select distinct ?keyword
 			where {
-				${objectFilterClauses(params)} .
+				${objectFilterClausesVirtuoso(params)} .
 				?dobj cpmeta:hasKeyword ?keyword
 			}`
 		};
