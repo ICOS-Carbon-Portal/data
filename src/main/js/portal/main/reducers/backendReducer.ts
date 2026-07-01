@@ -90,9 +90,10 @@ export default function(state: State, payload: BackendPayload): State {
 	}
 
 	if (payload instanceof BackendExportQuery) {
-		return stateUtils.update(state, {
-			exportQuery: payload
-		});
+		return stateUtils.update(state, payload.isSecondary
+			? { secondaryExportQuery: payload }
+			: { exportQuery: payload }
+		);
 	}
 
 	if (payload instanceof BackendExtendedDataObjInfo) {

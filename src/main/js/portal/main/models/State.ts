@@ -204,6 +204,7 @@ export interface State {
 	exportQuery: ExportQuery
 	// Dual-view comparison pane: results mirrored from the secondary SPARQL endpoint
 	// using the same (shared) filters. Empty/unused when config.dualView is false.
+	secondaryExportQuery: ExportQuery
 	secondarySpecTable: CompositeSpecTable
 	secondaryObjectsTable: KnownDataObject[]
 	secondaryExtendedDobjInfo: ExtendedDobjInfo[]
@@ -276,6 +277,10 @@ export const defaultState: State = {
 		isFetchingCVS: false,
 		sparqClientQuery: ''
 	},
+	secondaryExportQuery: {
+		isFetchingCVS: false,
+		sparqClientQuery: ''
+	},
 	secondarySpecTable: emptyCompositeSpecTable,
 	secondaryObjectsTable: [],
 	secondaryExtendedDobjInfo: [],
@@ -340,7 +345,8 @@ const deserialize = (jsonObj: StateSerialized, cart: Cart) => {
 		preview: preview,
 		previewSettings: preview.previewSettings,
 		helpStorage: HelpStorage.deserialize(jsonObj.helpStorage),
-		exportQuery: {isFetchingCVS: false, sparqClientQuery: jsonObj.exportQuery.sparqClientQuery}
+		exportQuery: {isFetchingCVS: false, sparqClientQuery: jsonObj.exportQuery.sparqClientQuery},
+		secondaryExportQuery: {isFetchingCVS: false, sparqClientQuery: jsonObj.secondaryExportQuery?.sparqClientQuery ?? ''}
 	};
 
 	return props;

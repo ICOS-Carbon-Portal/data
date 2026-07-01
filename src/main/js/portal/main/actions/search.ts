@@ -32,6 +32,9 @@ import {FilterNumber} from "../models/FilterNumbers";
 import Paging from "../models/Paging";
 // The export/SPARQL-client query targets the primary endpoint, which runs on Virtuoso.
 import { listFilteredDataObjects } from '../sparqlQueriesVirtuoso';
+// The secondary (dual-view comparison) pane runs against the original meta backend,
+// so its exported query is built with the original (non-Virtuoso) query module.
+import { listFilteredDataObjects as listFilteredDataObjectsSecondary } from '../sparqlQueries';
 import { sparqlFetchBlob } from "../backend";
 import {PersistedMapPropsExtended} from "../models/InitMap";
 import scopedKeywords from "../backend/scopedKeywords";
@@ -112,6 +115,11 @@ export const getFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getSt
 	const sparqClientQuery = makeQuerySubmittable(sparqQuery.text);
 
 	dispatch(new Payloads.BackendExportQuery(false, sparqClientQuery));
+
+	if (config.dualView) {
+		const secondaryQuery = makeQuerySubmittable(listFilteredDataObjectsSecondary(options).text);
+		dispatch(new Payloads.BackendExportQuery(false, secondaryQuery, true));
+	}
 
 	scopedKeywords.fetch(options).then(
 		(scopedKeywords) => {

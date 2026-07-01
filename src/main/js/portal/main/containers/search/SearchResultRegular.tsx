@@ -42,7 +42,7 @@ function SearchResultRegular(props: OurProps) {
 	const {preview, objectsTable, previewLookup, paging, sorting, searchOptions,
 		toggleSort, requestStep, labelLookup, checkedObjectsInSearch, extendedDobjInfo,
 		updateCheckedObjects, handlePreview, handleAddToCart,
-		handleAllCheckboxesChange, getAllFilteredDataObjects, exportQuery, user, showUniqueOnly } = props;
+		handleAllCheckboxesChange, getAllFilteredDataObjects, exportQuery, user, showUniqueOnly, paneSource } = props;
 
 	const objectText = checkedObjectsInSearch.length <= 1 ? "object" : "objects";
 	const checkedUriSet = new Set<string>(checkedObjectsInSearch);
@@ -60,6 +60,7 @@ function SearchResultRegular(props: OurProps) {
 				requestStep={requestStep}
 				getAllFilteredDataObjects={getAllFilteredDataObjects}
 				exportQuery={exportQuery}
+				paneSource={paneSource}
 			/>
 
 			<div className="card-body pb-0">
@@ -191,7 +192,7 @@ function stateToProps(state: State, ownProps: IncomingProps){
 		sorting: state.sorting,
 		searchOptions: state.searchOptions,
 		extendedDobjInfo: isSecondary ? state.secondaryExtendedDobjInfo : state.extendedDobjInfo,
-		exportQuery: state.exportQuery,
+		exportQuery: isSecondary ? state.secondaryExportQuery : state.exportQuery,
 		user: state.user
 	};
 }

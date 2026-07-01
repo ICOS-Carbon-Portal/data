@@ -136,7 +136,7 @@ export class BackendResultsLoading extends BackendPayload{
 }
 
 export class BackendExportQuery extends BackendPayload {
-	constructor(readonly isFetchingCVS: boolean, readonly sparqClientQuery: string) { super(); }
+	constructor(readonly isFetchingCVS: boolean, readonly sparqClientQuery: string, readonly isSecondary: boolean = false) { super(); }
 }
 
 export class MiscError extends MiscPayload{

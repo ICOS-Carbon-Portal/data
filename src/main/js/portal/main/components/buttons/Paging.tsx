@@ -4,6 +4,7 @@ import P from "../../models/Paging";
 import config from "../../config";
 import {ExportQuery, SearchOptions} from "../../models/State";
 import { FileDownload } from './FileDownload';
+import type { PaneSource } from '../../containers/search/SearchResultRegular';
 
 interface Paging {
 	type: 'header' | 'footer'
@@ -12,10 +13,11 @@ interface Paging {
 	searchOptions: SearchOptions | undefined
 	getAllFilteredDataObjects: () => void
 	exportQuery: ExportQuery
+	paneSource?: PaneSource
 }
 
 export const Paging = (props: Paging) => {
-	const { type, paging, requestStep, searchOptions, getAllFilteredDataObjects, exportQuery } = props;
+	const { type, paging, requestStep, searchOptions, getAllFilteredDataObjects, exportQuery, paneSource } = props;
 
 	const {offset, objCount, pageCount} = paging;
 	const minObjs = Math.min(offset + pageCount, objCount);
@@ -32,7 +34,7 @@ export const Paging = (props: Paging) => {
 				<span className="align-middle">
 					<CountHeader objCount={count} to={to} offset={offset} showDeprecated={showDeprecated} />
 
-					<FileDownload exportQuery={exportQuery} getAllFilteredDataObjects={getAllFilteredDataObjects} searchResultsCount={count} />
+					<FileDownload exportQuery={exportQuery} getAllFilteredDataObjects={getAllFilteredDataObjects} searchResultsCount={count} paneSource={paneSource} />
 				</span>
 				<div className="float-end lh-sm">
 					<StepButton direction="step-backward" enabled={offset > 0} onStep={() => requestStep(-1)}/>
