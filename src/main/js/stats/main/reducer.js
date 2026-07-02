@@ -11,7 +11,7 @@ import FilterTemporal from "./models/FilterTemporal";
 
 export const initState = {
 	view: new ViewMode(localConfig.envri),
-	downloadStats: new StatsTable({}),
+	downloadStats: new StatsTable(undefined),
 	statsMap: new StatsMap(),
 	statsGraph: new StatsGraph(),
 	specProjectLookup: undefined,
@@ -47,7 +47,10 @@ export default function(state = initState, action){
 			return update({
 				view: state.view.setMode(action.mode),
 				statsGraph: {},
-				dateUnit: initState.dateUnit
+				dateUnit: initState.dateUnit,
+				variousStats: undefined,
+				previewData: undefined,
+				downloadStats: initState.downloadStats,
 			});
 
 		case actionTypes.COUNTRIES_FETCHED:
