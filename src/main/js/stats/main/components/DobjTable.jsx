@@ -3,28 +3,23 @@ import './styles.css';
 import { getRowSwitch } from './TableRow';
 
 const PLACEHOLDER_ROW_COUNT = 10;
+const PLACEHOLDER_COL_RANGES = [[6, 9], [4, 7], [2, 4]];
 
-const PLACEHOLDER_WIDTH_PATTERNS = [
-	['col-8', 'col-6', 'col-3'],
-	['col-6', 'col-7', 'col-2'],
-	['col-9', 'col-4', 'col-3'],
-	['col-7', 'col-5', 'col-4'],
-	['col-8', 'col-6', 'col-2'],
-];
-
-const PlaceholderRows = ({ colCount }) =>
-	Array.from({ length: PLACEHOLDER_ROW_COUNT }, (_, i) => {
-		const pattern = PLACEHOLDER_WIDTH_PATTERNS[i % PLACEHOLDER_WIDTH_PATTERNS.length];
-		return (
+const PlaceholderRows = ({ colCount }) => {
+	const rows = React.useMemo(() =>
+		Array.from({ length: PLACEHOLDER_ROW_COUNT }, (_, i) => (
 			<tr key={'ph-' + i}>
-				{Array.from({ length: colCount }, (_, j) => (
-					<td key={j}>
-						<span className={`placeholder ${pattern[Math.min(j, pattern.length - 1)]}`} />
-					</td>
-				))}
+				{Array.from({ length: colCount }, (_, j) => {
+					const [min, max] = PLACEHOLDER_COL_RANGES[Math.min(j, PLACEHOLDER_COL_RANGES.length - 1)];
+					const width = Math.floor(Math.random() * (max - min + 1)) + min;
+					return <td key={j}><span className={`placeholder col-${width}`} /></td>;
+				})}
 			</tr>
-		);
-	});
+		)),
+		[colCount]
+	);
+	return rows;
+};
 
 export default class DobjTable extends Component {
 	constructor(props) {
