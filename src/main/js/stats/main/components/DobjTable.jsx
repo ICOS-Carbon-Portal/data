@@ -51,7 +51,7 @@ export default class DobjTable extends Component {
 					<table className="table">
 						<tbody>
 							<TableHeaders tableHeaders={tableHeaders} />
-							{dataList === undefined
+							{isLoading
 								? <PlaceholderRows colCount={tableHeaders.length} />
 								: RowSwitch && dataList.map((stat, idx) => <RowSwitch key={'row-' + idx} dobj={stat} onFileNameClick={this.onFileNameClick.bind(this)} />)
 							}
