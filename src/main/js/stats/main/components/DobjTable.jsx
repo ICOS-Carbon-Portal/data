@@ -2,6 +2,30 @@ import React, { Component } from 'react';
 import './styles.css';
 import { getRowSwitch } from './TableRow';
 
+const PLACEHOLDER_ROW_COUNT = 10;
+
+const PLACEHOLDER_WIDTH_PATTERNS = [
+	['col-8', 'col-6', 'col-3'],
+	['col-6', 'col-7', 'col-2'],
+	['col-9', 'col-4', 'col-3'],
+	['col-7', 'col-5', 'col-4'],
+	['col-8', 'col-6', 'col-2'],
+];
+
+const PlaceholderRows = ({ colCount }) =>
+	Array.from({ length: PLACEHOLDER_ROW_COUNT }, (_, i) => {
+		const pattern = PLACEHOLDER_WIDTH_PATTERNS[i % PLACEHOLDER_WIDTH_PATTERNS.length];
+		return (
+			<tr key={'ph-' + i}>
+				{Array.from({ length: colCount }, (_, j) => (
+					<td key={j}>
+						<span className={`placeholder ${pattern[Math.min(j, pattern.length - 1)]}`} />
+					</td>
+				))}
+			</tr>
+		);
+	});
+
 export default class DobjTable extends Component {
 	constructor(props) {
 		super(props);
@@ -26,11 +50,14 @@ export default class DobjTable extends Component {
 					panelTitle={panelTitle}
 				/>
 
-				<div className="card-body table-responsive" style={{ clear: 'both' }}>
+				<div className="card-body table-responsive placeholder-glow" style={{ clear: 'both' }}>
 					<table className="table">
 						<tbody>
 							<TableHeaders tableHeaders={tableHeaders} />
-							{RowSwitch && dataList.map((stat, idx) => <RowSwitch key={'row-' + idx} dobj={stat} onFileNameClick={this.onFileNameClick.bind(this)} />)}
+							{dataList === undefined
+								? <PlaceholderRows colCount={tableHeaders.length} />
+								: RowSwitch && dataList.map((stat, idx) => <RowSwitch key={'row-' + idx} dobj={stat} onFileNameClick={this.onFileNameClick.bind(this)} />)
+							}
 						</tbody>
 					</table>
 				</div>
