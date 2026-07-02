@@ -176,6 +176,11 @@ export default {
 	restheartDbUrl: commonConfig.restheartDbUrl,
 	sparqlEndpoint: commonConfig.sparqlEndpoint,
 	secondarySparqlEndpoint: commonConfig.secondarySparqlEndpoint as string | null,
+	// Base URI of the secondary meta backend (for landing-page links from the comparison pane),
+	// derived from its /sparql endpoint. null when the dual-view feature is disabled.
+	secondaryMetaBaseUri: commonConfig.secondarySparqlEndpoint
+		? (commonConfig.secondarySparqlEndpoint as string).replace(/\/sparql\/?$/, '')
+		: null,
 	// Dual-view comparison pane is enabled when a second SPARQL endpoint is configured
 	dualView: !!commonConfig.secondarySparqlEndpoint,
 	stepsize: 20,

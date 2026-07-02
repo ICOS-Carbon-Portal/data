@@ -108,8 +108,8 @@ export function getUrlsFromPids(pids: Sha256Str[]): UrlStr[] {
 
 export const pidRegexp = /^(?:https?\:\/\/(?:hdl\.handle\.net|doi\.org)\/)?(?:[\d\.]+\d\/)?([a-zA-Z0-9\-_]{24})$/
 
-export function getUrlWithEnvironmentPrefix(dobj: UrlStr) {
-	return commonConfig.metaBaseUri + '/objects/' + dobj.split('/').pop()
+export function getUrlWithEnvironmentPrefix(dobj: UrlStr, metaBaseUri: string = commonConfig.metaBaseUri) {
+	return metaBaseUri + '/objects/' + dobj.split('/').pop()
 }
 
 export type OptFunction<I, O> = <IOPT extends I | undefined>(io: IOPT) => (IOPT extends undefined ? undefined : O)

@@ -149,6 +149,7 @@ function SearchResultRegular(props: OurProps) {
 									isChecked={checkedObjectsInSearch.includes(objInfo.dobj)}
 									checkedObjects={checkedObjects}
 									isCartView={false}
+									paneSource={paneSource}
 								/>
 							);
 						})
