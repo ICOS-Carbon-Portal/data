@@ -51,6 +51,7 @@ export default function(state = initState, action){
 				variousStats: undefined,
 				previewData: undefined,
 				downloadStats: initState.downloadStats,
+				paging: initState.paging,
 			});
 
 		case actionTypes.COUNTRIES_FETCHED:
@@ -217,7 +218,11 @@ export default function(state = initState, action){
 		case actionTypes.RADIO_UPDATED:
 			const partialState = state.view.mode === "previews"
 				? updateRadiosAndPreviewData(state, action)
-				: { mainRadio: state.mainRadio.withSelected(action.actionTxt) };
+				: {
+					mainRadio: state.mainRadio.withSelected(action.actionTxt),
+					variousStats: undefined,
+					paging: initState.paging,
+				};
 
 			return update(partialState);
 
@@ -304,8 +309,9 @@ const aggrResultFormatter = {
 const updateRadiosAndPreviewData = (state, action) => {
 	const radioName = action.isMain ? "mainRadio" : "subRadio";
 	const newRadio = state[radioName].withSelected(action.actionTxt);
-	const previewData = action.radioConfig.name === "mainPreview"
-		? state.previewData
+	const isMainSwitch = action.radioConfig.name === "mainPreview";
+	const previewData = isMainSwitch
+		? undefined
 		: filterPreviewData(newRadio, state.previewDataFull);
 	const mainRadio = radioName === "mainRadio" ? newRadio : state.mainRadio;
 	const subRadio = radioName === "subRadio"
@@ -314,14 +320,16 @@ const updateRadiosAndPreviewData = (state, action) => {
 			? state.subRadio.setActive()
 			: state.subRadio.setInactive();
 
-	const paging = getPreviewPaging(
-		state.previewDataFull,
-		previewData,
-		state.previewSize,
-		state.paging.page,
-		state.mainRadio,
-		state.subRadio
-	);
+	const paging = isMainSwitch
+		? initState.paging
+		: getPreviewPaging(
+			state.previewDataFull,
+			previewData,
+			state.previewSize,
+			state.paging.page,
+			state.mainRadio,
+			state.subRadio
+		);
 
 	return {
 		mainRadio,
