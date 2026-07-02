@@ -38,11 +38,13 @@ export default class DobjTable extends Component {
 
 	render() {
 		const { dataList, paging, requestPage, panelTitle, tableHeaders, disablePaging, hasHashIdFilter, updateTableWithFilter } = this.props;
+		const isLoading = dataList === undefined;
 		const RowSwitch = dataList && dataList.length ? getRowSwitch(dataList[0], updateTableWithFilter) : undefined;
 
 		return (
 			<div className="card">
 				<Paging
+					isLoading={isLoading}
 					hasHashIdFilter={hasHashIdFilter}
 					disablePaging={disablePaging}
 					paging={paging}
@@ -66,11 +68,19 @@ export default class DobjTable extends Component {
 	}
 }
 
-const Paging = ({ hasHashIdFilter, disablePaging, paging, requestPage, panelTitle }) => {
+const Paging = ({ isLoading, hasHashIdFilter, disablePaging, paging, requestPage, panelTitle }) => {
 	if (hasHashIdFilter) {
 		return (
 			<div className="card-header">
 				<h5 className="card-title">Stats for single data object</h5>
+			</div>
+		);
+	}
+
+	if (isLoading) {
+		return (
+			<div className="card-header">
+				<h5 style={{display:'inline'}}>{panelTitle}</h5>
 			</div>
 		);
 	}
