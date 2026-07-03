@@ -28,6 +28,8 @@ export default {
 	restheartDbUrl: restheartDbUrls[envri],
 	restheartProfileBaseUrl: `${authBaseUri}/db/users`,
 	portalUseLogUrl: `${authBaseUri}/logs/portaluse`,
+	// When true, no requests are sent to the portaluse logging endpoint. Currently disabled.
+	portalUseLogDisabled: true,
 	cpmetaOntoUri: 'http://meta.icos-cp.eu/ontologies/cpmeta/',
 	cpmetaResUri: 'http://meta.icos-cp.eu/resources/cpmeta/',
 	metaBaseUri,

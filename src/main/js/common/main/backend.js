@@ -2,6 +2,9 @@ import config from "./config";
 
 
 export const saveToRestheart = dataToSave => {
+	// Logging to the portaluse endpoint can be disabled via config.
+	if (config.portalUseLogDisabled) return Promise.resolve();
+
 	return fetch(config.portalUseLogUrl, {
 		method: 'POST',
 		mode: 'cors',
