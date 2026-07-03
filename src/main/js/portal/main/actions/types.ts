@@ -1,5 +1,5 @@
 import {Filter} from "../models/SpecTable";
-import {SearchOptions, State} from "../models/State";
+import {CategFilters, SearchOptions, State} from "../models/State";
 import Paging from "../models/Paging";
 import {FilterRequest} from "../models/FilterRequest";
 
@@ -9,6 +9,9 @@ export interface QueryParameters {
 	stations: Filter
 	sites: Filter
 	submitters: Filter
+	// Raw per-column UI selections, consumed by the Virtuoso (primary) query builder to produce a
+	// self-contained relational query. The original sparqlQueries.ts still uses the fields above.
+	filterCategories: CategFilters
 	sorting: State['sorting']
 	paging: Paging
 	filters: FilterRequest[]

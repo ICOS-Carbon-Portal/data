@@ -128,8 +128,8 @@ lazy val data = (project in file("."))
 			cpFrontendPublish
 		).value,
 		cpDeployPlaybook := "core.yml",
-		cpDeployPermittedInventories := Some(Seq("staging", "cities", "production")),
-		cpDeployInfraBranch := "master",
+		cpDeployPermittedInventories := Some(Seq("staging", "cities", "production", "test-fs4")),
+		cpDeployInfraBranch := "valter/test/virtuoso",
 
 //		initialCommands in console := """
 //			import se.lu.nateko.cp.data.api.B2Playground._

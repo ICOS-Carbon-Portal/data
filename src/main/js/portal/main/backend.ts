@@ -1,5 +1,6 @@
 import { sparqlFetch, sparqlFetchAndParse } from './backend/SparqlFetch';
 import * as queries from './sparqlQueries';
+import * as virtuosoQueries from './sparqlQueriesVirtuoso';
 import commonConfig from '../../common/main/config';
 import localConfig from './config';
 import Cart, {JsonCart} from './models/Cart';
@@ -23,6 +24,15 @@ import {HelpStorageListEntry} from "./models/HelpStorage";
 const config = Object.assign(commonConfig, localConfig);
 const tsSettingsStorageName = 'tsSettings';
 const tsSettingsStorage = new Storage();
+
+// The primary SPARQL endpoint currently runs on Virtuoso, which needs a few
+// query work-arounds (FROM clauses, distinct_keywords).
+// The secondary endpoint (dual-view comparison pane) runs the original backend and
+// must use the original implementation. These selectors pick which to apply: the
+// virtuoso query module (sparqlQueriesVirtuoso) for the primary endpoint, the original
+// query module (sparqlQueries) for the secondary one.
+const isVirtuosoEndpoint = (endpoint: UrlStr) => endpoint === config.sparqlEndpoint;
+const queriesFor = (endpoint: UrlStr) => isVirtuosoEndpoint(endpoint) ? virtuosoQueries : queries;
 
 const fetchSpecBasics = () => {
 	const query = queries.specBasics();
@@ -52,10 +62,11 @@ const fetchSpecColumnMeta = () => {
 	}));
 };
 
-export const fetchDobjOriginsAndCounts = (filters: FilterRequest[]) => {
-	const query = queries.dobjOriginsAndCounts(filters);
+export const fetchDobjOriginsAndCounts = (filters: FilterRequest[], endpoint: UrlStr = config.sparqlEndpoint) => {
+	const query = queriesFor(endpoint).dobjOriginsAndCounts(filters);
+	console.log(`Initial origins/counts query (endpoint: ${endpoint}):\n${query.text}`);
 
-	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
+	return sparqlFetchAndParse(query, endpoint, b => ({
 		spec: b.spec.value,
 		countryCode: b.countryCode?.value,
 		submitter: b.submitter.value,
@@ -171,17 +182,32 @@ export const fetchKnownDataObjects = (dobjs: string[]) => {
 		: Promise.resolve({colNames: [], rows: []});
 };
 
-export function fetchFilteredDataObjects(options: QueryParameters){
+export function fetchFilteredDataObjects(options: QueryParameters, endpoint: UrlStr = config.sparqlEndpoint){
 	return Filter.allowsNothing(options.specs) || Filter.allowsNothing(options.submitters) || Filter.allowsNothing(options.stations)
 		? Promise.resolve({
 			colNames: [],
 			rows: []
 		})
-		: fetchAndParseDataObjects(queries.listFilteredDataObjects(options));
+		: fetchAndParseDataObjects(queriesFor(endpoint).listFilteredDataObjects(options), endpoint);
 }
 
-const fetchAndParseDataObjects = (query: ObjInfoQuery) => {
-	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
+// Counts the filtered data objects using the exact same query as fetchFilteredDataObjects,
+// but projecting only the count and without `order by`/`offset`/`limit`.
+export function fetchFilteredDataObjectsCount(options: QueryParameters, endpoint: UrlStr = config.sparqlEndpoint): Promise<number> {
+	if (Filter.allowsNothing(options.specs) || Filter.allowsNothing(options.submitters) || Filter.allowsNothing(options.stations))
+		return Promise.resolve(0);
+
+	const query = queriesFor(endpoint).countFilteredDataObjects(options);
+	console.log(`Full count query (endpoint: ${endpoint}):\n${query.text}`);
+
+	return sparql(query, endpoint, true).then(res => {
+		const binding = res.results.bindings[0];
+		return binding ? parseInt(binding.count.value) : 0;
+	});
+}
+
+const fetchAndParseDataObjects = (query: ObjInfoQuery, endpoint: UrlStr = config.sparqlEndpoint) => {
+	return sparqlFetchAndParse(query, endpoint, b => ({
 		dobj: sparqlParsers.fromUrl(b.dobj),
 		hasNextVersion: sparqlParsers.fromBoolean(b.hasNextVersion),
 		spec: sparqlParsers.fromUrl(b.spec),
@@ -291,12 +317,12 @@ export const getProfile = (email: string | null): Promise<User['profile']> => {
 		: Promise.resolve({});
 };
 
-export const getExtendedDataObjInfo = (dobjs: UrlStr[]): Promise<ExtendedDobjInfo[]> => {
+export const getExtendedDataObjInfo = (dobjs: UrlStr[], endpoint: UrlStr = config.sparqlEndpoint): Promise<ExtendedDobjInfo[]> => {
 	if (dobjs.length == 0) return Promise.resolve([]);
 
 	const query = queries.extendedDataObjectInfo(dobjs);
 
-	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
+	return sparqlFetchAndParse(query, endpoint, b => ({
 		dobj: sparqlParsers.fromUrl(b.dobj),
 		station: sparqlParsers.fromString(b.station),
 		stationId: sparqlParsers.fromString(b.stationId),

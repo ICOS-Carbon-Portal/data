@@ -2,9 +2,12 @@
 @import se.lu.nateko.cp.meta.core.data.EnvriConfig
 @import se.lu.nateko.cp.data.utils.printEnvriConf
 
-@()(implicit envri: Envri, conf: EnvriConfig)
+@(secondaryMetaHost: Option[String] = None)(implicit envri: Envri, conf: EnvriConfig)
 
 <script type="text/javascript">
 	window.envri = "@envri";
 	window.envriConfig = @Html(printEnvriConf(conf));
+	@secondaryMetaHost.map { host =>
+		window.envriConfig.secondaryMetaHost = "@host";
+	}
 </script>

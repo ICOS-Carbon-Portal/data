@@ -116,8 +116,37 @@ export class BackendKeywordsFetched extends BackendPayload {
 	constructor(readonly scopedKeywords: string[]){super();}
 }
 
+// Dual-view: payloads carrying results from the secondary SPARQL endpoint
+export class BackendSecondaryOriginsTable extends BackendPayload{
+	constructor(readonly table: SpecTable<OriginsColNames>){super();}
+}
+
+export class BackendSecondaryObjectsFetched extends BackendPayload{
+	constructor(readonly objectsTable: ObjectsTableLike, readonly isDataEndReached: boolean){super();}
+}
+
+export class BackendSecondaryExtendedDataObjInfo extends BackendPayload{
+	constructor(readonly extendedDobjInfo: AsyncResult<typeof getExtendedDataObjInfo>){super();}
+}
+
+// Emptied when filters change and a fresh fetch begins, so both panes visibly
+// clear their result lists and counts while the new results are loading.
+export class BackendResultsLoading extends BackendPayload{
+	constructor(){super();}
+}
+
+// Full-count fetch (button-triggered): a marker that the fetch has started (so the
+// pane can show a spinner) and the payload carrying the resulting total.
+export class BackendFullCountLoading extends BackendPayload{
+	constructor(readonly isSecondary: boolean){super();}
+}
+
+export class BackendFullCount extends BackendPayload{
+	constructor(readonly receivedCount: number, readonly isSecondary: boolean){super();}
+}
+
 export class BackendExportQuery extends BackendPayload {
-	constructor(readonly isFetchingCVS: boolean, readonly sparqClientQuery: string) { super(); }
+	constructor(readonly isFetchingCVS: boolean, readonly sparqClientQuery: string, readonly isSecondary: boolean = false) { super(); }
 }
 
 export class MiscError extends MiscPayload{

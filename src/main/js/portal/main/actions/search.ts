@@ -30,8 +30,12 @@ import {
 } from "./common";
 import {FilterNumber} from "../models/FilterNumbers";
 import Paging from "../models/Paging";
-import { listFilteredDataObjects } from '../sparqlQueries';
-import { sparqlFetchBlob } from "../backend";
+// The export/SPARQL-client query targets the primary endpoint, which runs on Virtuoso.
+import { listFilteredDataObjects } from '../sparqlQueriesVirtuoso';
+// The secondary (dual-view comparison) pane runs against the original meta backend,
+// so its exported query is built with the original (non-Virtuoso) query module.
+import { listFilteredDataObjects as listFilteredDataObjectsSecondary } from '../sparqlQueries';
+import { sparqlFetchBlob, fetchFilteredDataObjectsCount } from "../backend";
 import {PersistedMapPropsExtended} from "../models/InitMap";
 import scopedKeywords from "../backend/scopedKeywords";
 
@@ -41,6 +45,7 @@ export default function bootstrapSearch(user: WhoAmI,tabs: TabsState): PortalThu
 		const filters = getFilters(getState());
 		dispatch(getBackendTables(filters)).then(_ => {
 			dispatch(getFilteredDataObjects);
+			dispatch(getSecondaryOriginsAndCounts);
 		});
 
 		dispatch(new Payloads.BootstrapRouteSearch());
@@ -55,10 +60,36 @@ const dataObjectsFetcher = config.useDataObjectsCache
 	? new CachedDataObjectsFetcher(config.dobjCacheFetchLimit)
 	: new DataObjectsFetcher();
 
+// Dual-view: a separate fetcher bound to the secondary endpoint, used to mirror
+// the result list with the same (shared) filters. Undefined when the feature is off.
+const secondaryDataObjectsFetcher = (config.dualView && config.secondarySparqlEndpoint)
+	? (config.useDataObjectsCache
+		? new CachedDataObjectsFetcher(config.dobjCacheFetchLimit, config.secondarySparqlEndpoint)
+		: new DataObjectsFetcher(config.secondarySparqlEndpoint))
+	: undefined;
+
 export const getOriginsThenDobjList: PortalThunkAction<void> = getDobjOriginsAndCounts(true);
+
+// Dual-view: fetch origins/counts from the secondary endpoint with the shared filters.
+// No-op when the feature is disabled.
+const getSecondaryOriginsAndCounts: PortalThunkAction<void> = (dispatch, getState) => {
+	if (!(config.dualView && config.secondarySparqlEndpoint)) return;
+
+	const filters = getFilters(getState());
+	fetchDobjOriginsAndCounts(filters, config.secondarySparqlEndpoint).then(
+		dobjOriginsAndCounts => {
+			const tbl = new SpecTable<OriginsColNames>(dobjOriginsAndCounts.colNames, dobjOriginsAndCounts.rows, {});
+			dispatch(new Payloads.BackendSecondaryOriginsTable(tbl));
+		},
+		failWithError(dispatch)
+	);
+};
 
 function getDobjOriginsAndCounts(fetchObjListWhenDone: boolean): PortalThunkAction<void> {
 	return (dispatch, getState) => {
+		// Filters changed: clear both panes and reset counts so it's clear new results are loading
+		dispatch(new Payloads.BackendResultsLoading());
+
 		const filters = getFilters(getState());
 
 		fetchDobjOriginsAndCounts(filters).then(
@@ -70,6 +101,8 @@ function getDobjOriginsAndCounts(fetchObjListWhenDone: boolean): PortalThunkActi
 			},
 			failWithError(dispatch)
 		);
+
+		dispatch(getSecondaryOriginsAndCounts);
 
 	};
 }
@@ -83,6 +116,11 @@ export const getFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getSt
 
 	dispatch(new Payloads.BackendExportQuery(false, sparqClientQuery));
 
+	if (config.dualView) {
+		const secondaryQuery = makeQuerySubmittable(listFilteredDataObjectsSecondary(options).text);
+		dispatch(new Payloads.BackendExportQuery(false, secondaryQuery, true));
+	}
+
 	scopedKeywords.fetch(options).then(
 		(scopedKeywords) => {
 			dispatch(new Payloads.BackendKeywordsFetched(scopedKeywords))
@@ -94,9 +132,21 @@ export const getFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getSt
 		({rows, isDataEndReached}) => {
 			dispatch(fetchExtendedDataObjInfo(rows.map((d) => d.dobj)));
 			dispatch(new Payloads.BackendObjectsFetched(rows, isDataEndReached));
+			dispatch(ensureFullDataObjectCount(false, options));
 		},
 		failWithError(dispatch)
 	);
+
+	if (secondaryDataObjectsFetcher) {
+		secondaryDataObjectsFetcher.fetch(options).then(
+			({rows, isDataEndReached}) => {
+				dispatch(fetchSecondaryExtendedDobjInfo(rows.map((d) => d.dobj)));
+				dispatch(new Payloads.BackendSecondaryObjectsFetched(rows, isDataEndReached));
+				dispatch(ensureFullDataObjectCount(true, options));
+			},
+			failWithError(dispatch)
+		);
+	}
 
 	logPortalUsage(state);
 };
@@ -111,6 +161,7 @@ const getOptions = (state: State, customPaging?: Paging): QueryParameters => {
 		stations: null,
 		sites: null,
 		submitters: null,
+		filterCategories: {},
 		sorting,
 		paging: customPaging ?? paging,
 		filters
@@ -137,7 +188,8 @@ const getOptions = (state: State, customPaging?: Paging): QueryParameters => {
 			]),
 			stations: originsStationFilter,
 			sites: sitesFilters.some(f => specTable.origins.filteredColumns.includes(f)) ? specTable.getColumnValuesFilter('site') : null,
-			submitters: specTable.getFilter('submitter')
+			submitters: specTable.getFilter('submitter'),
+			filterCategories: state.filterCategories
 		};
 };
 
@@ -171,10 +223,45 @@ export function getAllFilteredDataObjects(): PortalThunkAction<void>{
 }
 
 
+// After a pane's results load, run a count query (the exact same query used to fetch the
+// data objects, but projecting only the count and without order by/limit) and store the
+// actual total, so the count-query number can be compared against the number of data objects
+// actually matched by that endpoint. The count depends only on the filters, so it is fetched
+// once per filter set (skipped while already known or in flight). The `options` passed in are
+// the very same ones used for the data-object fetch, guaranteeing an identical query.
+function ensureFullDataObjectCount(isSecondary: boolean, options: QueryParameters): PortalThunkAction<void> {
+	return (dispatch, getState) => {
+		const endpoint = isSecondary ? config.secondarySparqlEndpoint ?? undefined : undefined;
+		if (isSecondary && !endpoint) return;
+
+		const paging = isSecondary ? getState().secondaryPaging : getState().paging;
+		if (paging.receivedCount !== undefined || paging.receivedCountFetching) return;
+
+		dispatch(new Payloads.BackendFullCountLoading(isSecondary));
+
+		fetchFilteredDataObjectsCount(options, endpoint).then(
+			count => {
+				dispatch(new Payloads.BackendFullCount(count, isSecondary));
+			},
+			failWithError(dispatch)
+		);
+	};
+}
+
 function fetchExtendedDataObjInfo(dobjs: UrlStr[]): PortalThunkAction<void> {
 	return (dispatch) => {
 		getExtendedDataObjInfo(dobjs).then(extendedDobjInfo => {
 				dispatch(new Payloads.BackendExtendedDataObjInfo(extendedDobjInfo));
+			},
+			failWithError(dispatch)
+		);
+	};
+}
+
+function fetchSecondaryExtendedDobjInfo(dobjs: UrlStr[]): PortalThunkAction<void> {
+	return (dispatch) => {
+		getExtendedDataObjInfo(dobjs, config.secondarySparqlEndpoint ?? undefined).then(extendedDobjInfo => {
+				dispatch(new Payloads.BackendSecondaryExtendedDataObjInfo(extendedDobjInfo));
 			},
 			failWithError(dispatch)
 		);
@@ -282,6 +369,8 @@ export function updateAdvanced(filterText: string, filterType: AdvancedFilter): 
 export function updateSelectedPids(selectedPids: Sha256Str[] | null): PortalThunkAction<void> {
 	return (dispatch) => {
 		dispatch(new FiltersUpdatePids(selectedPids));
+		// Filters changed: clear both panes and reset counts so it's clear new results are loading
+		dispatch(new Payloads.BackendResultsLoading());
 		dispatch(getFilteredDataObjects);
 	};
 }

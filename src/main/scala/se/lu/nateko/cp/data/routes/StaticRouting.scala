@@ -19,7 +19,7 @@ import se.lu.nateko.cp.meta.core.data.EnvriConfigs
 import scala.concurrent.Future
 import eu.icoscp.envri.Envri
 
-class StaticRouting(sentryPortalDsn: String)(using envriConfigs: EnvriConfigs) {
+class StaticRouting(sentryPortalDsn: String, secondaryMetaHosts: Map[Envri, String])(using envriConfigs: EnvriConfigs) {
 	import StaticRouting.pageMarshaller
 	import UploadRouting.Sha256Segment
 	private type PageFactory = PartialFunction[(String, Envri), Html]
@@ -33,7 +33,7 @@ class StaticRouting(sentryPortalDsn: String)(using envriConfigs: EnvriConfigs) {
 	private val jsAppFolder = "frontendapps"
 
 	private[this] val standardPageFactory: PageFactory = {
-		case ("portal", envri) => views.html.PortalPage(sentryPortalDsn)(envri, envriConfigs(envri))
+		case ("portal", envri) => views.html.PortalPage(sentryPortalDsn, secondaryMetaHosts.get(envri))(envri, envriConfigs(envri))
 		case ("stats", envri) => views.html.StatsPage()(envri, envriConfigs(envri))
 		case ("etcfacade", envri) => views.html.EtcFacadePage()(envri, envriConfigs(envri))
 		case ("dygraph-light", envri) => views.html.DygraphLight()(envri, envriConfigs(envri))

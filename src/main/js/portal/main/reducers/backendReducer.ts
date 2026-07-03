@@ -13,7 +13,13 @@ import {
 	BackendBatchDownload,
 	BackendUpdateCart,
 	BackendUpdatePriorCart,
-	BackendExportQuery
+	BackendExportQuery,
+	BackendSecondaryOriginsTable,
+	BackendSecondaryObjectsFetched,
+	BackendSecondaryExtendedDataObjInfo,
+	BackendResultsLoading,
+	BackendFullCountLoading,
+	BackendFullCount
 } from "./actionpayloads";
 import stateUtils, {CategFilters, KnownDataObject, State} from "../models/State";
 import config, {CategoryType} from "../config";
@@ -67,10 +73,43 @@ export default function(state: State, payload: BackendPayload): State {
 		});
 	}
 
-	if (payload instanceof BackendExportQuery) {
+	if (payload instanceof BackendSecondaryOriginsTable){
+		return stateUtils.update(state, handleSecondaryOriginsTable(state, payload));
+	}
+
+	if (payload instanceof BackendSecondaryObjectsFetched){
+		return stateUtils.update(state, handleSecondaryObjectsFetched(state, payload));
+	}
+
+	if (payload instanceof BackendSecondaryExtendedDataObjInfo){
 		return stateUtils.update(state, {
-			exportQuery: payload
+			secondaryExtendedDobjInfo: payload.extendedDobjInfo
 		});
+	}
+
+	if (payload instanceof BackendResultsLoading){
+		return stateUtils.update(state, handleResultsLoading());
+	}
+
+	if (payload instanceof BackendFullCountLoading){
+		return stateUtils.update(state, payload.isSecondary
+			? { secondaryPaging: state.secondaryPaging.withReceivedCountFetching(true) }
+			: { paging: state.paging.withReceivedCountFetching(true) }
+		);
+	}
+
+	if (payload instanceof BackendFullCount){
+		return stateUtils.update(state, payload.isSecondary
+			? { secondaryPaging: state.secondaryPaging.withReceivedCount(payload.receivedCount) }
+			: { paging: state.paging.withReceivedCount(payload.receivedCount) }
+		);
+	}
+
+	if (payload instanceof BackendExportQuery) {
+		return stateUtils.update(state, payload.isSecondary
+			? { secondaryExportQuery: payload }
+			: { exportQuery: payload }
+		);
 	}
 
 	if (payload instanceof BackendExtendedDataObjInfo) {
@@ -142,15 +181,71 @@ const handleObjectsFetched = (state: State, payload: BackendObjectsFetched) => {
 	};
 };
 
+// Dual-view: secondary endpoint mirrors the result list/counts using the shared
+// (primary) filters. We graft the secondary origins onto the primary basics/columnMeta
+// so the same count/availability helpers apply; primary state is never touched here.
+const handleSecondaryOriginsTable = (state: State, payload: BackendSecondaryOriginsTable): Pick<State, 'secondarySpecTable' | 'secondaryPaging'> => {
+	const secondarySpecTable = state.specTable.withOriginsTable(payload.table);
+	return {
+		secondarySpecTable,
+		secondaryPaging: new Paging({ objCount: getObjCount(secondarySpecTable) })
+	};
+};
+
+const handleSecondaryObjectsFetched = (state: State, payload: BackendSecondaryObjectsFetched): Pick<State, 'secondaryObjectsTable' | 'secondaryPaging'> => {
+	const objectsTable = payload.objectsTable as KnownDataObject[];
+	const extendedObjectsTable = objectsTable.map(ot => {
+		const spec = state.specTable.getTableRows('basics').find(r => r.spec === ot.spec);
+		return {...ot, ...spec};
+	});
+
+	const objCount = getObjCount(state.secondarySpecTable);
+	// Paging is shared with the primary pane, so mirror its offset for the window display.
+	const secondaryPaging = state.secondaryPaging.withObjCount({
+		objCount,
+		pageCount: payload.objectsTable.length,
+		filtersEnabled: false,
+		isDataEndReached: payload.isDataEndReached
+	}).withOffset(state.paging.offset);
+
+	return {
+		secondaryObjectsTable: extendedObjectsTable,
+		secondaryPaging
+	};
+};
+
+// Clear both panes' result lists and reset their counts to signal that a new
+// fetch (triggered by a filter change) is in progress. The fresh counts/results
+// arrive later via BackendOriginsTable/BackendObjectsFetched and their secondary
+// counterparts.
+const handleResultsLoading = (): Pick<State, 'objectsTable' | 'paging' | 'page' | 'secondaryObjectsTable' | 'secondaryPaging'> => {
+	return {
+		objectsTable: [],
+		paging: new Paging({ objCount: 0 }),
+		page: 0,
+		secondaryObjectsTable: [],
+		secondaryPaging: new Paging({ objCount: 0 })
+	};
+};
+
 const handleSpecFilterUpdate = (state: State, payload: BackendUpdateSpecFilter) => {
 	const specTable = state.specTable.withFilter(payload.varName as ColNames, payload.filter);
+
+	// Categorical filters update counts client-side (no server refetch), so the
+	// dual-view secondary table must apply the same filter to keep its count in sync.
+	const secondarySpecTable = config.dualView
+		? state.secondarySpecTable.withFilter(payload.varName as ColNames, payload.filter)
+		: state.secondarySpecTable;
 
 	return stateUtils.update(state,{
 		specTable,
 		objectsTable: [],
 		...getNewPaging(state.paging, state.page, specTable, true),
 		filterCategories: Object.assign(state.filterCategories, {[payload.varName]: payload.filter}),
-		checkedObjectsInSearch: []
+		checkedObjectsInSearch: [],
+		secondarySpecTable,
+		secondaryObjectsTable: [],
+		secondaryPaging: new Paging({ objCount: getObjCount(secondarySpecTable) })
 	});
 };
 

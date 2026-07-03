@@ -6,14 +6,15 @@ import { sparqlParsers } from "./sparql";
 import { UrlStr } from "./declarations";
 import {distinct} from '../utils';
 import { envriFilteringFromClauses, objectFilterClauses } from "../sparqlQueries";
+import { objectFilterClauses as objectFilterClausesVirtuoso } from "../sparqlQueriesVirtuoso";
 import { QueryParameters } from "../actions/types";
 
 export type SpecLookupByKeyword = {[keyword: string]: UrlStr[] | undefined}
 
 
 export default{
-	fetch: function(query: QueryParameters): Promise<string[]>{
-		return getUniqueKeywords(query);
+	fetch: function(query: QueryParameters, endpoint: UrlStr = commonConfig.sparqlEndpoint): Promise<string[]>{
+		return getUniqueKeywords(query, endpoint);
 	}
 }
 const config = Object.assign(commonConfig, localConfig);
@@ -37,29 +38,42 @@ where{
 	return {text};
 }
 
-function getUniqueKeywords(query: QueryParameters): Promise<string[]>{
+function getUniqueKeywords(query: QueryParameters, endpoint: UrlStr = commonConfig.sparqlEndpoint): Promise<string[]>{
 	return sparqlFetchAndParse(
-		filteredKeywordsQuery(query),
-		commonConfig.sparqlEndpoint,
+		filteredKeywordsQuery(query, endpoint === commonConfig.sparqlEndpoint),
+		endpoint,
 		b => ({
-			keywords: sparqlParsers.fromCommaSepListString(b.keywords)
+			keyword: sparqlParsers.fromCommaSepListString(b.keyword)
 		})
-	).then(res => distinct(res.rows.flatMap(r => r.keywords)));
+	).then(res => distinct(res.rows.flatMap(r => r.keyword)));
 }
 
-function filteredKeywordsQuery(params: QueryParameters): Query<'keywords', never>{
+function filteredKeywordsQuery(params: QueryParameters, virtuoso: boolean = true): Query<'keyword', never>{
 	const prefixes: string = `
-prefix cpmeta: <${config.cpmetaOntoUri}>
-prefix prov: <http://www.w3.org/ns/prov#>
-prefix xsd: <http://www.w3.org/2001/XMLSchema#>
-prefix geo: <http://www.opengis.net/ont/geosparql#>`
+		prefix cpmeta: <${config.cpmetaOntoUri}>
+		prefix prov: <http://www.w3.org/ns/prov#>
+		prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+		prefix geo: <http://www.opengis.net/ont/geosparql#>`
 
-	return {text: `# filteredKeywordsQuery
-${prefixes}
-select (cpmeta:distinct_keywords() as ?keywords)
-${envriFilteringFromClauses}
-where {
-	${objectFilterClauses(params)}
-}`
-	};
+	if (virtuoso) {
+		return {text:
+			`# filteredKeywordsQuery
+			${prefixes}
+			select distinct ?keyword
+			where {
+				${objectFilterClausesVirtuoso(params)} .
+				?dobj cpmeta:hasKeyword ?keyword
+			}`
+		};
+	} else {
+		return {text:
+			`# filteredKeywordsQuery
+			${prefixes}
+			select (cpmeta:distinct_keywords() as ?keyword)
+			${envriFilteringFromClauses}
+			where {
+				${objectFilterClauses(params)}
+			}`
+		};
+	}
 }

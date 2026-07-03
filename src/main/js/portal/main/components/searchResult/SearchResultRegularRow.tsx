@@ -8,6 +8,7 @@ import Preview from '../../models/Preview';
 import { addingToCartProhibition } from '../../models/CartItem';
 import { UrlStr } from '../../backend/declarations';
 import CollectionBtn from '../buttons/CollectionBtn';
+import type { PaneSource } from '../../containers/search/SearchResultRegular';
 
 
 const truncateStyle: CSSProperties = {
@@ -37,6 +38,7 @@ interface OurProps {
 	checkedObjects?: KnownDataObject[]
 	labelLookup: LabelLookup
 	isCartView: Boolean
+	paneSource?: PaneSource
 }
 
 export default class SearchResultRegularRow extends Component<OurProps> {
@@ -55,6 +57,10 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 		const {allowCartAdd, uiMessage} = addingToCartProhibition(objInfo);
 		const checkBtnTitle = uiMessage ?? `Select to preview or download`;
 		const level = `Level ${objInfo.level}`
+		// Each pane links to its own meta backend; the secondary pane uses the secondary base URI.
+		const metaBaseUri = props.paneSource === 'secondary'
+			? (config.secondaryMetaBaseUri ?? undefined)
+			: undefined;
 
 		return(
 			<div className='d-flex border-top py-4'>
@@ -70,7 +76,7 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 				</div>
 				<div>
 					<h4 className="fs-5">
-						<a title="View metadata" href={getUrlWithEnvironmentPrefix(objInfo.dobj)}>{title}</a>
+						<a title="View metadata" href={getUrlWithEnvironmentPrefix(objInfo.dobj, metaBaseUri)}>{title}</a>
 					</h4>
 					<Description extendedInfo={extendedInfo} truncateStyle={truncateStyle} />
 					<div className="extended-info" style={{ marginTop: 4 }}>

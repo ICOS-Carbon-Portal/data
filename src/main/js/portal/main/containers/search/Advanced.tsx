@@ -11,7 +11,8 @@ import CheckBtn from "../../components/buttons/CheckBtn";
 import {FilterPanel} from "../../components/filters/FilterPanel";
 import { ToSparqlClient } from '../../components/ToSparqlClient';
 import { publicQueries, QueryName } from '../../config';
-import * as queries from '../../sparqlQueries';
+// The advanced tab shows the queries that run against the primary (Virtuoso) endpoint.
+import * as queries from '../../sparqlQueriesVirtuoso';
 import { getFilters } from '../../actions/common';
 import { specKeywordsQuery } from '../../backend/scopedKeywords';
 
