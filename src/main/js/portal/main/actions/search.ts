@@ -40,10 +40,7 @@ export default function bootstrapSearch(user: WhoAmI): PortalThunkAction<void> {
 	return (dispatch, getState) => {
 		const filters = getFilters(getState());
 		dispatch(getBackendTables(filters)).then(_ => {
-			// The Advanced tab (FilterAdvanced.tsx) independently triggers its own
-			// getFilteredDataObjects on mount. Firing it here too races the two
-			// fetchExtendedDataObjInfo responses and can leave state.extendedDobjInfo
-			// desynced from the correct object list/count (rows silently missing).
+			// Advanced tab boostraps its own results, so skip if on that tab
 			if (getState().tabs.searchTab !== 1) {
 				dispatch(getFilteredDataObjects);
 			}
