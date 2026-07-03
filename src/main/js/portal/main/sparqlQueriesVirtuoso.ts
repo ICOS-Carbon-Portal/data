@@ -411,7 +411,9 @@ export function objectFilterClauses(query: QueryParameters): String {
 	${getFilterClauses(nonVarFilters, false)}`;
 }
 
-export function filteredObjectsQuery(params: QueryParameters, selections: string): string {
+// When asCount is true, the query is identical to the data-objects query except that the
+// only projection is the result count and the `order by`/`offset`/`limit` clauses are dropped.
+export function filteredObjectsQuery(params: QueryParameters, selections: string, asCount: boolean = false): string {
 
 	const { sorting, paging } = params;
 	const orderBy = (sorting && sorting.varName)
@@ -433,18 +435,26 @@ prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 prefix xsd: <http://www.w3.org/2001/XMLSchema#>
 prefix geo: <http://www.opengis.net/ont/geosparql#>
-select ${selections}
+select ${asCount ? '(count(?dobj) as ?count)' : selections}
 ${fromClauses}where {
 ${objectFilterClauses(params)}
-}
+}${asCount ? '' : `
 ${orderBy}
-offset ${paging.offset || 0} limit ${paging.limit || 20}`;
+offset ${paging.offset || 0} limit ${paging.limit || 20}`}`;
 }
 
 export function listFilteredDataObjects(params: QueryParameters): ObjInfoQuery {
 	const selections = `?dobj ?hasNextVersion ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd`;
 	return {
 		text: `# listFilteredDataObjects${filteredObjectsQuery(params, selections)}`
+	};
+};
+
+export type CountQuery = Query<'count', never>
+
+export function countFilteredDataObjects(params: QueryParameters): CountQuery {
+	return {
+		text: `# countFilteredDataObjects${filteredObjectsQuery(params, '', true)}`
 	};
 };
 

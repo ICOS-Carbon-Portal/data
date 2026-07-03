@@ -190,6 +190,21 @@ export function fetchFilteredDataObjects(options: QueryParameters, endpoint: Url
 		: fetchAndParseDataObjects(queriesFor(endpoint).listFilteredDataObjects(options), endpoint);
 }
 
+// Counts the filtered data objects using the exact same query as fetchFilteredDataObjects,
+// but projecting only the count and without `order by`/`offset`/`limit`.
+export function fetchFilteredDataObjectsCount(options: QueryParameters, endpoint: UrlStr = config.sparqlEndpoint): Promise<number> {
+	if (Filter.allowsNothing(options.specs) || Filter.allowsNothing(options.submitters) || Filter.allowsNothing(options.stations))
+		return Promise.resolve(0);
+
+	const query = queriesFor(endpoint).countFilteredDataObjects(options);
+	console.log(`Full count query (endpoint: ${endpoint}):\n${query.text}`);
+
+	return sparql(query, endpoint, true).then(res => {
+		const binding = res.results.bindings[0];
+		return binding ? parseInt(binding.count.value) : 0;
+	});
+}
+
 const fetchAndParseDataObjects = (query: ObjInfoQuery, endpoint: UrlStr = config.sparqlEndpoint) => {
 	return sparqlFetchAndParse(query, endpoint, b => ({
 		dobj: sparqlParsers.fromUrl(b.dobj),

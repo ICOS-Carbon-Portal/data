@@ -35,7 +35,7 @@ import { listFilteredDataObjects } from '../sparqlQueriesVirtuoso';
 // The secondary (dual-view comparison) pane runs against the original meta backend,
 // so its exported query is built with the original (non-Virtuoso) query module.
 import { listFilteredDataObjects as listFilteredDataObjectsSecondary } from '../sparqlQueries';
-import { sparqlFetchBlob, fetchFilteredDataObjects } from "../backend";
+import { sparqlFetchBlob, fetchFilteredDataObjectsCount } from "../backend";
 import {PersistedMapPropsExtended} from "../models/InitMap";
 import scopedKeywords from "../backend/scopedKeywords";
 
@@ -132,7 +132,7 @@ export const getFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getSt
 		({rows, isDataEndReached}) => {
 			dispatch(fetchExtendedDataObjInfo(rows.map((d) => d.dobj)));
 			dispatch(new Payloads.BackendObjectsFetched(rows, isDataEndReached));
-			dispatch(ensureFullDataObjectCount(false));
+			dispatch(ensureFullDataObjectCount(false, options));
 		},
 		failWithError(dispatch)
 	);
@@ -142,7 +142,7 @@ export const getFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getSt
 			({rows, isDataEndReached}) => {
 				dispatch(fetchSecondaryExtendedDobjInfo(rows.map((d) => d.dobj)));
 				dispatch(new Payloads.BackendSecondaryObjectsFetched(rows, isDataEndReached));
-				dispatch(ensureFullDataObjectCount(true));
+				dispatch(ensureFullDataObjectCount(true, options));
 			},
 			failWithError(dispatch)
 		);
@@ -223,31 +223,25 @@ export function getAllFilteredDataObjects(): PortalThunkAction<void>{
 }
 
 
-// After a pane's results load, fetch the full result set once and store its actual size,
-// so the count-query number can be compared against the number of data objects actually
-// returned by that endpoint. The count depends only on the filters, so it is fetched once
-// per filter set (skipped while already known or in flight). Capped at config.exportCSVLimit.
-function ensureFullDataObjectCount(isSecondary: boolean): PortalThunkAction<void> {
+// After a pane's results load, run a count query (the exact same query used to fetch the
+// data objects, but projecting only the count and without order by/limit) and store the
+// actual total, so the count-query number can be compared against the number of data objects
+// actually matched by that endpoint. The count depends only on the filters, so it is fetched
+// once per filter set (skipped while already known or in flight). The `options` passed in are
+// the very same ones used for the data-object fetch, guaranteeing an identical query.
+function ensureFullDataObjectCount(isSecondary: boolean, options: QueryParameters): PortalThunkAction<void> {
 	return (dispatch, getState) => {
 		const endpoint = isSecondary ? config.secondarySparqlEndpoint ?? undefined : undefined;
 		if (isSecondary && !endpoint) return;
 
-		const state = getState();
-		const paging = isSecondary ? state.secondaryPaging : state.paging;
+		const paging = isSecondary ? getState().secondaryPaging : getState().paging;
 		if (paging.receivedCount !== undefined || paging.receivedCountFetching) return;
 
 		dispatch(new Payloads.BackendFullCountLoading(isSecondary));
 
-		// Sort order is irrelevant when we only need the total, and dropping the
-		// `order by` clause makes the count query considerably cheaper.
-		const options = getOptions(
-			{ ...state, sorting: { varName: '', ascending: state.sorting.ascending } },
-			new Paging({ objCount: 0, offset: 0, limit: config.exportCSVLimit })
-		);
-
-		fetchFilteredDataObjects(options, endpoint).then(
-			({ rows }) => {
-				dispatch(new Payloads.BackendFullCount(rows.length, isSecondary));
+		fetchFilteredDataObjectsCount(options, endpoint).then(
+			count => {
+				dispatch(new Payloads.BackendFullCount(count, isSecondary));
 			},
 			failWithError(dispatch)
 		);
