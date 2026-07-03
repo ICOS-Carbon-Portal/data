@@ -109,7 +109,7 @@ export class BackendBatchDownload extends BackendPayload{
 
 export type ObjectsTableLike = AsyncResult<typeof fetchKnownDataObjects>['rows'] | KnownDataObject[];
 export class BackendObjectsFetched extends BackendPayload{
-	constructor(readonly objectsTable: ObjectsTableLike, readonly isDataEndReached: boolean){super();}
+	constructor(readonly objectsTable: ObjectsTableLike, readonly isDataEndReached: boolean, readonly receivedCount: number){super();}
 }
 
 export class BackendKeywordsFetched extends BackendPayload {
@@ -122,7 +122,7 @@ export class BackendSecondaryOriginsTable extends BackendPayload{
 }
 
 export class BackendSecondaryObjectsFetched extends BackendPayload{
-	constructor(readonly objectsTable: ObjectsTableLike, readonly isDataEndReached: boolean){super();}
+	constructor(readonly objectsTable: ObjectsTableLike, readonly isDataEndReached: boolean, readonly receivedCount: number){super();}
 }
 
 export class BackendSecondaryExtendedDataObjInfo extends BackendPayload{
@@ -133,6 +133,16 @@ export class BackendSecondaryExtendedDataObjInfo extends BackendPayload{
 // clear their result lists and counts while the new results are loading.
 export class BackendResultsLoading extends BackendPayload{
 	constructor(){super();}
+}
+
+// Full-count fetch (button-triggered): a marker that the fetch has started (so the
+// pane can show a spinner) and the payload carrying the resulting total.
+export class BackendFullCountLoading extends BackendPayload{
+	constructor(readonly isSecondary: boolean){super();}
+}
+
+export class BackendFullCount extends BackendPayload{
+	constructor(readonly receivedCount: number, readonly isSecondary: boolean){super();}
 }
 
 export class BackendExportQuery extends BackendPayload {

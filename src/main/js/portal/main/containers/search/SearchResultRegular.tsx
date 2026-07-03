@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { KnownDataObject, State} from "../../models/State";
 import {PortalDispatch} from "../../store";
-import {getAllFilteredDataObjects, requestStep, toggleSort, updateCheckedObjectsInSearch} from "../../actions/search";
+import {fetchFullDataObjectCount, getAllFilteredDataObjects, requestStep, toggleSort, updateCheckedObjectsInSearch} from "../../actions/search";
 import {UrlStr} from "../../backend/declarations";
 import {Paging} from "../../components/buttons/Paging";
 import CheckAllBoxes from "../../components/controls/CheckAllBoxes";
@@ -42,7 +42,8 @@ function SearchResultRegular(props: OurProps) {
 	const {preview, objectsTable, previewLookup, paging, sorting, searchOptions,
 		toggleSort, requestStep, labelLookup, checkedObjectsInSearch, extendedDobjInfo,
 		updateCheckedObjects, handlePreview, handleAddToCart,
-		handleAllCheckboxesChange, getAllFilteredDataObjects, exportQuery, user, showUniqueOnly, paneSource } = props;
+		handleAllCheckboxesChange, getAllFilteredDataObjects, exportQuery, user, showUniqueOnly, paneSource,
+		fetchFullCount } = props;
 
 	const objectText = checkedObjectsInSearch.length <= 1 ? "object" : "objects";
 	const checkedUriSet = new Set<string>(checkedObjectsInSearch);
@@ -61,6 +62,7 @@ function SearchResultRegular(props: OurProps) {
 				getAllFilteredDataObjects={getAllFilteredDataObjects}
 				exportQuery={exportQuery}
 				paneSource={paneSource}
+				getFullCount={() => fetchFullCount(paneSource === 'secondary')}
 			/>
 
 			<div className="card-body pb-0">
@@ -204,6 +206,7 @@ function dispatchToProps(dispatch: PortalDispatch){
 		toggleSort: (varName: string) => dispatch(toggleSort(varName)),
 		requestStep: (direction: -1 | 1) => dispatch(requestStep(direction)),
 		getAllFilteredDataObjects: () => dispatch(getAllFilteredDataObjects()),
+		fetchFullCount: (isSecondary: boolean) => dispatch(fetchFullDataObjectCount(isSecondary)),
 	};
 }
 

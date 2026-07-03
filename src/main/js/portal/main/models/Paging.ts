@@ -8,10 +8,12 @@ interface Props {
 	filtersEnabled?: boolean
 	cacheOffset?: number
 	isDataEndReached?: boolean
+	receivedCount?: number
+	receivedCountFetching?: boolean
 }
 type Offset = number;
 type FiltersEnabled = Required<Pick<Props, 'filtersEnabled'>>['filtersEnabled'];
-type WithProps = Pick<Props, 'objCount' | 'pageCount' | 'filtersEnabled' | 'isDataEndReached'>;
+type WithProps = Pick<Props, 'objCount' | 'pageCount' | 'filtersEnabled' | 'isDataEndReached' | 'receivedCount'>;
 
 export default class Paging{
 	private _objCount: number;
@@ -21,8 +23,13 @@ export default class Paging{
 	private _filtersEnabled: boolean;
 	private _cacheOffset: number;
 	private _isDataEndReached: boolean;
+	// Actual number of data objects received for the full result set (known once the
+	// data end is reached or the user requests a full-count fetch). Undefined until known.
+	private _receivedCount?: number;
+	// True while a full-count fetch is in progress (button-triggered).
+	private _receivedCountFetching: boolean;
 
-	constructor({objCount, offset, limit, pageCount, filtersEnabled, cacheOffset, isDataEndReached}: Props){
+	constructor({objCount, offset, limit, pageCount, filtersEnabled, cacheOffset, isDataEndReached, receivedCount, receivedCountFetching}: Props){
 		this._objCount = objCount;
 		this._offset = offset || 0;
 		this._pageCount = pageCount ?? config.stepsize;
@@ -30,6 +37,8 @@ export default class Paging{
 		this._filtersEnabled = filtersEnabled || false;
 		this._cacheOffset = cacheOffset ?? this._offset;
 		this._isDataEndReached = isDataEndReached || false;
+		this._receivedCount = receivedCount;
+		this._receivedCountFetching = receivedCountFetching || false;
 	}
 
 	get serialize(){
@@ -39,7 +48,9 @@ export default class Paging{
 			pageCount: this._pageCount,
 			filtersEnabled: this._filtersEnabled,
 			cacheOffset: this._cacheOffset,
-			isDataEndReached: this._isDataEndReached
+			isDataEndReached: this._isDataEndReached,
+			receivedCount: this._receivedCount,
+			receivedCountFetching: this._receivedCountFetching
 		};
 	}
 
@@ -67,13 +78,36 @@ export default class Paging{
 		return this._limit;
 	}
 
+	get isDataEndReached(){
+		return this._isDataEndReached;
+	}
+
+	get receivedCount(){
+		return this._receivedCount;
+	}
+
+	get receivedCountFetching(){
+		return this._receivedCountFetching;
+	}
+
+	// Explicitly set the full received-count (e.g. from a button-triggered full fetch),
+	// clearing the fetching flag.
+	withReceivedCount(receivedCount: number){
+		return new Paging({...this.serialize, receivedCount, receivedCountFetching: false});
+	}
+
+	withReceivedCountFetching(receivedCountFetching: boolean){
+		return new Paging({...this.serialize, receivedCountFetching});
+	}
+
 	withOffset(offset: Offset){
 		return new Paging({
 			objCount: this._objCount,
 			offset: offset,
 			pageCount: this._pageCount,
 			filtersEnabled: this._filtersEnabled,
-			isDataEndReached: this._isDataEndReached
+			isDataEndReached: this._isDataEndReached,
+			receivedCount: this._receivedCount
 		});
 	}
 
@@ -85,7 +119,8 @@ export default class Paging{
 				objCount: this._objCount,
 				offset,
 				cacheOffset: Math.min(offset, this._cacheOffset),
-				isDataEndReached: this._isDataEndReached
+				isDataEndReached: this._isDataEndReached,
+				receivedCount: this._receivedCount
 			});
 
 		} else if (direction > 0){
@@ -95,20 +130,22 @@ export default class Paging{
 				objCount: this._objCount,
 				offset,
 				cacheOffset: this._cacheOffset,
-				isDataEndReached: this._isDataEndReached
+				isDataEndReached: this._isDataEndReached,
+				receivedCount: this._receivedCount
 			});
 
 		} else return this;
 	}
 
-	withObjCount({objCount, pageCount, filtersEnabled, isDataEndReached}: WithProps){
+	withObjCount({objCount, pageCount, filtersEnabled, isDataEndReached, receivedCount}: WithProps){
 		return new Paging({
 			objCount,
 			offset: this._offset,
 			pageCount,
 			filtersEnabled,
 			cacheOffset: this._cacheOffset,
-			isDataEndReached: isDataEndReached
+			isDataEndReached: isDataEndReached,
+			receivedCount: receivedCount
 		});
 	}
 
@@ -118,7 +155,8 @@ export default class Paging{
 			offset: this._offset,
 			pageCount: this._pageCount,
 			filtersEnabled,
-			isDataEndReached: this._isDataEndReached
+			isDataEndReached: this._isDataEndReached,
+			receivedCount: this._receivedCount
 		});
 	}
 }

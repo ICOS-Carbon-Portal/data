@@ -17,7 +17,9 @@ import {
 	BackendSecondaryOriginsTable,
 	BackendSecondaryObjectsFetched,
 	BackendSecondaryExtendedDataObjInfo,
-	BackendResultsLoading
+	BackendResultsLoading,
+	BackendFullCountLoading,
+	BackendFullCount
 } from "./actionpayloads";
 import stateUtils, {CategFilters, KnownDataObject, State} from "../models/State";
 import config, {CategoryType} from "../config";
@@ -89,6 +91,20 @@ export default function(state: State, payload: BackendPayload): State {
 		return stateUtils.update(state, handleResultsLoading());
 	}
 
+	if (payload instanceof BackendFullCountLoading){
+		return stateUtils.update(state, payload.isSecondary
+			? { secondaryPaging: state.secondaryPaging.withReceivedCountFetching(true) }
+			: { paging: state.paging.withReceivedCountFetching(true) }
+		);
+	}
+
+	if (payload instanceof BackendFullCount){
+		return stateUtils.update(state, payload.isSecondary
+			? { secondaryPaging: state.secondaryPaging.withReceivedCount(payload.receivedCount) }
+			: { paging: state.paging.withReceivedCount(payload.receivedCount) }
+		);
+	}
+
 	if (payload instanceof BackendExportQuery) {
 		return stateUtils.update(state, payload.isSecondary
 			? { secondaryExportQuery: payload }
@@ -156,7 +172,10 @@ const handleObjectsFetched = (state: State, payload: BackendObjectsFetched) => {
 		objCount,
 		pageCount: payload.objectsTable.length,
 		filtersEnabled,
-		isDataEndReached: payload.isDataEndReached
+		isDataEndReached: payload.isDataEndReached,
+		// The received count is the true full total only once the data end is reached;
+		// otherwise it's just a partial page, so leave it unknown until a full fetch.
+		receivedCount: payload.isDataEndReached ? payload.receivedCount : undefined
 	});
 
 	return {
@@ -189,7 +208,8 @@ const handleSecondaryObjectsFetched = (state: State, payload: BackendSecondaryOb
 		objCount,
 		pageCount: payload.objectsTable.length,
 		filtersEnabled: false,
-		isDataEndReached: payload.isDataEndReached
+		isDataEndReached: payload.isDataEndReached,
+		receivedCount: payload.isDataEndReached ? payload.receivedCount : undefined
 	}).withOffset(state.paging.offset);
 
 	return {
