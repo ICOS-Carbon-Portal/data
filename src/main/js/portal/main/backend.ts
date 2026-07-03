@@ -64,6 +64,7 @@ const fetchSpecColumnMeta = () => {
 
 export const fetchDobjOriginsAndCounts = (filters: FilterRequest[], endpoint: UrlStr = config.sparqlEndpoint) => {
 	const query = queriesFor(endpoint).dobjOriginsAndCounts(filters);
+	console.log(`Initial origins/counts query (endpoint: ${endpoint}):\n${query.text}`);
 
 	return sparqlFetchAndParse(query, endpoint, b => ({
 		spec: b.spec.value,
