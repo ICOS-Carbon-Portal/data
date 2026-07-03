@@ -181,7 +181,7 @@ export function removeFromCart(ids: UrlStr[]): PortalThunkAction<void> {
 export function getKnownDataObjInfo(dobjs: string[], cb?: Function): PortalThunkAction<void> {
 	return (dispatch) => {
 		fetchKnownDataObjects(dobjs).then(result => {
-				dispatch(new Payloads.BackendObjectsFetched(result.rows, true, result.rows.length));
+				dispatch(new Payloads.BackendObjectsFetched(result.rows, true));
 
 				if (cb) dispatch(cb);
 			},

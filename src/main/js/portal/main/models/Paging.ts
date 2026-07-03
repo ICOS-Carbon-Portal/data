@@ -13,7 +13,7 @@ interface Props {
 }
 type Offset = number;
 type FiltersEnabled = Required<Pick<Props, 'filtersEnabled'>>['filtersEnabled'];
-type WithProps = Pick<Props, 'objCount' | 'pageCount' | 'filtersEnabled' | 'isDataEndReached' | 'receivedCount'>;
+type WithProps = Pick<Props, 'objCount' | 'pageCount' | 'filtersEnabled' | 'isDataEndReached'>;
 
 export default class Paging{
 	private _objCount: number;
@@ -23,8 +23,9 @@ export default class Paging{
 	private _filtersEnabled: boolean;
 	private _cacheOffset: number;
 	private _isDataEndReached: boolean;
-	// Actual number of data objects received for the full result set (known once the
-	// data end is reached or the user requests a full-count fetch). Undefined until known.
+	// Actual number of data objects received for the full result set (populated by an
+	// automatic full-count fetch once results load). Depends only on the filters, so it
+	// persists across paging/sorting and is reset (to undefined) only when filters change.
 	private _receivedCount?: number;
 	// True while a full-count fetch is in progress (button-triggered).
 	private _receivedCountFetching: boolean;
@@ -107,7 +108,8 @@ export default class Paging{
 			pageCount: this._pageCount,
 			filtersEnabled: this._filtersEnabled,
 			isDataEndReached: this._isDataEndReached,
-			receivedCount: this._receivedCount
+			receivedCount: this._receivedCount,
+			receivedCountFetching: this._receivedCountFetching
 		});
 	}
 
@@ -120,7 +122,8 @@ export default class Paging{
 				offset,
 				cacheOffset: Math.min(offset, this._cacheOffset),
 				isDataEndReached: this._isDataEndReached,
-				receivedCount: this._receivedCount
+				receivedCount: this._receivedCount,
+				receivedCountFetching: this._receivedCountFetching
 			});
 
 		} else if (direction > 0){
@@ -131,13 +134,16 @@ export default class Paging{
 				offset,
 				cacheOffset: this._cacheOffset,
 				isDataEndReached: this._isDataEndReached,
-				receivedCount: this._receivedCount
+				receivedCount: this._receivedCount,
+				receivedCountFetching: this._receivedCountFetching
 			});
 
 		} else return this;
 	}
 
-	withObjCount({objCount, pageCount, filtersEnabled, isDataEndReached, receivedCount}: WithProps){
+	// A fresh page of results: the received count depends only on the filters, so it (and
+	// any in-flight full-count fetch) is preserved across paging/sorting.
+	withObjCount({objCount, pageCount, filtersEnabled, isDataEndReached}: WithProps){
 		return new Paging({
 			objCount,
 			offset: this._offset,
@@ -145,7 +151,8 @@ export default class Paging{
 			filtersEnabled,
 			cacheOffset: this._cacheOffset,
 			isDataEndReached: isDataEndReached,
-			receivedCount: receivedCount
+			receivedCount: this._receivedCount,
+			receivedCountFetching: this._receivedCountFetching
 		});
 	}
 
@@ -156,7 +163,8 @@ export default class Paging{
 			pageCount: this._pageCount,
 			filtersEnabled,
 			isDataEndReached: this._isDataEndReached,
-			receivedCount: this._receivedCount
+			receivedCount: this._receivedCount,
+			receivedCountFetching: this._receivedCountFetching
 		});
 	}
 }

@@ -109,7 +109,7 @@ export class BackendBatchDownload extends BackendPayload{
 
 export type ObjectsTableLike = AsyncResult<typeof fetchKnownDataObjects>['rows'] | KnownDataObject[];
 export class BackendObjectsFetched extends BackendPayload{
-	constructor(readonly objectsTable: ObjectsTableLike, readonly isDataEndReached: boolean, readonly receivedCount: number){super();}
+	constructor(readonly objectsTable: ObjectsTableLike, readonly isDataEndReached: boolean){super();}
 }
 
 export class BackendKeywordsFetched extends BackendPayload {
@@ -122,7 +122,7 @@ export class BackendSecondaryOriginsTable extends BackendPayload{
 }
 
 export class BackendSecondaryObjectsFetched extends BackendPayload{
-	constructor(readonly objectsTable: ObjectsTableLike, readonly isDataEndReached: boolean, readonly receivedCount: number){super();}
+	constructor(readonly objectsTable: ObjectsTableLike, readonly isDataEndReached: boolean){super();}
 }
 
 export class BackendSecondaryExtendedDataObjInfo extends BackendPayload{

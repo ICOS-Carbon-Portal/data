@@ -129,18 +129,20 @@ export const getFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getSt
 	)
 
 	dataObjectsFetcher.fetch(options).then(
-		({rows, isDataEndReached, cacheSize}) => {
+		({rows, isDataEndReached}) => {
 			dispatch(fetchExtendedDataObjInfo(rows.map((d) => d.dobj)));
-			dispatch(new Payloads.BackendObjectsFetched(rows, isDataEndReached, cacheSize));
+			dispatch(new Payloads.BackendObjectsFetched(rows, isDataEndReached));
+			dispatch(ensureFullDataObjectCount(false));
 		},
 		failWithError(dispatch)
 	);
 
 	if (secondaryDataObjectsFetcher) {
 		secondaryDataObjectsFetcher.fetch(options).then(
-			({rows, isDataEndReached, cacheSize}) => {
+			({rows, isDataEndReached}) => {
 				dispatch(fetchSecondaryExtendedDobjInfo(rows.map((d) => d.dobj)));
-				dispatch(new Payloads.BackendSecondaryObjectsFetched(rows, isDataEndReached, cacheSize));
+				dispatch(new Payloads.BackendSecondaryObjectsFetched(rows, isDataEndReached));
+				dispatch(ensureFullDataObjectCount(true));
 			},
 			failWithError(dispatch)
 		);
@@ -221,19 +223,23 @@ export function getAllFilteredDataObjects(): PortalThunkAction<void>{
 }
 
 
-// Fetch the full result set for a pane and store its actual size, so the count-query
-// number can be compared against the number of data objects actually returned by that
-// endpoint. Capped at config.exportCSVLimit.
-export function fetchFullDataObjectCount(isSecondary: boolean): PortalThunkAction<void> {
+// After a pane's results load, fetch the full result set once and store its actual size,
+// so the count-query number can be compared against the number of data objects actually
+// returned by that endpoint. The count depends only on the filters, so it is fetched once
+// per filter set (skipped while already known or in flight). Capped at config.exportCSVLimit.
+function ensureFullDataObjectCount(isSecondary: boolean): PortalThunkAction<void> {
 	return (dispatch, getState) => {
 		const endpoint = isSecondary ? config.secondarySparqlEndpoint ?? undefined : undefined;
 		if (isSecondary && !endpoint) return;
+
+		const state = getState();
+		const paging = isSecondary ? state.secondaryPaging : state.paging;
+		if (paging.receivedCount !== undefined || paging.receivedCountFetching) return;
 
 		dispatch(new Payloads.BackendFullCountLoading(isSecondary));
 
 		// Sort order is irrelevant when we only need the total, and dropping the
 		// `order by` clause makes the count query considerably cheaper.
-		const state = getState();
 		const options = getOptions(
 			{ ...state, sorting: { varName: '', ascending: state.sorting.ascending } },
 			new Paging({ objCount: 0, offset: 0, limit: config.exportCSVLimit })

@@ -172,10 +172,7 @@ const handleObjectsFetched = (state: State, payload: BackendObjectsFetched) => {
 		objCount,
 		pageCount: payload.objectsTable.length,
 		filtersEnabled,
-		isDataEndReached: payload.isDataEndReached,
-		// The received count is the true full total only once the data end is reached;
-		// otherwise it's just a partial page, so leave it unknown until a full fetch.
-		receivedCount: payload.isDataEndReached ? payload.receivedCount : undefined
+		isDataEndReached: payload.isDataEndReached
 	});
 
 	return {
@@ -208,8 +205,7 @@ const handleSecondaryObjectsFetched = (state: State, payload: BackendSecondaryOb
 		objCount,
 		pageCount: payload.objectsTable.length,
 		filtersEnabled: false,
-		isDataEndReached: payload.isDataEndReached,
-		receivedCount: payload.isDataEndReached ? payload.receivedCount : undefined
+		isDataEndReached: payload.isDataEndReached
 	}).withOffset(state.paging.offset);
 
 	return {
