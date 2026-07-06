@@ -20,7 +20,7 @@ import { MapProps } from "./State";
 import { drawRectBoxToCoords } from "../utils";
 
 export interface DrawFeature {
-	id: Symbol;
+	id: symbol;
 	type: string;
 	coords: Coordinate[][];
 }
@@ -241,7 +241,7 @@ export class StationFilterControl extends Control {
 		this.deleteRectBtnSource.addFeature(iconFeature);
 	}
 
-	private onBtnClick(ev: MouseEvent) {
+	private onBtnClick(_ev: MouseEvent) {
 		this.setActiveState(!this.isActive);
 		this.updatePersistedMapProps({ isStationFilterCtrlActive: this.isActive });
 		this.setTooltip();

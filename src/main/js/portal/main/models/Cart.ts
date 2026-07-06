@@ -85,5 +85,4 @@ export const restoreCart = (jsonCart: { cart: any }) => {
 	return new Cart(name, items);
 };
 
-const emptyJsonCart = new Cart().serialize;
-export type JsonCart = typeof emptyJsonCart;
+export type JsonCart = Cart["serialize"];

@@ -2,7 +2,6 @@
 
 import { NumberFilterCategories, numberFilterKeys } from "../config";
 import { FilterNumber } from "./FilterNumbers";
-import { UrlStr } from "../backend/declarations";
 
 export type FilterRequest =
 	| PidFilterRequest
@@ -25,7 +24,7 @@ export interface TemporalFilterRequest {
 	toDateTimeStr: string | undefined;
 }
 
-export interface NumberFilterRequest extends FilterNumber {}
+export type NumberFilterRequest = FilterNumber;
 
 export interface DeprecatedFilterRequest {
 	category: "deprecated";

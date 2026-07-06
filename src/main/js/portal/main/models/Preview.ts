@@ -1,13 +1,13 @@
 /** @format */
 
 import CartItem, { CartItemSerialized } from "./CartItem";
-import { getNewTimeseriesUrl, getLastSegmentInUrl, isDefined } from "../utils";
+import { getNewTimeseriesUrl, getLastSegmentInUrl } from "../utils";
 import config, { PreviewType } from "../config";
 import deepEqual from "deep-equal";
 import PreviewLookup, { PreviewInfo } from "./PreviewLookup";
 import Cart from "./Cart";
-import { ExtendedDobjInfo, KnownDataObject } from "./State";
-import { IdxSig, Sha256Str, UrlStr } from "../backend/declarations";
+import { KnownDataObject } from "./State";
+import { Sha256Str, UrlStr } from "../backend/declarations";
 import { Value } from "./SpecTable";
 
 export interface PreviewOption {
@@ -107,9 +107,7 @@ export default class Preview {
 		lookup: PreviewLookup,
 		cart: Cart,
 		ids: UrlStr[],
-		objectsTable: KnownDataObject[],
-		yAxis?: string,
-		y2Axis?: string,
+		objectsTable: KnownDataObject[]
 	) {
 		const objects = ids.map((id) => {
 			const objInfo = objectsTable.find((ot) => ot.dobj.endsWith(id));
@@ -261,7 +259,7 @@ export function batchPreviewAvailability(
 	if (!objs.every((obj) => obj.dataset === objs[0].dataset)) return onlyUniform;
 
 	for (let i = 0; i < objs.length; i++) {
-		let preview = previewAvailability(lookup, objs[i]);
+		const preview = previewAvailability(lookup, objs[i]);
 		if (!preview.previewType)
 			return noPreview("You have selected a data object that cannot be previewed");
 		previewTypes.add(preview.previewType);

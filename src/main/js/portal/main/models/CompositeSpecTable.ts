@@ -18,7 +18,7 @@ export type SpecTableSerialized = {
 };
 
 export default class CompositeSpecTable {
-	public readonly id: Symbol;
+	public readonly id: symbol;
 
 	constructor(
 		readonly basics: SpecTable<BasicsColNames>,

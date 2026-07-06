@@ -1,6 +1,6 @@
 /** @format */
 
-import { IdxSig, UrlStr } from "../backend/declarations";
+import { UrlStr } from "../backend/declarations";
 import { PreviewType, themeUris } from "../config";
 import { KnownDataObject } from "./State";
 
@@ -157,9 +157,9 @@ export default class CartItem {
 	getNewUrl(keyVal: Record<string, string | undefined>) {
 		const newKeyVal = Object.assign(this._keyValPairs, keyVal);
 		if (
-			newKeyVal.hasOwnProperty("y2")
+			Object.prototype.hasOwnProperty.call(newKeyVal, "y2")
 			&& newKeyVal["y2"] !== undefined
-			&& newKeyVal.hasOwnProperty("legendLabels")
+			&& Object.prototype.hasOwnProperty.call(newKeyVal, "legendLabels")
 			&& newKeyVal["legendLabels"] !== undefined
 		) {
 			Object.assign(newKeyVal, { legendLabelsY2: newKeyVal.legendLabels });

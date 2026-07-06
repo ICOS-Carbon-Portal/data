@@ -3,7 +3,7 @@
 import Select from "ol/interaction/Select";
 import * as condition from "ol/events/condition";
 import { Collection, Feature } from "ol";
-import { LabelLookup, MapProps, State, StationPos4326Lookup } from "./State";
+import { LabelLookup, MapProps, StationPos4326Lookup } from "./State";
 import { UrlStr } from "../backend/declarations";
 import { difference, throwError } from "../utils";
 import { Filter, Value } from "./SpecTable";
@@ -100,7 +100,7 @@ export default class InitMap {
 			persistedMapProps.srid === undefined ?
 				olMapSettings.defaultSRID
 			:	persistedMapProps.srid;
-		this.appEPSGCode = `EPSG:${srid}` as EpsgCode;
+		this.appEPSGCode = `EPSG:${srid}`;
 		const projection =
 			getProjection(this.appEPSGCode)
 			?? throwError(`Projection ${this.appEPSGCode} not found`);

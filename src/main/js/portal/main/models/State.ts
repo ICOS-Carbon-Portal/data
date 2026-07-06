@@ -72,7 +72,7 @@ export interface WhoAmI {
 	email: string | null;
 }
 export interface User extends WhoAmI {
-	profile: Profile | {};
+	profile: Profile | object;
 }
 
 export type KnownDataObject = {
@@ -182,7 +182,7 @@ export interface State {
 	baseDobjStats: SpecTable<OriginsColNames>; //without spatial filtering
 	mapProps: MapProps;
 	extendedDobjInfo: ExtendedDobjInfo[];
-	formatToRdfGraph: {};
+	formatToRdfGraph: object;
 	objectsTable: KnownDataObject[];
 	sorting: {
 		varName: string;
@@ -193,11 +193,11 @@ export interface State {
 	priorCart: Cart | undefined;
 	id: UrlStr | undefined;
 	metadata?: MetaData | MetaDataWStats;
-	station: {} | undefined;
+	station: object | undefined;
 	preview: Preview;
 	previewSettings: PreviewSettings;
 	itemsToAddToCart: Sha256Str[] | undefined;
-	toasterData: {} | undefined;
+	toasterData: object | undefined;
 	batchDownloadStatus: {
 		isAllowed: boolean;
 		ts: number;
@@ -328,10 +328,8 @@ const deserialize = (jsonObj: StateSerialized, cart: Cart) => {
 
 	const props: State = {
 		...jsonObj,
-		filterTemporal: FilterTemporal.deserialize(
-			jsonObj.filterTemporal as SerializedFilterTemporal,
-		),
-		filterNumbers: FilterNumbers.deserialize(jsonObj.filterNumbers as FilterNumberSerialized[]),
+		filterTemporal: FilterTemporal.deserialize(jsonObj.filterTemporal),
+		filterNumbers: FilterNumbers.deserialize(jsonObj.filterNumbers),
 		previewLookup,
 		specTable,
 		baseDobjStats,
@@ -359,7 +357,7 @@ const getStateFromHash = () => {
 const parseHash = (hash: string) => {
 	try {
 		return allowlistJsonHash(JSON.parse(hash));
-	} catch (err) {
+	} catch {
 		return {};
 	}
 };
@@ -367,7 +365,7 @@ const parseHash = (hash: string) => {
 const hashToState = () => {
 	try {
 		return JSON.parse(getCurrentHash());
-	} catch (err) {
+	} catch {
 		return {};
 	}
 };
@@ -570,7 +568,7 @@ const stateToHash = (state: State) => {
 	return Object.keys(final).length ? JSON.stringify(final) : "";
 };
 
-const shortenUrls = (state: Partial<StateSerialized> = {} as Partial<StateSerialized>) => {
+const shortenUrls = (state: Partial<StateSerialized> = {}) => {
 	return managePrefixes(state, (prefix: any, value: string) => {
 		if (Array.isArray(prefix)) {
 			// TODO: remove prefix handling since wdcgg is no longer present
@@ -599,7 +597,7 @@ const extendUrls = (state: State) => {
 };
 
 const managePrefixes = (
-	state: State | Partial<StateSerialized> = {} as Partial<StateSerialized>,
+	state: State | Partial<StateSerialized> = {},
 	transform: (pref: CategPrefix, value: string) => string,
 ) => {
 	if (Object.keys(state).length === 0) return state;

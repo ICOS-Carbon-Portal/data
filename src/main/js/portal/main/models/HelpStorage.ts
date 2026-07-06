@@ -316,7 +316,7 @@ const initItems: HelpItem[] = [
 		[],
 	),
 
-	new HelpItem("preview", 'How \"Preview\" and \"Add to cart\" buttons work:', undefined, [
+	new HelpItem("preview", 'How "Preview" and "Add to cart" buttons work:', undefined, [
 		{
 			label: "preview availability",
 			comment:
@@ -341,7 +341,7 @@ const initItems: HelpItem[] = [
 		{
 			label: "adding to cart (logged-in users)",
 			comment:
-				'select one or more data objects, click the \"Add to cart\" button; all the objects on the page can be selected using the \"Select all\" tickbox',
+				'select one or more data objects, click the "Add to cart" button; all the objects on the page can be selected using the "Select all" tickbox',
 		},
 	]),
 
@@ -428,7 +428,7 @@ const initItems: HelpItem[] = [
 	),
 ];
 
-function nonStrictnessWarning(title: String): string {
+function nonStrictnessWarning(title: string): string {
 	return (
 		`Note that ${title} selection does not filter data objects strictly, there may be false positives in the results. `
 		+ `To avoid them, also filter by either ${titles.valType} or ${titles.variable}.`

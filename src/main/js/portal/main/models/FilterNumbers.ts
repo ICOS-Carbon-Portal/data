@@ -1,6 +1,6 @@
 /** @format */
 
-import { NumberFilterCategories, numberFilterKeys } from "../config";
+import { NumberFilterCategories } from "../config";
 import { defaultState } from "./State";
 
 export interface NumberFilterValidation {
