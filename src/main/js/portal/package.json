@@ -11,8 +11,8 @@
     "build": "vite build --watch --mode development",
     "typecheck": "tsc --noEmit",
     "test": "karma start",
-    "lint": "eslint main/models",
-    "prettier": "prettier --write main/models"
+    "lint": "eslint",
+    "format": "prettier --write ."
   },
   "repository": {
     "type": "git",
