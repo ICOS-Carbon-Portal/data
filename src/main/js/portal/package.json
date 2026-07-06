@@ -10,7 +10,9 @@
     "publish": "tsc --noEmit && vite build",
     "build": "vite build --watch --mode development",
     "typecheck": "tsc --noEmit",
-    "test": "karma start"
+    "test": "karma start",
+    "lint": "eslint main/models",
+    "prettier": "prettier --write main/models"
   },
   "repository": {
     "type": "git",
@@ -34,6 +36,7 @@
   },
   "homepage": "https://github.com/ICOS-Carbon-Portal/data#readme",
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
     "@types/linkify-it": "3.0.3",
     "@types/proj4": "^2.5.5",
     "@types/react-datepicker": "^4.15.2",
@@ -42,8 +45,14 @@
     "@types/react-widgets": "4.4.9",
     "@types/topojson": "^3.2.4",
     "@vitejs/plugin-react": "^6.0.1",
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "prettier": "^3.9.4",
     "sass": "^1.69.2",
     "typescript": "5.2.2",
+    "typescript-eslint": "^8.62.1",
     "vite": "^8.0.8"
   },
   "dependencies": {
@@ -68,5 +77,10 @@
     "redux": "4.2.1",
     "redux-thunk": "2.4.2",
     "topojson-client": "^3.1.0"
+  },
+  "allowScripts": {
+    "@parcel/watcher@2.5.6": true,
+    "@sentry/cli@2.58.5": true,
+    "core-js-pure@3.20.1": true
   }
 }

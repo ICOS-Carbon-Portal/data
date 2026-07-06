@@ -1,3 +1,5 @@
+/** @format */
+
 import config, {placeholders, numericFilterLabels, publicQueries, QueryName, Envri} from '../config';
 import {Int} from "../types";
 import {UrlStr} from "../backend/declarations";

@@ -1,3 +1,5 @@
+/** @format */
+
 import {SPECCOL} from '../sparqlQueries';
 import {distinct, symmetricalDifference} from '../utils'
 

@@ -1,3 +1,5 @@
+/** @format */
+
 import CartItem from './CartItem';
 
 export default class Cart {

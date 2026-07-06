@@ -1,3 +1,5 @@
+/** @format */
+
 import { TemporalFilterRequest } from "./FilterRequest";
 import config from "../config";
 

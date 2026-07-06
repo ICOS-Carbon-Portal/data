@@ -1,3 +1,5 @@
+/** @format */
+
 import Select from 'ol/interaction/Select';
 import * as condition from 'ol/events/condition';
 import { Collection, Feature } from 'ol';

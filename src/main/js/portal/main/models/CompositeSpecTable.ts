@@ -1,3 +1,5 @@
+/** @format */
+
 import {
 	SpecBasicsQuery,
 	SpecVarMetaQuery,

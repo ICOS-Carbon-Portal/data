@@ -1,3 +1,5 @@
+/** @format */
+
 // Modelled after Web Storage API: https://developer.mozilla.org/en-US/docs/Web/API/Storage
 
 import {IdxSig} from "../backend/declarations";

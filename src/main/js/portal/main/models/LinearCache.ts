@@ -1,3 +1,5 @@
+/** @format */
+
 import {AsyncResult} from "../backend/declarations";
 import {fetchFilteredDataObjects} from "../backend";
 

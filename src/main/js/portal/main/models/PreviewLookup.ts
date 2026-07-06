@@ -1,3 +1,5 @@
+/** @format */
+
 import config, {PreviewType} from '../config';
 import CompositeSpecTable from './CompositeSpecTable';
 import {UrlStr} from '../backend/declarations';

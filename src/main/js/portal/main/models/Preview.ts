@@ -1,3 +1,5 @@
+/** @format */
+
 import CartItem, {CartItemSerialized} from './CartItem';
 import {getNewTimeseriesUrl, getLastSegmentInUrl, isDefined} from '../utils';
 import config, {PreviewType} from "../config";

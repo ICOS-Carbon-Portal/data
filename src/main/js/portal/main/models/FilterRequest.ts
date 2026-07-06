@@ -1,3 +1,5 @@
+/** @format */
+
 import {NumberFilterCategories, numberFilterKeys} from "../config";
 import {FilterNumber} from "./FilterNumbers";
 import { UrlStr } from "../backend/declarations";

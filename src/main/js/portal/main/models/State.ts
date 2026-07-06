@@ -1,3 +1,5 @@
+/** @format */
+
 import Preview, { PreviewSettings } from "./Preview";
 import FilterTemporal, {SerializedFilterTemporal} from "./FilterTemporal";
 import CompositeSpecTable, {BasicsColNames, VariableMetaColNames, OriginsColNames} from "./CompositeSpecTable";

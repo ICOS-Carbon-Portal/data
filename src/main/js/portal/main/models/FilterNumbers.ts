@@ -1,3 +1,5 @@
+/** @format */
+
 import {NumberFilterCategories, numberFilterKeys} from "../config";
 import {defaultState} from "./State";
 

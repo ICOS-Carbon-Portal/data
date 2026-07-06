@@ -1,3 +1,5 @@
+/** @format */
+
 import Control, { Options } from 'ol/control/Control';
 import Map from 'ol/Map';
 import Draw, { createBox, DrawEvent } from 'ol/interaction/Draw';

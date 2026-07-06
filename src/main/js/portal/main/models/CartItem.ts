@@ -1,3 +1,5 @@
+/** @format */
+
 import {IdxSig, UrlStr} from "../backend/declarations";
 import { PreviewType, themeUris } from "../config";
 import { KnownDataObject} from "./State";
