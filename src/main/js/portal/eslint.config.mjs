@@ -39,6 +39,13 @@ export default tseslint.config(
 			"@typescript-eslint/no-wrapper-object-types": "warn",
 			"@typescript-eslint/prefer-promise-reject-errors": "warn",
 			"react-hooks/exhaustive-deps": "warn",
+			// Downgraded: this codebase intentionally uses documentation-only string
+			// aliases (UrlStr, Sha256Str, etc.) unioned with literal sets for human
+			// readability, even though they collapse to the primitive type.
+			"@typescript-eslint/no-redundant-type-constituents": "warn",
+			// Allow a leading underscore to mark a parameter as intentionally
+			// unused (e.g. keeping an event-handler signature self-documenting).
+			"@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
 		},
 	},
 	eslintConfigPrettier,
