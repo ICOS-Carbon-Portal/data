@@ -1,28 +1,26 @@
 /** @format */
 
 import Preview, { PreviewSettings } from "./Preview";
-import FilterTemporal, {SerializedFilterTemporal} from "./FilterTemporal";
-import CompositeSpecTable, {BasicsColNames, VariableMetaColNames, OriginsColNames} from "./CompositeSpecTable";
+import FilterTemporal, { SerializedFilterTemporal } from "./FilterTemporal";
+import CompositeSpecTable, {
+	BasicsColNames,
+	VariableMetaColNames,
+	OriginsColNames,
+} from "./CompositeSpecTable";
 import PreviewLookup from "./PreviewLookup";
 import Cart from "./Cart";
 import Paging from "./Paging";
-import HelpStorage, {HelpStorageListEntry} from './HelpStorage';
-import config, {
-	prefixes,
-	CategoryType,
-	CategPrefix,
-	numberFilterKeys
-} from "../config";
-import deepequal from 'deep-equal';
+import HelpStorage, { HelpStorageListEntry } from "./HelpStorage";
+import config, { prefixes, CategoryType, CategPrefix, numberFilterKeys } from "../config";
+import deepequal from "deep-equal";
 import { UrlStr, Sha256Str } from "../backend/declarations";
-import {Store} from "redux";
+import { Store } from "redux";
 import { DataObject, References } from "../../../common/main/metacore";
 import SpecTable from "./SpecTable";
-import {getLastSegmentInUrl, pick} from "../utils";
-import {FilterNumber, FilterNumbers, FilterNumberSerialized} from "./FilterNumbers";
-import {SupportedSRIDs} from "icos-cp-ol";
+import { getLastSegmentInUrl, pick } from "../utils";
+import { FilterNumber, FilterNumbers, FilterNumberSerialized } from "./FilterNumbers";
+import { SupportedSRIDs } from "icos-cp-ol";
 import PortalHistoryState from "../backend/PortalHistoryState";
-
 
 export const portalHistoryState = new PortalHistoryState(config.portalHistoryStateProps);
 
@@ -30,205 +28,214 @@ export const portalHistoryState = new PortalHistoryState(config.portalHistorySta
 // Changes to any of these objects are automatically saved in browser history state
 // If other objects needs to be saved in browser history, use method 'updateAndSave'
 const hashKeys = [
-	'route',
-	'filterCategories',
-	'filterAdvancedText',
-	'filterAdvancedType',
-	'filterFileName',
-	'filterTemporal',
-	'filterPids',
-	'filterNumbers',
-	'filterKeywords',
-	'tabs',
-	'page',
-	'preview',
-	'previewSettings',
-	'id',
-	'yAxis',
-	'y2Axis',
-	'searchOptions',
-	'mapProps',
-	'itemsToAddToCart'
+	"route",
+	"filterCategories",
+	"filterAdvancedText",
+	"filterAdvancedType",
+	"filterFileName",
+	"filterTemporal",
+	"filterPids",
+	"filterNumbers",
+	"filterKeywords",
+	"tabs",
+	"page",
+	"preview",
+	"previewSettings",
+	"id",
+	"yAxis",
+	"y2Axis",
+	"searchOptions",
+	"mapProps",
+	"itemsToAddToCart",
 ];
 
-export type Route = 'search' | 'metadata' | 'preview' | 'cart';
+export type Route = "search" | "metadata" | "preview" | "cart";
 
 export interface Profile {
-	icosLicenceOk: boolean
-	givenName: string
-	surname: string
-	orcid: string
-	affiliation: string
-	affiliation2: string
-	workPhone: string
-	mobilePhone: string
-	streetAddress: string
-	city: string
-	zipCode: string
-	country: string
-	gender: "Male" | "Female"
-	birthYear: string
+	icosLicenceOk: boolean;
+	givenName: string;
+	surname: string;
+	orcid: string;
+	affiliation: string;
+	affiliation2: string;
+	workPhone: string;
+	mobilePhone: string;
+	streetAddress: string;
+	city: string;
+	zipCode: string;
+	country: string;
+	gender: "Male" | "Female";
+	birthYear: string;
 }
 
-export interface WhoAmI {email: string | null}
+export interface WhoAmI {
+	email: string | null;
+}
 export interface User extends WhoAmI {
-	profile: Profile | {}
+	profile: Profile | {};
 }
 
 export type KnownDataObject = {
-	dobj: string
-	hasNextVersion: boolean
-	hasVarInfo?: boolean
-	dataset: string
-	fileName: string
-	format: string
-	formatLabel?: string
-	level: number
-	size: string
-	spec: string
-	specLabel?: string
-	submTime: Date
-	theme: string
-	themeLabel?: string
-	timeEnd: Date
-	timeStart: Date
-	type?: string //this is currently always the same as spec, but maybe was supposed to be PreviewType at some point
-	temporalResolution?: string
-	extendedDobjInfo?: ExtendedDobjInfo
-}
+	dobj: string;
+	hasNextVersion: boolean;
+	hasVarInfo?: boolean;
+	dataset: string;
+	fileName: string;
+	format: string;
+	formatLabel?: string;
+	level: number;
+	size: string;
+	spec: string;
+	specLabel?: string;
+	submTime: Date;
+	theme: string;
+	themeLabel?: string;
+	timeEnd: Date;
+	timeStart: Date;
+	type?: string; //this is currently always the same as spec, but maybe was supposed to be PreviewType at some point
+	temporalResolution?: string;
+	extendedDobjInfo?: ExtendedDobjInfo;
+};
 
 export type ExtendedDobjInfo = {
-	dobj: UrlStr
-	station: string | undefined
-	stationId: string | undefined
-	samplingHeight: number | undefined
-	samplingPoint: string | undefined
-	theme: string | undefined
-	themeIcon: string | undefined
-	title: string | undefined
-	description: string | undefined
-	specComments: string | undefined
-	columnNames: string[] | undefined
-	site: string | undefined
-	hasVarInfo: boolean | undefined
-	dois: UrlStr[] | undefined
-	biblioInfo: References | undefined
-}
+	dobj: UrlStr;
+	station: string | undefined;
+	stationId: string | undefined;
+	samplingHeight: number | undefined;
+	samplingPoint: string | undefined;
+	theme: string | undefined;
+	themeIcon: string | undefined;
+	title: string | undefined;
+	description: string | undefined;
+	specComments: string | undefined;
+	columnNames: string[] | undefined;
+	site: string | undefined;
+	hasVarInfo: boolean | undefined;
+	dois: UrlStr[] | undefined;
+	biblioInfo: References | undefined;
+};
 
 export interface MetaData extends DataObject {
-	id: UrlStr
+	id: UrlStr;
 }
 
 export interface MetaDataWStats extends MetaData {
-	downloadCount: number,
-	previewCount: number
+	downloadCount: number;
+	previewCount: number;
 }
 
 export interface SearchOptions {
-	showDeprecated: boolean
+	showDeprecated: boolean;
 }
 
-export interface TabsState {tabName?: string, selectedTabId?: string, searchTab?: number, resultTab?: number}
+export interface TabsState {
+	tabName?: string;
+	selectedTabId?: string;
+	searchTab?: number;
+	resultTab?: number;
+}
 
 export type AdvancedFilter = "dobj" | "collection" | "filename";
 
 //TODO Investigate whether the type should be Filter, and whether Value needs to have 'number' on the list of types
-export type CategFilters = {[key in CategoryType]?: string[] | null}
+export type CategFilters = { [key in CategoryType]?: string[] | null };
 
-export type TsSetting = { 'x': string } & { 'y': string } & { 'y2': string } & { 'type': 'line' | 'scatter' }
+export type TsSetting = { x: string } & { y: string } & { y2: string } & {
+	type: "line" | "scatter";
+};
 export type TsSettings = {
-	[key: string]: TsSetting
-}
+	[key: string]: TsSetting;
+};
 
 export type ExportQuery = {
-	isFetchingCVS: boolean
-	sparqClientQuery: string
-}
+	isFetchingCVS: boolean;
+	sparqClientQuery: string;
+};
 
-export type StationPos4326Lookup = Record<UrlStr, { lon: number, lat: number }>
-export type LabelLookup = Record<string, {label: string, list: HelpStorageListEntry[]}>;
+export type StationPos4326Lookup = Record<UrlStr, { lon: number; lat: number }>;
+export type LabelLookup = Record<string, { label: string; list: HelpStorageListEntry[] }>;
 
 // 0=lower left X (lon), 1=lower left Y (lat), 2=upper right X (lon), 3=upper right Y (lat)
-export type DrawRectBbox = [number, number, number, number]
+export type DrawRectBbox = [number, number, number, number];
 export type MapProps = {
-	srid: SupportedSRIDs
-	rects?: DrawRectBbox[]
-}
+	srid: SupportedSRIDs;
+	rects?: DrawRectBbox[];
+};
 
 export interface State {
-	ts: number | undefined
-	isRunningInit: boolean
-	searchOptions: SearchOptions
-	route: Route | undefined
-	countryCodesLookup: Record<string, string>
-	filterCategories: CategFilters
-	filterTemporal: FilterTemporal
-	filterPids: Sha256Str[] | null
-	filterNumbers: FilterNumbers
-	filterAdvancedText: string
-	filterAdvancedType: AdvancedFilter
-	user: User
+	ts: number | undefined;
+	isRunningInit: boolean;
+	searchOptions: SearchOptions;
+	route: Route | undefined;
+	countryCodesLookup: Record<string, string>;
+	filterCategories: CategFilters;
+	filterTemporal: FilterTemporal;
+	filterPids: Sha256Str[] | null;
+	filterNumbers: FilterNumbers;
+	filterAdvancedText: string;
+	filterAdvancedType: AdvancedFilter;
+	user: User;
 	previewLookup: PreviewLookup | undefined;
 	labelLookup: LabelLookup;
-	stationPos4326Lookup: StationPos4326Lookup
-	specTable: CompositeSpecTable
-	baseDobjStats: SpecTable<OriginsColNames> //without spatial filtering
-	mapProps: MapProps
-	extendedDobjInfo: ExtendedDobjInfo[]
-	formatToRdfGraph: {}
-	objectsTable: KnownDataObject[]
+	stationPos4326Lookup: StationPos4326Lookup;
+	specTable: CompositeSpecTable;
+	baseDobjStats: SpecTable<OriginsColNames>; //without spatial filtering
+	mapProps: MapProps;
+	extendedDobjInfo: ExtendedDobjInfo[];
+	formatToRdfGraph: {};
+	objectsTable: KnownDataObject[];
 	sorting: {
-		varName: string,
-		ascending: boolean
-	}
-	paging: Paging
-	cart: Cart
-	priorCart: Cart | undefined
-	id: UrlStr | undefined
-	metadata?: MetaData | MetaDataWStats
-	station: {} | undefined
-	preview: Preview
-	previewSettings: PreviewSettings
-	itemsToAddToCart: Sha256Str[] | undefined
-	toasterData: {} | undefined
+		varName: string;
+		ascending: boolean;
+	};
+	paging: Paging;
+	cart: Cart;
+	priorCart: Cart | undefined;
+	id: UrlStr | undefined;
+	metadata?: MetaData | MetaDataWStats;
+	station: {} | undefined;
+	preview: Preview;
+	previewSettings: PreviewSettings;
+	itemsToAddToCart: Sha256Str[] | undefined;
+	toasterData: {} | undefined;
 	batchDownloadStatus: {
-		isAllowed: boolean,
-		ts: number
-	}
-	checkedObjectsInSearch: UrlStr[]
-	checkedObjectsInCart: UrlStr[]
-	tabs: TabsState
-	page: number
-	tsSettings: TsSettings
-	helpStorage: HelpStorage
-	scopedKeywords: string[]
-	filterKeywords: string[]
-	exportQuery: ExportQuery
+		isAllowed: boolean;
+		ts: number;
+	};
+	checkedObjectsInSearch: UrlStr[];
+	checkedObjectsInCart: UrlStr[];
+	tabs: TabsState;
+	page: number;
+	tsSettings: TsSettings;
+	helpStorage: HelpStorage;
+	scopedKeywords: string[];
+	filterKeywords: string[];
+	exportQuery: ExportQuery;
 }
 
 export const emptyCompositeSpecTable = new CompositeSpecTable(
 	new SpecTable<BasicsColNames>([], [], {}),
 	new SpecTable<VariableMetaColNames>([], [], {}),
-	new SpecTable<OriginsColNames>([], [], {})
+	new SpecTable<OriginsColNames>([], [], {}),
 );
 
 export const defaultState: State = {
 	ts: Date.now(),
 	isRunningInit: true,
 	searchOptions: {
-		showDeprecated: false
+		showDeprecated: false,
 	},
 	route: undefined,
 	countryCodesLookup: {},
 	filterCategories: {},
 	filterTemporal: new FilterTemporal(),
 	filterPids: null,
-	filterNumbers: new FilterNumbers(numberFilterKeys.map(cat => new FilterNumber(cat))),
+	filterNumbers: new FilterNumbers(numberFilterKeys.map((cat) => new FilterNumber(cat))),
 	filterAdvancedText: "",
 	filterAdvancedType: "dobj",
 	user: {
 		profile: {},
-		email: null
+		email: null,
 	},
 	previewLookup: undefined,
 	labelLookup: {},
@@ -237,16 +244,16 @@ export const defaultState: State = {
 	baseDobjStats: new SpecTable<OriginsColNames>([], [], {}),
 	mapProps: {
 		srid: config.olMapSettings.defaultSRID,
-		rects: []
+		rects: [],
 	},
 	extendedDobjInfo: [],
 	formatToRdfGraph: {},
 	objectsTable: [],
 	sorting: {
 		varName: "submTime",
-		ascending: false
+		ascending: false,
 	},
-	paging: new Paging({objCount: 0}),
+	paging: new Paging({ objCount: 0 }),
 	cart: new Cart(),
 	priorCart: undefined,
 	id: undefined,
@@ -258,7 +265,7 @@ export const defaultState: State = {
 	toasterData: undefined,
 	batchDownloadStatus: {
 		isAllowed: false,
-		ts: 0
+		ts: 0,
 	},
 	checkedObjectsInSearch: [],
 	checkedObjectsInCart: [],
@@ -270,12 +277,12 @@ export const defaultState: State = {
 	filterKeywords: [],
 	exportQuery: {
 		isFetchingCVS: false,
-		sparqClientQuery: ''
-	}
+		sparqClientQuery: "",
+	},
 };
 
 const update = (state: State, updates: Partial<State>): State => {
-	return Object.assign({}, state, updates, {ts: Date.now()});
+	return Object.assign({}, state, updates, { ts: Date.now() });
 };
 
 // history state is only automatically updated when URL changes. Use this method to force
@@ -284,15 +291,16 @@ const updateAndSave = (state: State, updates: any) => {
 	const newState = update(state, updates);
 
 	portalHistoryState.replaceState(serialize(newState), window.location.href).then(
-		_ => _,
-		reason => console.error(`Failed to add value to indexed database because ${reason}`)
+		(_) => _,
+		(reason) => console.error(`Failed to add value to indexed database because ${reason}`),
 	);
 
 	return newState;
 };
 
 const serialize = (state: State) => {
-	return {...state,
+	return {
+		...state,
 		filterTemporal: state.filterTemporal.serialize,
 		filterNumbers: state.filterNumbers.serialize,
 		specTable: state.specTable.serialize,
@@ -301,24 +309,28 @@ const serialize = (state: State) => {
 		cart: undefined,
 		priorCart: undefined,
 		preview: state.preview.serialize,
-		helpStorage: state.helpStorage.serialize
+		helpStorage: state.helpStorage.serialize,
 	};
 };
 
-export type StateSerialized = ReturnType<typeof serialize>
+export type StateSerialized = ReturnType<typeof serialize>;
 
 const deserialize = (jsonObj: StateSerialized, cart: Cart) => {
 	const specTable = CompositeSpecTable.deserialize(jsonObj.specTable);
 
 	const { table, varInfo } = jsonObj.previewLookup ?? {};
-	const previewLookup = table && varInfo
-		? new PreviewLookup(table, varInfo)
-		: PreviewLookup.init(specTable, jsonObj.labelLookup);
-	const baseDobjStats = SpecTable.deserialize(jsonObj.baseDobjStats)
-	const preview = Preview.deserialize(jsonObj.preview)
+	const previewLookup =
+		table && varInfo ?
+			new PreviewLookup(table, varInfo)
+		:	PreviewLookup.init(specTable, jsonObj.labelLookup);
+	const baseDobjStats = SpecTable.deserialize(jsonObj.baseDobjStats);
+	const preview = Preview.deserialize(jsonObj.preview);
 
-	const props: State = {...jsonObj,
-		filterTemporal: FilterTemporal.deserialize(jsonObj.filterTemporal as SerializedFilterTemporal),
+	const props: State = {
+		...jsonObj,
+		filterTemporal: FilterTemporal.deserialize(
+			jsonObj.filterTemporal as SerializedFilterTemporal,
+		),
 		filterNumbers: FilterNumbers.deserialize(jsonObj.filterNumbers as FilterNumberSerialized[]),
 		previewLookup,
 		specTable,
@@ -328,7 +340,10 @@ const deserialize = (jsonObj: StateSerialized, cart: Cart) => {
 		preview: preview,
 		previewSettings: preview.previewSettings,
 		helpStorage: HelpStorage.deserialize(jsonObj.helpStorage),
-		exportQuery: {isFetchingCVS: false, sparqClientQuery: jsonObj.exportQuery.sparqClientQuery}
+		exportQuery: {
+			isFetchingCVS: false,
+			sparqClientQuery: jsonObj.exportQuery.sparqClientQuery,
+		},
 	};
 
 	return props;
@@ -344,7 +359,7 @@ const getStateFromHash = () => {
 const parseHash = (hash: string) => {
 	try {
 		return allowlistJsonHash(JSON.parse(hash));
-	} catch(err) {
+	} catch (err) {
 		return {};
 	}
 };
@@ -352,13 +367,13 @@ const parseHash = (hash: string) => {
 const hashToState = () => {
 	try {
 		return JSON.parse(getCurrentHash());
-	} catch(err) {
+	} catch (err) {
 		return {};
 	}
 };
 
-const getStateFromStore = (storeState: State & Record<string,any>) => {
-	return hashKeys.reduce((acc: Record<string,any>, key: string) => {
+const getStateFromStore = (storeState: State & Record<string, any>) => {
+	return hashKeys.reduce((acc: Record<string, any>, key: string) => {
 		acc[key] = storeState[key];
 		return acc;
 	}, {});
@@ -368,31 +383,31 @@ const simplifyState = (state: State) => {
 	return Object.assign(state, {
 		filterTemporal: state.filterTemporal ? state.filterTemporal.serialize : {},
 		filterNumbers: state.filterNumbers.serialize,
-		preview: state.preview.pids
+		preview: state.preview.pids,
 	});
 };
 
 type JsonHashState = {
-	route?: Route
-	filterCategories?: CategFilters
-	filterAdvancedText?: string
-	filterAdvancedType?: AdvancedFilter
-	filterFileName?: string
-	filterTemporal?: SerializedFilterTemporal
-	filterPids?: Sha256Str
-	filterNumbers?: FilterNumberSerialized[]
-	filterKeywords?: string[]
-	tabs?: State['tabs']
-	page?: number
-	preview?: Sha256Str[]
-	previewSettings?: PreviewSettings
-	id?: UrlStr
-	yAxis?: string
-	y2Axis?: string
-	searchOptions?: SearchOptions
-	mapProps?: MapProps
-	itemsToAddToCart?: Sha256Str[]
-}
+	route?: Route;
+	filterCategories?: CategFilters;
+	filterAdvancedText?: string;
+	filterAdvancedType?: AdvancedFilter;
+	filterFileName?: string;
+	filterTemporal?: SerializedFilterTemporal;
+	filterPids?: Sha256Str;
+	filterNumbers?: FilterNumberSerialized[];
+	filterKeywords?: string[];
+	tabs?: State["tabs"];
+	page?: number;
+	preview?: Sha256Str[];
+	previewSettings?: PreviewSettings;
+	id?: UrlStr;
+	yAxis?: string;
+	y2Axis?: string;
+	searchOptions?: SearchOptions;
+	mapProps?: MapProps;
+	itemsToAddToCart?: Sha256Str[];
+};
 
 const allowlistJsonHash = (hash: any): JsonHashState => {
 	const allowedHash: JsonHashState = {};
@@ -407,19 +422,22 @@ const allowlistJsonHash = (hash: any): JsonHashState => {
 			allowedHash[key as keyof JsonHashState] = hash[key];
 		}
 	}
-	allowedHash.previewSettings = { ...Preview.buildPreviewSettings(allowedHash.previewSettings), ...ps };
+	allowedHash.previewSettings = {
+		...Preview.buildPreviewSettings(allowedHash.previewSettings),
+		...ps,
+	};
 
 	return allowedHash;
-}
+};
 
 const jsonToState = (state0: JsonHashState) => {
-	const state = {...defaultState, ...state0};
+	const state = { ...defaultState, ...state0 };
 
 	try {
-		if (state0.filterTemporal){
+		if (state0.filterTemporal) {
 			state.filterTemporal = new FilterTemporal().restore(state0.filterTemporal);
 		}
-		if (state0.filterNumbers){
+		if (state0.filterNumbers) {
 			state.filterNumbers = defaultState.filterNumbers.restore(state0.filterNumbers);
 		}
 
@@ -437,11 +455,11 @@ const jsonToState = (state0: JsonHashState) => {
 
 		state.preview = new Preview().withPids(state0.preview ?? [], state0.previewSettings);
 
-		if (state0.id){
+		if (state0.id) {
 			state.id = config.objectUriPrefix[config.envri] + state0.id;
 		}
-	} catch(err) {
-		console.error({state, state0, err});
+	} catch (err) {
+		console.error({ state, state0, err });
 		throw new Error("Could not convert json to state");
 	}
 
@@ -449,31 +467,31 @@ const jsonToState = (state0: JsonHashState) => {
 };
 
 const handleRoute = (storeState: Partial<StateSerialized>) => {
-	if (storeState.route === 'search'){
+	if (storeState.route === "search") {
 		delete storeState.route;
 	}
 };
 
 const specialCases = (state: Partial<StateSerialized>) => {
-	if (state.route === 'preview') {
+	if (state.route === "preview") {
 		return {
 			route: state.route,
 			preview: state.preview,
 			previewSettings: state.previewSettings,
-			itemsToAddToCart: state.itemsToAddToCart
+			itemsToAddToCart: state.itemsToAddToCart,
 		};
 	} else {
 		delete state.preview;
 		delete state.previewSettings;
 	}
 
-	if (state.route === 'cart'){
+	if (state.route === "cart") {
 		return {
-			route: state.route
-		}
+			route: state.route,
+		};
 	}
 
-	if (state.route === 'search'){
+	if (state.route === "search") {
 		delete state.route;
 	}
 
@@ -487,7 +505,7 @@ const specialCases = (state: Partial<StateSerialized>) => {
 	return state;
 };
 
-function getCurrentHash(){
+function getCurrentHash() {
 	return decodeURIComponent(window.location.hash.substring(1));
 }
 
@@ -497,17 +515,23 @@ const hashUpdater = (store: Store) => () => {
 	const oldHash = getCurrentHash();
 
 	if (newHash !== oldHash) {
-		newHash = newHash === '' ? '' : "#" + encodeURIComponent(newHash);
+		newHash = newHash === "" ? "" : "#" + encodeURIComponent(newHash);
 		if (state.route !== hashToState().route) {
-			portalHistoryState.pushState(serialize(state), window.location.href.split('#')[0] + newHash).then(
-				_ => _,
-				reason => console.log(`Failed to add value to indexed database because ${reason}`)
-			);
+			portalHistoryState
+				.pushState(serialize(state), window.location.href.split("#")[0] + newHash)
+				.then(
+					(_) => _,
+					(reason) =>
+						console.log(`Failed to add value to indexed database because ${reason}`),
+				);
 		} else {
-			portalHistoryState.replaceState(serialize(state), window.location.href.split('#')[0] + newHash).then(
-				_ => _,
-				reason => console.log(`Failed to add value to indexed database because ${reason}`)
-			);
+			portalHistoryState
+				.replaceState(serialize(state), window.location.href.split("#")[0] + newHash)
+				.then(
+					(_) => _,
+					(reason) =>
+						console.log(`Failed to add value to indexed database because ${reason}`),
+				);
 		}
 	}
 };
@@ -517,12 +541,10 @@ const storeOverwatch = (store: Store, stateKeys: (keyof State)[], onChange: Func
 
 	const handleChange = () => {
 		const nextState = pick(store.getState(), ...stateKeys);
-		if (currentState === undefined)
-			currentState = nextState;
+		if (currentState === undefined) currentState = nextState;
 
 		const changes = stateKeys.reduce<Partial<typeof nextState>>((acc, key) => {
-			if (!deepequal(currentState[key], nextState[key]))
-				acc[key] = nextState[key];
+			if (!deepequal(currentState[key], nextState[key])) acc[key] = nextState[key];
 			return acc;
 		}, {});
 
@@ -545,101 +567,101 @@ const stateToHash = (state: State) => {
 	handleRoute(reducedStoreState as Partial<StateSerialized>);
 	const withSpecialCases = specialCases(reducedStoreState as Partial<StateSerialized>);
 	const final = shortenUrls(withSpecialCases);
-	return Object.keys(final).length ? JSON.stringify(final) : '';
+	return Object.keys(final).length ? JSON.stringify(final) : "";
 };
 
-const shortenUrls = (state: Partial<StateSerialized> = ({} as Partial<StateSerialized>)) => {
-	return managePrefixes(state,
-		(prefix: any, value: string) => {
-			if (Array.isArray(prefix)){
-				// TODO: remove prefix handling since wdcgg is no longer present
-				const prefixObj = prefix.find(p => value.startsWith(p.value) || p.prefix === 'i');
-				if (prefixObj === undefined) throw new Error(`Could not find prefix for ${value}`);
-				return prefixObj.prefix + value.slice(prefixObj.value.length);
-			} else {
-				return value.slice(prefix.length);
-			}
-		});
+const shortenUrls = (state: Partial<StateSerialized> = {} as Partial<StateSerialized>) => {
+	return managePrefixes(state, (prefix: any, value: string) => {
+		if (Array.isArray(prefix)) {
+			// TODO: remove prefix handling since wdcgg is no longer present
+			const prefixObj = prefix.find((p) => value.startsWith(p.value) || p.prefix === "i");
+			if (prefixObj === undefined) throw new Error(`Could not find prefix for ${value}`);
+			return prefixObj.prefix + value.slice(prefixObj.value.length);
+		} else {
+			return value.slice(prefix.length);
+		}
+	});
 };
 
 const extendUrls = (state: State) => {
-	return managePrefixes(state,
-		(prefix: CategPrefix, value: string) => {
-			if (value.startsWith('http://') || value.startsWith('https://')) return value;
-			if (Array.isArray(prefix)){
-				const pLetter = value.slice(0, 1);
-				const prefixObj = prefix.find(p => p.prefix === pLetter);
+	return managePrefixes(state, (prefix: CategPrefix, value: string) => {
+		if (value.startsWith("http://") || value.startsWith("https://")) return value;
+		if (Array.isArray(prefix)) {
+			const pLetter = value.slice(0, 1);
+			const prefixObj = prefix.find((p) => p.prefix === pLetter);
 
-				if (prefixObj === undefined) throw new Error(`Could not find prefix for ${value}`);
-				return prefixObj.value + value.slice(1);
-			} else {
-				return prefix + value;
-			}
-		});
+			if (prefixObj === undefined) throw new Error(`Could not find prefix for ${value}`);
+			return prefixObj.value + value.slice(1);
+		} else {
+			return prefix + value;
+		}
+	});
 };
 
-const managePrefixes = (state: State | Partial<StateSerialized> = ({} as Partial<StateSerialized>), transform: (pref: CategPrefix, value: string) => string) => {
+const managePrefixes = (
+	state: State | Partial<StateSerialized> = {} as Partial<StateSerialized>,
+	transform: (pref: CategPrefix, value: string) => string,
+) => {
 	if (Object.keys(state).length === 0) return state;
-	if (state.filterCategories === undefined || Object.keys(state.filterCategories).length === 0) return state;
+	if (state.filterCategories === undefined || Object.keys(state.filterCategories).length === 0)
+		return state;
 
-	const categories: CategoryType[] = Object.keys(state.filterCategories) as Array<keyof typeof state.filterCategories>;
+	const categories: CategoryType[] = Object.keys(state.filterCategories) as Array<
+		keyof typeof state.filterCategories
+	>;
 	const appPrefixes = prefixes[config.envri];
 	const fc = state.filterCategories;
 
 	return {
-		...state, ...{
-			filterCategories: categories.reduce<CategFilters>((acc: CategFilters, category: CategoryType) => {
-				const filterVals = fc[category];
+		...state,
+		...{
+			filterCategories: categories.reduce<CategFilters>(
+				(acc: CategFilters, category: CategoryType) => {
+					const filterVals = fc[category];
 
-				if (filterVals) acc[category] = filterVals.map((value: string) => {
-					if (appPrefixes[category]) {
-						const prefix = appPrefixes[category];
-						if (prefix === undefined) return value;
+					if (filterVals)
+						acc[category] = filterVals.map((value: string) => {
+							if (appPrefixes[category]) {
+								const prefix = appPrefixes[category];
+								if (prefix === undefined) return value;
 
-						return transform(prefix, value);
-					} else {
-						return value;
-					}
-				});
+								return transform(prefix, value);
+							} else {
+								return value;
+							}
+						});
 
-				return acc;
-			}, {})
-		}
+					return acc;
+				},
+				{},
+			),
+		},
 	};
 };
 
-const reduceState = (state: Record<string,any>) => {
-	return Object.keys(state).reduce((acc: Record<string,any>, key: string) => {
-
+const reduceState = (state: Record<string, any>) => {
+	return Object.keys(state).reduce((acc: Record<string, any>, key: string) => {
 		const val = state[key];
 		if (val == null) return acc;
 
-		if (key === 'mapProps'){
-			if ((val as MapProps).rects?.length)
-				acc[key] = val;
-
-		} else if (Array.isArray(val) && val.length){
+		if (key === "mapProps") {
+			if ((val as MapProps).rects?.length) acc[key] = val;
+		} else if (Array.isArray(val) && val.length) {
 			acc[key] = val;
-
-		} else if (typeof val === 'object') {
+		} else if (typeof val === "object") {
 			const part = reduceState(val);
 
 			if (Object.keys(part).length) {
 				acc[key] = part;
 			}
-
-		} else if (state.route === 'metadata' && key === 'id' && val && val.length > 0){
+		} else if (state.route === "metadata" && key === "id" && val && val.length > 0) {
 			acc[key] = getLastSegmentInUrl(val);
-
-		} else if (typeof val === 'string'){
+		} else if (typeof val === "string") {
 			acc[key] = val;
-
-		} else if (typeof val === 'number' && val !== 0){
+		} else if (typeof val === "number" && val !== 0) {
 			acc[key] = val;
-
-		} else if (key === 'showDeprecated' && val) {
+		} else if (key === "showDeprecated" && val) {
 			acc[key] = val;
-
 		}
 
 		return acc;
@@ -657,5 +679,5 @@ export default {
 	storeOverwatch,
 	stateToHash,
 	shortenUrls,
-	extendUrls
+	extendUrls,
 };

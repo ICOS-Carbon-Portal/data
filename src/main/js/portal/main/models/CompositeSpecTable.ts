@@ -1,39 +1,38 @@
 /** @format */
 
-import {
-	SpecBasicsQuery,
-	SpecVarMetaQuery,
-	DobjOriginsAndCountsQuery
-} from '../sparqlQueries';
-import SpecTable, {Value, Filter, Row, TableSerialized} from "./SpecTable";
-import { QueryResultColumns } from '../backend/sparql';
-
+import { SpecBasicsQuery, SpecVarMetaQuery, DobjOriginsAndCountsQuery } from "../sparqlQueries";
+import SpecTable, { Value, Filter, Row, TableSerialized } from "./SpecTable";
+import { QueryResultColumns } from "../backend/sparql";
 
 export type BasicsColNames = QueryResultColumns<SpecBasicsQuery>;
 export type VariableMetaColNames = QueryResultColumns<SpecVarMetaQuery>;
 export type OriginsColNames = QueryResultColumns<DobjOriginsAndCountsQuery>;
 export type ColNames = BasicsColNames | VariableMetaColNames | OriginsColNames;
 
-const tableNames = ['basics', 'columnMeta', 'origins'] as const;
-type TableNames = typeof tableNames[number];
+const tableNames = ["basics", "columnMeta", "origins"] as const;
+type TableNames = (typeof tableNames)[number];
 export type SpecTableSerialized = {
-	basics: TableSerialized<BasicsColNames>
-	columnMeta: TableSerialized<VariableMetaColNames>
-	origins: TableSerialized<OriginsColNames>
-}
+	basics: TableSerialized<BasicsColNames>;
+	columnMeta: TableSerialized<VariableMetaColNames>;
+	origins: TableSerialized<OriginsColNames>;
+};
 
-export default class CompositeSpecTable{
+export default class CompositeSpecTable {
 	public readonly id: Symbol;
 
-	constructor(readonly basics: SpecTable<BasicsColNames>, readonly columnMeta: SpecTable<VariableMetaColNames>, readonly origins: SpecTable<OriginsColNames>){
+	constructor(
+		readonly basics: SpecTable<BasicsColNames>,
+		readonly columnMeta: SpecTable<VariableMetaColNames>,
+		readonly origins: SpecTable<OriginsColNames>,
+	) {
 		this.id = Symbol();
 	}
 
-	static fromTables(tables: SpecTable[]){
+	static fromTables(tables: SpecTable[]) {
 		return new CompositeSpecTable(
 			tables[0] as SpecTable<BasicsColNames>,
 			tables[1] as SpecTable<VariableMetaColNames>,
-			tables[2] as SpecTable<OriginsColNames>
+			tables[2] as SpecTable<OriginsColNames>,
 		);
 	}
 
@@ -41,73 +40,74 @@ export default class CompositeSpecTable{
 		return {
 			basics: this.basics.serialize,
 			columnMeta: this.columnMeta.serialize,
-			origins: this.origins.serialize
-		}
+			origins: this.origins.serialize,
+		};
 	}
 
 	static deserialize(tables: SpecTableSerialized) {
-		const {basics, columnMeta, origins} = tables;
+		const { basics, columnMeta, origins } = tables;
 
-		const basicsTbl = SpecTable.deserialize(basics)
-		const columnMetaTbl = SpecTable.deserialize(columnMeta)
-		const originsTbl = SpecTable.deserialize(origins)
+		const basicsTbl = SpecTable.deserialize(basics);
+		const columnMetaTbl = SpecTable.deserialize(columnMeta);
+		const originsTbl = SpecTable.deserialize(origins);
 
 		return new CompositeSpecTable(basicsTbl, columnMetaTbl, originsTbl).withFilterReflection;
 	}
 
-	get tables(){
+	get tables() {
 		return [this.basics, this.columnMeta, this.origins];
 	}
 
 	getTable(name: TableNames): SpecTable {
-		switch (name){
-			case "basics": return this.basics;
-			case "columnMeta": return this.columnMeta;
-			case "origins": return this.origins;
+		switch (name) {
+			case "basics":
+				return this.basics;
+			case "columnMeta":
+				return this.columnMeta;
+			case "origins":
+				return this.origins;
 		}
 	}
 
-	getTableRows(name: TableNames): Row<string>[]{
+	getTableRows(name: TableNames): Row<string>[] {
 		return this.getTable(name).rows;
 	}
 
-	get basicsRows(){
+	get basicsRows() {
 		return this.basics.rows;
 	}
 
-	get columnMetaRows(){
+	get columnMetaRows() {
 		return this.columnMeta.rows;
 	}
 
-	get originsRows(){
+	get originsRows() {
 		return this.origins.rows;
 	}
 
-	get isInitialized(){
+	get isInitialized() {
 		return this.basicsRows.length > 0 && this.columnMetaRows.length > 0;
 	}
 
-	get names(): Array<ColNames>{
-		const toFlatMap = this.tables.map(tbl => tbl.colNames);
+	get names(): Array<ColNames> {
+		const toFlatMap = this.tables.map((tbl) => tbl.colNames);
 		return Array.prototype.concat.apply([], toFlatMap);
 	}
 
-	get tableNames(): TableNames[]{
+	get tableNames(): TableNames[] {
 		return tableNames.slice();
 	}
 
-	findTable(columnName: ColNames): SpecTable<string> | undefined{
-		return this.tables.find(tbl =>
-			(tbl.colNames as ColNames[]).includes(columnName)
-		);
+	findTable(columnName: ColNames): SpecTable<string> | undefined {
+		return this.tables.find((tbl) => (tbl.colNames as ColNames[]).includes(columnName));
 	}
 
-	withFilter(colName: ColNames, filter: Filter): CompositeSpecTable{
+	withFilter(colName: ColNames, filter: Filter): CompositeSpecTable {
 		const table = this.findTable(colName);
-		if(table === undefined) return this;
+		if (table === undefined) return this;
 
 		return CompositeSpecTable.fromTables(
-			this.tables.map(tbl => tbl === table ? table.withFilter(colName, filter) : tbl)
+			this.tables.map((tbl) => (tbl === table ? table.withFilter(colName, filter) : tbl)),
 		).withFilterReflection;
 	}
 
@@ -116,53 +116,57 @@ export default class CompositeSpecTable{
 		const specFilters = [
 			this.basics.ownSpecFilter,
 			this.columnMeta.ownSpecFilter,
-			this.origins.implicitOwnSpecFilter //origins is special, affected by continuous-var filters
+			this.origins.implicitOwnSpecFilter, //origins is special, affected by continuous-var filters
 		];
 
 		function specFilterJoin(excludedIdx: number): Filter {
 			const chosenFilts = specFilters.filter((_, idx) => idx != excludedIdx);
 			const specFilter0 = Filter.and(chosenFilts);
-			return specFilter0 === null
-				? null
-				: specFilter0.length < self.basics.specsCount
-					? specFilter0
-					: null;
+			return (
+				specFilter0 === null ? null
+				: specFilter0.length < self.basics.specsCount ? specFilter0
+				: null
+			);
 		}
 
-		const reflectedTables = this.tables.map((t, idx) => t.withExtraSpecFilter(specFilterJoin(idx)));
+		const reflectedTables = this.tables.map((t, idx) =>
+			t.withExtraSpecFilter(specFilterJoin(idx)),
+		);
 		return CompositeSpecTable.fromTables(reflectedTables);
 	}
 
 	withResetFilters() {
-		return new CompositeSpecTable(this.basics.withResetFilters(), this.columnMeta.withResetFilters(), this.origins.withResetFilters()).withFilterReflection;
+		return new CompositeSpecTable(
+			this.basics.withResetFilters(),
+			this.columnMeta.withResetFilters(),
+			this.origins.withResetFilters(),
+		).withFilterReflection;
 	}
 
 	withOriginsTable(origins: SpecTable<OriginsColNames>): CompositeSpecTable {
 		const newOrigins = origins.withFilters(this.origins.filters);
-		return new CompositeSpecTable(this.basics, this.columnMeta, newOrigins).withFilterReflection;
+		return new CompositeSpecTable(this.basics, this.columnMeta, newOrigins)
+			.withFilterReflection;
 	}
 
 	getFilter(colName: ColNames): Filter {
 		return this.findTable(colName)?.getFilter(colName) ?? null;
 	}
 
-	get hasActiveFilters(): boolean{
-		return this.tables.some(tbl => tbl.hasOwnFilters);
+	get hasActiveFilters(): boolean {
+		return this.tables.some((tbl) => tbl.hasOwnFilters);
 	}
 
-	getDistinctAvailableColValues(colName: ColNames): Value[]{
+	getDistinctAvailableColValues(colName: ColNames): Value[] {
 		return this.findTable(colName)?.getDistinctAvailableColValues(colName) ?? [];
 	}
 
-	getAllDistinctAvailableColValues(colName: ColNames): Value[]{
+	getAllDistinctAvailableColValues(colName: ColNames): Value[] {
 		const table = this.findTable(colName);
-		return table
-			? table.getAllColValues(colName)
-			: [];
+		return table ? table.getAllColValues(colName) : [];
 	}
 
 	getColumnValuesFilter(colName: ColNames): Filter {
 		return this.findTable(colName)?.getColumnValuesFilter(colName) ?? null;
 	}
-
 }

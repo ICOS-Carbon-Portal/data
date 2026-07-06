@@ -1,63 +1,60 @@
 /** @format */
 
-import CartItem, {CartItemSerialized} from './CartItem';
-import {getNewTimeseriesUrl, getLastSegmentInUrl, isDefined} from '../utils';
-import config, {PreviewType} from "../config";
-import deepEqual from 'deep-equal';
-import PreviewLookup, {PreviewInfo} from "./PreviewLookup";
+import CartItem, { CartItemSerialized } from "./CartItem";
+import { getNewTimeseriesUrl, getLastSegmentInUrl, isDefined } from "../utils";
+import config, { PreviewType } from "../config";
+import deepEqual from "deep-equal";
+import PreviewLookup, { PreviewInfo } from "./PreviewLookup";
 import Cart from "./Cart";
-import {ExtendedDobjInfo, KnownDataObject} from "./State";
-import {IdxSig, Sha256Str, UrlStr} from "../backend/declarations";
-import { Value } from './SpecTable';
-
+import { ExtendedDobjInfo, KnownDataObject } from "./State";
+import { IdxSig, Sha256Str, UrlStr } from "../backend/declarations";
+import { Value } from "./SpecTable";
 
 export interface PreviewOption {
-	varTitle: string
-	valTypeLabel: string
+	varTitle: string;
+	valTypeLabel: string;
 }
 
-export function previewVarCompare(po1: PreviewOption, po2: PreviewOption): number{
-	return po1.varTitle.localeCompare(po2.varTitle)
+export function previewVarCompare(po1: PreviewOption, po2: PreviewOption): number {
+	return po1.varTitle.localeCompare(po2.varTitle);
 }
-
 
 const previewSettingsKeys = [
-	'x',
-	'y',
-	'y2',
-	'type',
-	'legendLabels',
-	'legendLabelsY2',
-	'linking',
-	'img',
-	'varName',
-	'extraDim',
-	'date',
-	'gamma',
-	'center',
-	'zoom',
-	'color',
-	'y1',
-	'map'
+	"x",
+	"y",
+	"y2",
+	"type",
+	"legendLabels",
+	"legendLabelsY2",
+	"linking",
+	"img",
+	"varName",
+	"extraDim",
+	"date",
+	"gamma",
+	"center",
+	"zoom",
+	"color",
+	"y1",
+	"map",
 ] as const;
 
 function isPreviewSetting(key: string): key is keyof PreviewSettings {
 	return previewSettingsKeys.includes(key as keyof PreviewSettings);
 }
 
-export type PreviewSettings = Record<typeof previewSettingsKeys[number], string | undefined>;
+export type PreviewSettings = Record<(typeof previewSettingsKeys)[number], string | undefined>;
 
 export interface PreviewSerialized {
-	items: CartItemSerialized[]
-	options: PreviewOption[]
-	type: PreviewType | undefined
-	previewSettings: PreviewSettings
+	items: CartItemSerialized[];
+	options: PreviewOption[];
+	type: PreviewType | undefined;
+	previewSettings: PreviewSettings;
 }
 
 function fromEntries<K extends string, V>(entries: [K, V][]): Record<K, V> {
 	return Object.fromEntries(entries) as Record<K, V>;
 }
-
 
 export default class Preview {
 	public readonly items: CartItem[];
@@ -66,16 +63,18 @@ export default class Preview {
 	public readonly type: PreviewType | undefined;
 	public previewSettings: PreviewSettings;
 
-	constructor(items?: CartItem[], options?: PreviewOption[], type?: PreviewType){
+	constructor(items?: CartItem[], options?: PreviewOption[], type?: PreviewType) {
 		this.items = items ?? [];
-		this.pids = this.items.map(item => getLastSegmentInUrl(item.dobj));
+		this.pids = this.items.map((item) => getLastSegmentInUrl(item.dobj));
 		this.options = options ?? [];
 		this.type = type;
 		this.previewSettings = Preview.buildPreviewSettings(this.item?.urlParams);
 	}
 
 	static buildPreviewSettings(urlParams?: Partial<PreviewSettings>): PreviewSettings {
-		const allowedPreviewSettings: PreviewSettings = fromEntries(previewSettingsKeys.map(k => [k, undefined]));
+		const allowedPreviewSettings: PreviewSettings = fromEntries(
+			previewSettingsKeys.map((k) => [k, undefined]),
+		);
 
 		for (const key in urlParams) {
 			if (isPreviewSetting(key)) {
@@ -87,7 +86,7 @@ export default class Preview {
 
 	get serialize(): PreviewSerialized {
 		return {
-			items: this.items.map(item => item.serialize),
+			items: this.items.map((item) => item.serialize),
 			options: this.options,
 			type: this.type,
 			previewSettings: this.previewSettings,
@@ -95,87 +94,107 @@ export default class Preview {
 	}
 
 	static deserialize(jsonPreview: PreviewSerialized) {
-		const items: CartItem[] = jsonPreview.items.map(item => new CartItem(item.id, item.dataobject, item.type, item.url));
+		const items: CartItem[] = jsonPreview.items.map(
+			(item) => new CartItem(item.id, item.dataobject, item.type, item.url),
+		);
 		const options = jsonPreview.options;
 		const type = jsonPreview.type;
 
 		return new Preview(items, options, type);
 	}
 
-	initPreview(lookup: PreviewLookup, cart: Cart, ids: UrlStr[], objectsTable: KnownDataObject[], yAxis?: string, y2Axis?: string) {
-		const objects = ids.map(id => {
-			const objInfo = objectsTable.find(ot => ot.dobj.endsWith(id));
+	initPreview(
+		lookup: PreviewLookup,
+		cart: Cart,
+		ids: UrlStr[],
+		objectsTable: KnownDataObject[],
+		yAxis?: string,
+		y2Axis?: string,
+	) {
+		const objects = ids.map((id) => {
+			const objInfo = objectsTable.find((ot) => ot.dobj.endsWith(id));
 
 			type OptionWithType = {
-				options: PreviewOption[]
-				type: PreviewType | undefined
-			}
+				options: PreviewOption[];
+				type: PreviewType | undefined;
+			};
 
-			const previewInfo: PreviewInfo | undefined = objInfo
-				? lookup.forDataObjSpec(objInfo.spec)
-				: cart.hasItem(id)
-					? lookup.forDataObjSpec(cart.item(id)!.spec)
-					: undefined;
+			const previewInfo: PreviewInfo | undefined =
+				objInfo ? lookup.forDataObjSpec(objInfo.spec)
+				: cart.hasItem(id) ? lookup.forDataObjSpec(cart.item(id)!.spec)
+				: undefined;
 
-			const options: OptionWithType = previewInfo == undefined
-				? {type: undefined, options: []}
-				: previewInfo.type === "TIMESERIES"
-					? previewInfo
-					: {type: previewInfo.type, options: []};
+			const options: OptionWithType =
+				previewInfo == undefined ? { type: undefined, options: [] }
+				: previewInfo.type === "TIMESERIES" ? previewInfo
+				: { type: previewInfo.type, options: [] };
 
-			const item = objInfo ?
-				new CartItem(id, objInfo, options.type) :
-				undefined;
-			return {options, item};
+			const item = objInfo ? new CartItem(id, objInfo, options.type) : undefined;
+			return { options, item };
 		});
 
 		const options = objects[0].options;
-		objects.map(object => {
-			if(!deepEqual(options, object.options)) {
-				throw new Error('Cannot preview differently structured objects');
+		objects.map((object) => {
+			if (!deepEqual(options, object.options)) {
+				throw new Error("Cannot preview differently structured objects");
 			}
 		});
 
-		const items: CartItem[] = objects.flatMap(o => o.item ?? [])
+		const items: CartItem[] = objects.flatMap((o) => o.item ?? []);
 
-		if (items.length){
-			if (options.type === 'TIMESERIES'){
-					let previewItems = items;
-					const xAxis = config.previewXaxisCols.find(x => options.options.some(op => op.varTitle === x));
-					if(xAxis){
-						const url = getNewTimeseriesUrl(items, xAxis, this.previewSettings);
-						previewItems = items.map(i => i.withUrl(url));
-					}
-					return new Preview(previewItems, options.options, options.type);
-			} else if (options.type === config.NETCDF || options.type === config.MAPGRAPH || options.type === config.PHENOCAM){
+		if (items.length) {
+			if (options.type === "TIMESERIES") {
+				let previewItems = items;
+				const xAxis = config.previewXaxisCols.find((x) =>
+					options.options.some((op) => op.varTitle === x),
+				);
+				if (xAxis) {
+					const url = getNewTimeseriesUrl(items, xAxis, this.previewSettings);
+					previewItems = items.map((i) => i.withUrl(url));
+				}
+				return new Preview(previewItems, options.options, options.type);
+			} else if (
+				options.type === config.NETCDF
+				|| options.type === config.MAPGRAPH
+				|| options.type === config.PHENOCAM
+			) {
 				return new Preview(items, options.options, options.type);
 			}
 		} else {
-			return new Preview(ids.map(id => new CartItem(id)));
+			return new Preview(ids.map((id) => new CartItem(id)));
 		}
 
-		throw new Error('Could not initialize Preview');
+		throw new Error("Could not initialize Preview");
 	}
 
 	restore(lookup: PreviewLookup, cart: Cart, objectsTable: KnownDataObject[]) {
 		if (this.hasPids) {
-			return this.initPreview(lookup, cart, this.pids.map(pid => config.objectUriPrefix[config.envri] + pid), objectsTable);
+			return this.initPreview(
+				lookup,
+				cart,
+				this.pids.map((pid) => config.objectUriPrefix[config.envri] + pid),
+				objectsTable,
+			);
 		} else {
 			return this;
 		}
 	}
 
-	withPids(pids: Sha256Str[], previewSettings?: PreviewSettings){
+	withPids(pids: Sha256Str[], previewSettings?: PreviewSettings) {
 		this.pids = pids;
 		this.previewSettings = Preview.buildPreviewSettings(previewSettings);
 		return this;
 	}
 
-	withItemUrl(url: UrlStr){
-		return new Preview(this.items.map(i => i.withUrl(url)), this.options, this.type);
+	withItemUrl(url: UrlStr) {
+		return new Preview(
+			this.items.map((i) => i.withUrl(url)),
+			this.options,
+			this.type,
+		);
 	}
 
-	get hasPids(){
+	get hasPids() {
 		return this.pids.length > 0;
 	}
 
@@ -183,67 +202,72 @@ export default class Preview {
 		return this.items[0];
 	}
 
-	get hasAllItems(){
-		const itemPids = this.items.map(item => getLastSegmentInUrl(item.dobj));
+	get hasAllItems() {
+		const itemPids = this.items.map((item) => getLastSegmentInUrl(item.dobj));
 
-		return this.hasPids && this.pids.every(pid => itemPids.includes(pid));
+		return this.hasPids && this.pids.every((pid) => itemPids.includes(pid));
 	}
 }
 
 export type PreviewAvailable = {
-	previewType: PreviewType
-}
+	previewType: PreviewType;
+};
 
 export type PreviewNotAvailable = {
-	previewType: null
-	previewAbsenceReason: string
-}
+	previewType: null;
+	previewAbsenceReason: string;
+};
 
-export type PreviewAvailability = PreviewAvailable | PreviewNotAvailable
+export type PreviewAvailability = PreviewAvailable | PreviewNotAvailable;
 
-function noPreview(reason: string): PreviewNotAvailable{
-	return {previewType: null, previewAbsenceReason: reason}
+function noPreview(reason: string): PreviewNotAvailable {
+	return { previewType: null, previewAbsenceReason: reason };
 }
 
 export function previewAvailability(
-	lookup: PreviewLookup | undefined, obj: {spec: string, dobj: string, submTime: Date}
-): PreviewAvailability{
+	lookup: PreviewLookup | undefined,
+	obj: { spec: string; dobj: string; submTime: Date },
+): PreviewAvailability {
+	if (obj.submTime.getTime() > Date.now())
+		return noPreview("This data object is under moratorium");
 
-	if(obj.submTime.getTime() > Date.now())
-		return noPreview("This data object is under moratorium")
+	if (!lookup) return noPreview("Preview information has not loaded");
 
-	if(!lookup) return noPreview("Preview information has not loaded")
+	const previewType = lookup.forDataObjSpec(obj.spec)?.type;
 
-	const previewType = lookup.forDataObjSpec(obj.spec)?.type
+	if (!previewType) return noPreview("This data object cannot be previewed");
 
-	if(!previewType) return noPreview("This data object cannot be previewed")
+	if (
+		previewType === "NETCDF"
+		&& obj.spec !== config.netCdf.cfSpec
+		&& !lookup.hasVarInfo(obj.dobj)
+	)
+		return noPreview("This NetCDF object cannot be previewed");
 
-	if(previewType === "NETCDF" && obj.spec !== config.netCdf.cfSpec && !(lookup.hasVarInfo(obj.dobj)))
-		return noPreview("This NetCDF object cannot be previewed")
-
-	return {previewType}
+	return { previewType };
 }
 
-const onlyUniform = noPreview("Batch previews are only available for data of same type")
+const onlyUniform = noPreview("Batch previews are only available for data of same type");
 
 export function batchPreviewAvailability(
 	lookup: PreviewLookup | undefined,
-	objs: {spec: string, dobj: string, submTime: Date, dataset: Value}[]
+	objs: { spec: string; dobj: string; submTime: Date; dataset: Value }[],
 ): PreviewAvailability {
-	if (!objs.length) return noPreview("No data objects selected")
-	if (objs.length === 1) return previewAvailability(lookup, objs[0])
+	if (!objs.length) return noPreview("No data objects selected");
+	if (objs.length === 1) return previewAvailability(lookup, objs[0]);
 
-	const previewTypes = new Set<PreviewType>()
+	const previewTypes = new Set<PreviewType>();
 
-	if (!objs.every(obj => obj.dataset === objs[0].dataset)) return onlyUniform
+	if (!objs.every((obj) => obj.dataset === objs[0].dataset)) return onlyUniform;
 
-	for(let i = 0; i < objs.length; i++){
-		let preview = previewAvailability(lookup, objs[i])
-		if (!preview.previewType) return noPreview("You have selected a data object that cannot be previewed")
-		previewTypes.add(preview.previewType)
-		if(previewTypes.size > 1) return onlyUniform
+	for (let i = 0; i < objs.length; i++) {
+		let preview = previewAvailability(lookup, objs[i]);
+		if (!preview.previewType)
+			return noPreview("You have selected a data object that cannot be previewed");
+		previewTypes.add(preview.previewType);
+		if (previewTypes.size > 1) return onlyUniform;
 		if (i > 0 && preview.previewType !== config.TIMESERIES)
-			return noPreview("You can only batch-preview plain time series data objects")
+			return noPreview("You can only batch-preview plain time series data objects");
 	}
-	return {previewType: previewTypes.values().next().value!}
+	return { previewType: previewTypes.values().next().value! };
 }

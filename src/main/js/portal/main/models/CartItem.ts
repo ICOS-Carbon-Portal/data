@@ -1,15 +1,15 @@
 /** @format */
 
-import {IdxSig, UrlStr} from "../backend/declarations";
+import { IdxSig, UrlStr } from "../backend/declarations";
 import { PreviewType, themeUris } from "../config";
-import { KnownDataObject} from "./State";
+import { KnownDataObject } from "./State";
 
 export interface CartItemSerialized {
-	id: string
-	dataobject: KnownDataObject | undefined
-	type: PreviewType | undefined
-	url: UrlStr | undefined
-	keyValPairs: Record<string, string | undefined>
+	id: string;
+	dataobject: KnownDataObject | undefined;
+	type: PreviewType | undefined;
+	url: UrlStr | undefined;
+	keyValPairs: Record<string, string | undefined>;
 }
 
 export default class CartItem {
@@ -19,7 +19,7 @@ export default class CartItem {
 	private readonly _url: UrlStr | undefined;
 	private readonly _keyValPairs: Record<string, string | undefined>;
 
-	constructor(id: string, dataobject?: KnownDataObject, type?: PreviewType, url?: string){
+	constructor(id: string, dataobject?: KnownDataObject, type?: PreviewType, url?: string) {
 		this._id = id;
 		this._dataobject = dataobject;
 		this._type = type;
@@ -27,13 +27,13 @@ export default class CartItem {
 		this._keyValPairs = this.deconstructURL(url);
 	}
 
-	get serialize(){
+	get serialize() {
 		return {
 			id: this._id,
 			dataobject: this._dataobject,
 			type: this._type,
 			url: this._url,
-			keyValPairs: this._keyValPairs
+			keyValPairs: this._keyValPairs,
 		};
 	}
 
@@ -54,7 +54,7 @@ export default class CartItem {
 		return {};
 	}
 
-	get hasKeyValPairs(){
+	get hasKeyValPairs() {
 		return Object.getOwnPropertyNames(this._keyValPairs).length > 0;
 	}
 
@@ -82,29 +82,29 @@ export default class CartItem {
 		return this._dataobject?.dataset;
 	}
 
-	get type(){
+	get type() {
 		return this._type;
 	}
 
-	get spec(){
+	get spec() {
 		return this._dataobject?.spec ?? "";
 	}
 
-	get theme(){
+	get theme() {
 		return this._dataobject?.theme ?? "";
 	}
 
-	get size(){
-		return parseInt(this._dataobject?.size || '0');
+	get size() {
+		return parseInt(this._dataobject?.size || "0");
 	}
 
-	get item(){
+	get item() {
 		return this._dataobject;
 	}
 
-	get itemName(){
-		function stripExt(fileName: string){
-			return fileName.slice(0, fileName.lastIndexOf('.'));
+	get itemName() {
+		function stripExt(fileName: string) {
+			return fileName.slice(0, fileName.lastIndexOf("."));
 		}
 
 		return this._dataobject ? stripExt(this._dataobject.fileName) : "";
@@ -114,7 +114,7 @@ export default class CartItem {
 		return this.itemName;
 	}
 
-	get url(){
+	get url() {
 		return this._url;
 	}
 
@@ -130,7 +130,7 @@ export default class CartItem {
 		return new Date(this._dataobject?.timeEnd ?? "");
 	}
 
-	get submTime(){
+	get submTime() {
 		return new Date(this._dataobject?.submTime ?? "");
 	}
 
@@ -142,52 +142,60 @@ export default class CartItem {
 		return this._keyValPairs[key];
 	}
 
-	withUrl(url: string){
+	withUrl(url: string) {
 		return new CartItem(this._id, this._dataobject, this._type, url);
 	}
 
-	deleteKeyValPair(key: string){
+	deleteKeyValPair(key: string) {
 		delete this._keyValPairs[key];
 	}
 
-	getValue(key: string){
+	getValue(key: string) {
 		return this._keyValPairs[key];
 	}
 
-	getNewUrl(keyVal: Record<string, string | undefined>){
+	getNewUrl(keyVal: Record<string, string | undefined>) {
 		const newKeyVal = Object.assign(this._keyValPairs, keyVal);
-		if (newKeyVal.hasOwnProperty('y2')
-			&& newKeyVal['y2'] !== undefined
-			&& newKeyVal.hasOwnProperty('legendLabels')
-			&& newKeyVal['legendLabels'] !== undefined) {
-			Object.assign(newKeyVal, {legendLabelsY2: newKeyVal.legendLabels});
+		if (
+			newKeyVal.hasOwnProperty("y2")
+			&& newKeyVal["y2"] !== undefined
+			&& newKeyVal.hasOwnProperty("legendLabels")
+			&& newKeyVal["legendLabels"] !== undefined
+		) {
+			Object.assign(newKeyVal, { legendLabelsY2: newKeyVal.legendLabels });
 		}
 
-		const host = new URL('/dygraph-light', document.baseURI).href;
+		const host = new URL("/dygraph-light", document.baseURI).href;
 
-		return `${host}/?` + Object.entries(newKeyVal)
-			.filter((param): param is [string, string] => param[1] !== undefined)
-			.map((param) => `${param[0]}=${encodeURIComponent(decodeURIComponent(param[1]))}`)
-			.join('&');
+		return (
+			`${host}/?`
+			+ Object.entries(newKeyVal)
+				.filter((param): param is [string, string] => param[1] !== undefined)
+				.map((param) => `${param[0]}=${encodeURIComponent(decodeURIComponent(param[1]))}`)
+				.join("&")
+		);
 	}
 }
 
 export type CartProhibition = {
-	allowCartAdd: boolean
-	uiMessage?: string
-}
+	allowCartAdd: boolean;
+	uiMessage?: string;
+};
 
 export function addingToCartProhibition(dobj: KnownDataObject | undefined): CartProhibition {
-	if(dobj === undefined) {
-		return { allowCartAdd: false, uiMessage: "This data object has not yet been loaded" }
+	if (dobj === undefined) {
+		return { allowCartAdd: false, uiMessage: "This data object has not yet been loaded" };
 	}
 
-	if(dobj.submTime.getTime() > Date.now()) {
-		return { allowCartAdd: false, uiMessage: "This data object is under moratorium" }
+	if (dobj.submTime.getTime() > Date.now()) {
+		return { allowCartAdd: false, uiMessage: "This data object is under moratorium" };
 	}
 
 	if (dobj.level === 0 && dobj.theme === themeUris.atmospheric) {
-		return { allowCartAdd: false, uiMessage: "Raw atmospheric data are only available on request at the moment" };
+		return {
+			allowCartAdd: false,
+			uiMessage: "Raw atmospheric data are only available on request at the moment",
+		};
 	}
 
 	return { allowCartAdd: true };

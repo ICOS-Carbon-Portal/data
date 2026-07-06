@@ -3,7 +3,7 @@
 import { TemporalFilterRequest } from "./FilterRequest";
 import config from "../config";
 
-export type SerializedFilterTemporal = { df?: string, dt?: string, sf?: string, st?: string }
+export type SerializedFilterTemporal = { df?: string; dt?: string; sf?: string; st?: string };
 const defaultMaxSamplingDate = config.features.setMaxSamplingDateToToday ? new Date() : undefined;
 
 export default class FilterTemporal {
@@ -29,9 +29,9 @@ export default class FilterTemporal {
 	static deserialize(jsonFilterTemporal: SerializedFilterTemporal) {
 		return new FilterTemporal(
 			new FromToDates(jsonFilterTemporal.df, jsonFilterTemporal.dt, defaultMaxSamplingDate),
-			new FromToDates(jsonFilterTemporal.sf, jsonFilterTemporal.st, new Date())
+			new FromToDates(jsonFilterTemporal.sf, jsonFilterTemporal.st, new Date()),
 		);
-	};
+	}
 
 	withDataTimeFrom(from: PotentialDate) {
 		return new FilterTemporal(this._dataTime.withFrom(from), this._submission);
@@ -57,16 +57,16 @@ export default class FilterTemporal {
 
 			return Object.keys(dates).reduce<FilterTemporal>((acc, key) => {
 				switch (key) {
-					case 'df':
+					case "df":
 						return acc.withDataTimeFrom(new Date(dates[key] as string));
 
-					case 'dt':
+					case "dt":
 						return acc.withDataTimeTo(new Date(dates[key] as string));
 
-					case 'sf':
+					case "sf":
 						return acc.withSubmissionFrom(new Date(dates[key] as string));
 
-					case 'st':
+					case "st":
 						return acc.withSubmissionTo(new Date(dates[key] as string));
 
 					default:
@@ -87,24 +87,29 @@ export default class FilterTemporal {
 	get filters(): TemporalFilterRequest[] {
 		return [
 			{
-				category: 'dataTime',
+				category: "dataTime",
 				from: this._dataTime.from,
 				fromDateTimeStr: this._dataTime.fromDateTimeStr,
 				to: this._dataTime.to,
-				toDateTimeStr: this._dataTime.toDateTimeStr
+				toDateTimeStr: this._dataTime.toDateTimeStr,
 			},
 			{
-				category: 'submission',
+				category: "submission",
 				from: this._submission.from,
 				fromDateTimeStr: this._submission.fromDateTimeStr,
 				to: this._submission.to,
-				toDateTimeStr: this._submission.toDateTimeStr
-			}
-		]
+				toDateTimeStr: this._submission.toDateTimeStr,
+			},
+		];
 	}
 
 	get hasFilter() {
-		return !!this._dataTime.from || !!this._dataTime.to || !!this._submission.from || !!this._submission.to;
+		return (
+			!!this._dataTime.from
+			|| !!this._dataTime.to
+			|| !!this._submission.from
+			|| !!this._submission.to
+		);
 	}
 }
 
@@ -163,7 +168,5 @@ export class FromToDates {
 const createDate = (potentialDate: PotentialDate) => {
 	if (potentialDate === undefined) return undefined;
 
-	return potentialDate instanceof Date
-		? potentialDate
-		: new Date(potentialDate);
+	return potentialDate instanceof Date ? potentialDate : new Date(potentialDate);
 };
