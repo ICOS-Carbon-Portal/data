@@ -2,21 +2,24 @@ import React, { Component } from 'react';
 import './styles.css';
 import { getRowSwitch } from './TableRow';
 
-const PLACEHOLDER_ROW_COUNT = 10;
-const PLACEHOLDER_COL_RANGES = [[6, 9], [4, 7], [2, 4]];
-
-const PlaceholderRows = ({ colCount }) => {
+const PlaceholderRows = ({ colCount, rowCount }) => {
 	const rows = React.useMemo(() =>
-		Array.from({ length: PLACEHOLDER_ROW_COUNT }, (_, i) => (
+		Array.from({ length: rowCount }, (_, i) => (
 			<tr key={'ph-' + i}>
 				{Array.from({ length: colCount }, (_, j) => {
-					const [min, max] = PLACEHOLDER_COL_RANGES[Math.min(j, PLACEHOLDER_COL_RANGES.length - 1)];
-					const width = Math.floor(Math.random() * (max - min + 1)) + min;
-					return <td key={j}><span className={`placeholder col-${width}`} /></td>;
+					if (j === 0) {
+						const pxWidth = Math.floor(Math.random() * 180) + 200; // 200–380px
+						return <td key={j}><span className="placeholder" style={{width: `${pxWidth}px`}} /></td>;
+					}
+					if (j === colCount - 1) {
+						const chWidth = rowCount === 1 ? 5 : 5 - Math.round(i * 4 / (rowCount - 1)); // 5ch→1ch: count col, decreasing
+						return <td key={j}><span className="placeholder" style={{width: `${chWidth}ch`}} /></td>;
+					}
+					return <td key={j}><span className="placeholder" style={{width: '200px'}} /></td>;
 				})}
 			</tr>
 		)),
-		[colCount]
+		[colCount, rowCount]
 	);
 	return rows;
 };
@@ -34,6 +37,7 @@ export default class DobjTable extends Component {
 	render() {
 		const { dataList, paging, requestPage, panelTitle, tableHeaders, disablePaging, hasHashIdFilter, updateTableWithFilter } = this.props;
 		const isLoading = dataList === undefined;
+		const rowCount = disablePaging ? 5 : paging.pagesize;
 		const RowSwitch = dataList && dataList.length ? getRowSwitch(dataList[0], updateTableWithFilter) : undefined;
 
 		return (
@@ -52,7 +56,7 @@ export default class DobjTable extends Component {
 						<tbody>
 							<TableHeaders tableHeaders={tableHeaders} />
 							{isLoading
-								? <PlaceholderRows colCount={tableHeaders.length} />
+								? <PlaceholderRows colCount={tableHeaders.length} rowCount={rowCount} />
 								: RowSwitch && dataList.map((stat, idx) => <RowSwitch key={'row-' + idx} dobj={stat} onFileNameClick={this.onFileNameClick.bind(this)} />)
 							}
 						</tbody>
@@ -74,8 +78,15 @@ const Paging = ({ isLoading, hasHashIdFilter, disablePaging, paging, requestPage
 
 	if (isLoading) {
 		return (
-			<div className="card-header">
-				<h5 style={{display:'inline'}}>{panelTitle}</h5>
+			<div className="card-header placeholder-glow">
+				<h5 style={{display:'flex', alignItems:'center', gap:'5px'}}>
+					{panelTitle}
+					<span className="placeholder" style={{width:'1ch'}} />
+					to
+					<span className="placeholder" style={{width:'3ch'}} />
+					of
+					<span className="placeholder" style={{width:'6ch'}} />
+				</h5>
 			</div>
 		);
 	}
