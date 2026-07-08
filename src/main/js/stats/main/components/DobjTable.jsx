@@ -51,7 +51,7 @@ export default class DobjTable extends Component {
 					panelTitle={panelTitle}
 				/>
 
-				<div className="card-body table-responsive placeholder-glow" style={{ clear: 'both' }}>
+				<div className={`card-body table-responsive${isLoading ? ' placeholder-glow' : ''}`} style={{ clear: 'both' }}>
 					<table className="table">
 						<tbody>
 							<TableHeaders tableHeaders={tableHeaders} />
