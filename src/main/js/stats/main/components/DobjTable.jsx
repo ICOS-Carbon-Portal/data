@@ -79,7 +79,7 @@ const Paging = ({ isLoading, hasHashIdFilter, disablePaging, paging, requestPage
 	if (isLoading) {
 		return (
 			<div className="card-header placeholder-glow">
-				<h5 style={{display:'flex', alignItems:'center', gap:'5px'}}>
+				<h5 className="d-flex align-items-center" style={{gap:'5px'}}>
 					{panelTitle}
 					<span className="placeholder" style={{width:'1ch'}} />
 					to
