@@ -49,35 +49,64 @@ export default function Filters({ filters, downloadStats, resetFilters, updateTa
 	);
 }
 
+const LOADING_FILTER_NAMES = [
+	'specification', 'project', 'dataLevel', 'stations',
+	'contributors', 'submitters', 'dlfrom', 'dataOriginCountries'
+];
+
+const inputPlaceholder = (width = 'w-100') =>
+	<span className={`placeholder d-block ${width}`} style={{height: '38px', borderRadius: '4px'}} />;
+
 const PanelBody = ({ hasHashIdFilter, filters, downloadStats, updateTableWithFilter, temporalFilterUpdate, grayDownloadFilterUpdate }) => {
-	if (filters && filters.length) {
-		const temporalFilters = {
-			name: 'dlDates',
-			values: downloadStats.temporalFilters
-		}
-
+	if (!filters || !(filters.length > 0)) {
 		return (
-			<>
-				{filters.filter(f => f.values && f.values.length && (!hasHashIdFilter || f.displayFilterForSingleObject)).map((filter, idx) =>
-					<Row key={idx} filter={filter} downloadStats={downloadStats} updateTableWithFilter={updateTableWithFilter} />
-				)}
-				<Filter placeholder="Download dates" filter={temporalFilters} value={[]}>
-					<PickDates filterTemporal={temporalFilters.values} setFilterTemporal={temporalFilterUpdate} />
-				</Filter>
-				<Filter placeholder="Search options" filter="" value={[]}>
-					<CheckButton
-						name={"includeGrayDl"}
-						grayDownloadFilterUpdate={grayDownloadFilterUpdate}
-						isChecked={downloadStats.grayDownloadFilter}
-						text={'Include gray listed IPs'}
-					/>
-				</Filter>
-			</>
+			<div className="placeholder-glow">
+				{LOADING_FILTER_NAMES.map(name => (
+					<div className="row mt-2" key={name}>
+						<label className="col-lg-4 col-form-label">{placeholders[name]}</label>
+						<div className="col-lg-8">{inputPlaceholder()}</div>
+					</div>
+				))}
+				<div className="row mt-2">
+					<label className="col-lg-4 col-form-label">{placeholders.dlDates}</label>
+					<div className="col-lg-8 d-flex flex-column gap-2">
+						{inputPlaceholder('w-75')}
+						{inputPlaceholder('w-75')}
+					</div>
+				</div>
+				<div className="row mt-2">
+					<label className="col-lg-4 col-form-label">Search options</label>
+					<div className="col-lg-8 d-flex align-items-center">
+						<span className="placeholder d-block" style={{height: '20px', width: '180px', borderRadius: '4px'}} />
+					</div>
+				</div>
+			</div>
 		);
-
-	} else {
-		return null;
 	}
+
+	const temporalFilters = {
+		name: 'dlDates',
+		values: downloadStats.temporalFilters
+	};
+
+	return (
+		<>
+			{filters.filter(f => f.values && f.values.length && (!hasHashIdFilter || f.displayFilterForSingleObject)).map((filter, idx) =>
+				<Row key={idx} filter={filter} downloadStats={downloadStats} updateTableWithFilter={updateTableWithFilter} />
+			)}
+			<Filter placeholder="Download dates" filter={temporalFilters} value={[]}>
+				<PickDates filterTemporal={temporalFilters.values} setFilterTemporal={temporalFilterUpdate} />
+			</Filter>
+			<Filter placeholder="Search options" filter="" value={[]}>
+				<CheckButton
+					name={"includeGrayDl"}
+					grayDownloadFilterUpdate={grayDownloadFilterUpdate}
+					isChecked={downloadStats.grayDownloadFilter}
+					text={'Include gray listed IPs'}
+				/>
+			</Filter>
+		</>
+	);
 };
 
 const Row = ({ filter, downloadStats, updateTableWithFilter }) => {
