@@ -17,6 +17,7 @@ type incommingProps = {
 	updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void
 	updateMapSelectedSRID: UpdateMapSelectedSRID
 	removeMapRect: () => void
+	clearAllFilters: () => void
 }
 type OurProps = StateProps & DispatchProps & incommingProps
 
@@ -40,7 +41,7 @@ class SearchResultMap extends Component<OurProps> {
 	render() {
 		return (
 			<>
-				<ActiveFilters removeMapRect={this.props.removeMapRect} />
+				<ActiveFilters removeMapRect={this.props.removeMapRect} clearAllFilters={this.props.clearAllFilters} />
 
 				<div id="map" style={{ width: '100%', height: '90vh', position:'relative' }} tabIndex={1}>
 					<div id="stationFilterCtrl" className="ol-control ol-layer-control-ur" style={{ top: 70, fontSize: 20 }}></div>

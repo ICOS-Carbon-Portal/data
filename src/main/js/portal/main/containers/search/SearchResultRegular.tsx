@@ -24,6 +24,7 @@ type IncomingActions = {
 	handleAddToCart: (objInfo: UrlStr[]) => void
 	handleAllCheckboxesChange: () => void
 	removeMapRect: () => void
+	clearAllFilters: () => void
 }
 type OurProps = StateProps & DispatchProps & IncomingActions & {tabHeader: string};
 
@@ -39,7 +40,7 @@ function SearchResultRegular(props: OurProps) {
 	const {preview, objectsTable, previewLookup, paging, sorting, searchOptions,
 		toggleSort, requestStep, labelLookup, checkedObjectsInSearch, extendedDobjInfo,
 		updateCheckedObjects, handlePreview, handleAddToCart,
-		handleAllCheckboxesChange, getAllFilteredDataObjects, exportQuery, user, removeMapRect } = props;
+		handleAllCheckboxesChange, getAllFilteredDataObjects, exportQuery, user, removeMapRect, clearAllFilters } = props;
 
 	const objectText = checkedObjectsInSearch.length <= 1 ? "object" : "objects";
 	const checkedUriSet = new Set<string>(checkedObjectsInSearch);
@@ -50,7 +51,7 @@ function SearchResultRegular(props: OurProps) {
 
 	return (
 		<div className="card">
-			<ActiveFilters removeMapRect={removeMapRect} />
+			<ActiveFilters removeMapRect={removeMapRect} clearAllFilters={clearAllFilters} />
 
 			<Paging
 				searchOptions={searchOptions}

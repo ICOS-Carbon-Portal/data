@@ -108,6 +108,15 @@ ul.dashed > li:before {
 	}
 }
 
+.active-filter-tag-warning {
+	background-color: var(--bs-warning);
+	cursor: pointer;
+
+	.fa-trash {
+		margin-left: 6px;
+	}
+}
+
 .dropdown-details .dropdown {
 	position: absolute;
 	top: auto;

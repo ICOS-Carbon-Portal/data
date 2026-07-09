@@ -22,6 +22,7 @@ type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
 type IncomingProps = {
 	removeMapRect: () => void
+	clearAllFilters: () => void
 }
 
 type OurProps = StateProps & DispatchProps & IncomingProps;
@@ -51,7 +52,7 @@ function ActiveFilters(props: OurProps) {
 	const {
 		specTable, filterTemporal, filterNumbers, filterKeywords, filterAdvancedText, filterAdvancedType,
 		filterPids, tabs, spatialRects, labelLookup, countryCodesLookup,
-		updateFilter, setFilterTemporal, setNumberFilter, setKeywordFilter, updateAdvanced, removeMapRect
+		updateFilter, setFilterTemporal, setNumberFilter, setKeywordFilter, updateAdvanced, removeMapRect, clearAllFilters
 	} = props;
 
 	const groups: TagGroup[] = [];
@@ -171,6 +172,10 @@ function ActiveFilters(props: OurProps) {
 			{groups.map(group => (
 				<FilterTagGroup key={group.key} label={group.label} values={group.values} onRemoveAll={group.onRemoveAll} />
 			))}
+			<span className="active-filter-tag active-filter-tag-warning" onClick={clearAllFilters}>
+				Clear all
+				<i className="fas fa-trash" />
+			</span>
 		</div>
 	);
 }

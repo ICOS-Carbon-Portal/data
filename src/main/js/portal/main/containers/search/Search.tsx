@@ -131,7 +131,7 @@ class Search extends Component<OurProps, OurState> {
 
 					<div style={expandedFilters}>
 						<Tabs tabName="searchTab" selectedTabId={tabs.searchTab} switchTab={switchTab}>
-							<Filters tabHeader="Filters" handleFilterReset={this.handleFilterReset.bind(this)} />
+							<Filters tabHeader="Filters" />
 							<Advanced tabHeader="Advanced" />
 						</Tabs>
 					</div>
@@ -146,11 +146,13 @@ class Search extends Component<OurProps, OurState> {
 							handleAddToCart={this.handleAddToCart.bind(this)}
 							handleAllCheckboxesChange={this.handleAllCheckboxesChange.bind(this)}
 							removeMapRect={this.handleRemoveMapRect.bind(this)}
+							clearAllFilters={this.handleFilterReset.bind(this)}
 						/>
 						<SearchResultCompact
 							tabHeader="Compact view"
 							handlePreview={this.handlePreview.bind(this)}
 							removeMapRect={this.handleRemoveMapRect.bind(this)}
+							clearAllFilters={this.handleFilterReset.bind(this)}
 						/>
 						<SearchResultMap
 							key={srid}
@@ -159,6 +161,7 @@ class Search extends Component<OurProps, OurState> {
 							updatePersistedMapProps={this.updatePersistedMapProps.bind(this)}
 							updateMapSelectedSRID={this.updateMapSelectedSRID.bind(this)}
 							removeMapRect={this.handleRemoveMapRect.bind(this)}
+							clearAllFilters={this.handleFilterReset.bind(this)}
 						/>
 					</Tabs>
 				</div>
