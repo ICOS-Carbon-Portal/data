@@ -172,7 +172,8 @@ export const fetchKnownDataObjects = (dobjs: string[]) => {
 };
 
 export function matchesNoResults(options: QueryParameters) {
-	return Filter.allowsNothing(options.specs) || Filter.allowsNothing(options.submitters) || Filter.allowsNothing(options.stations);
+	return (Filter.allowsNothing(options.specs) || Filter.allowsNothing(options.submitters) ||
+		Filter.allowsNothing(options.stations) || Filter.allowsNothing(options.sites));
 }
 
 export function fetchFilteredDataObjects(options: QueryParameters){
