@@ -6,6 +6,7 @@ import { PortalDispatch } from '../../store';
 import { failWithError } from '../../actions/common';
 import { Value } from '../../models/SpecTable';
 import { Copyright } from 'icos-cp-copyright';
+import ActiveFilters from './ActiveFilters';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -15,6 +16,7 @@ type incommingProps = {
 	persistedMapProps: PersistedMapPropsExtended
 	updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void
 	updateMapSelectedSRID: UpdateMapSelectedSRID
+	removeMapRect: () => void
 }
 type OurProps = StateProps & DispatchProps & incommingProps
 
@@ -37,22 +39,26 @@ class SearchResultMap extends Component<OurProps> {
 
 	render() {
 		return (
-			<div id="map" style={{ width: '100%', height: '90vh', position:'relative' }} tabIndex={1}>
-				<div id="stationFilterCtrl" className="ol-control ol-layer-control-ur" style={{ top: 70, fontSize: 20 }}></div>
-				<div id="popover" className="ol-popup"></div>
-				<div id="projSwitchCtrl" className="ol-layer-control ol-layer-control-lr" style={{ zIndex: 99, marginRight: 10, padding: 0 }}></div>
-				<div id="layerCtrl" className="ol-layer-control ol-layer-control-ur"></div>
-				<div id="attribution" className="ol-attribution ol-unselectable ol-control ol-uncollapsible" style={{right: 15}}>
-					<ul>
-						<li>
-							<Copyright />
-						</li>
-					</ul>
-					<ul>
-						<li id="baseMapAttribution" />
-					</ul>
+			<>
+				<ActiveFilters removeMapRect={this.props.removeMapRect} />
+
+				<div id="map" style={{ width: '100%', height: '90vh', position:'relative' }} tabIndex={1}>
+					<div id="stationFilterCtrl" className="ol-control ol-layer-control-ur" style={{ top: 70, fontSize: 20 }}></div>
+					<div id="popover" className="ol-popup"></div>
+					<div id="projSwitchCtrl" className="ol-layer-control ol-layer-control-lr" style={{ zIndex: 99, marginRight: 10, padding: 0 }}></div>
+					<div id="layerCtrl" className="ol-layer-control ol-layer-control-ur"></div>
+					<div id="attribution" className="ol-attribution ol-unselectable ol-control ol-uncollapsible" style={{right: 15}}>
+						<ul>
+							<li>
+								<Copyright />
+							</li>
+						</ul>
+						<ul>
+							<li id="baseMapAttribution" />
+						</ul>
+					</div>
 				</div>
-			</div>
+			</>
 		);
 	}
 

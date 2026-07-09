@@ -8,12 +8,14 @@ import {addToCart, removeFromCart} from "../../actions/common";
 import config, {timezone} from "../../config";
 import {Paging} from "../../components/buttons/Paging";
 import SearchResultCompactRow from "../../components/searchResult/SearchResultCompactRow";
+import ActiveFilters from './ActiveFilters';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
 type IncomingActions = {
 	handlePreview: (id: UrlStr[]) => void
+	removeMapRect: () => void
 }
 type OurProps = StateProps & DispatchProps & IncomingActions & {tabHeader: string};
 
@@ -28,11 +30,13 @@ class SearchResultCompact extends Component<OurProps> {
 	render(){
 		const {preview, cart, objectsTable, addToCart, lookup, paging, sorting, searchOptions,
 			toggleSort, requestStep, removeFromCart, handlePreview,
-			getAllFilteredDataObjects, exportQuery, extendedDobjInfo, user} = this.props;
+			getAllFilteredDataObjects, exportQuery, extendedDobjInfo, user, removeMapRect} = this.props;
 		const sortProps: SortProps = {sorting, toggleSort};
 
 		return (
 			<div className="card">
+				<ActiveFilters removeMapRect={removeMapRect} />
+
 				<Paging
 					searchOptions={searchOptions}
 					type="header"

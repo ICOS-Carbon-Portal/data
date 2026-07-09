@@ -162,12 +162,14 @@ const FilterCtrl: React.FunctionComponent<FilterCtrl> = props => {
 	}
 };
 
+export function getCategoryValueText(filterName: FilterName, value: string | number, countryCodesLookup: Record<string, string>, labelLookup: LabelLookup) {
+	return filterName === 'countryCode'
+		? countryCodesLookup[value]
+		: labelLookup[value]?.label;
+}
+
 function getDataValue(filterName: FilterName, specTable: CompositeSpecTable, countryCodesLookup: Record<string,string>, labelLookup: LabelLookup){
-	const getText = (value: string | number) => {
-		return filterName === 'countryCode'
-			? countryCodesLookup[value]
-			: labelLookup[value]?.label;
-	};
+	const getText = (value: string | number) => getCategoryValueText(filterName, value, countryCodesLookup, labelLookup);
 
 	const name = filterName as CategoryType;
 	const filterUris = specTable.getFilter(name)?.filter(isDefined) ?? [];

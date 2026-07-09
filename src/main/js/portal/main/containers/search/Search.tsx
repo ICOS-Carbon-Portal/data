@@ -81,6 +81,11 @@ class Search extends Component<OurProps, OurState> {
 		this.props.filtersReset();
 	}
 
+	handleRemoveMapRect() {
+		this.persistedMapProps = {...this.persistedMapProps, drawFeatures: []};
+		this.props.setMapProps(this.persistedMapProps);
+	}
+
 	updatePersistedMapProps(persistedMapProps: PersistedMapPropsExtended) {
 		this.persistedMapProps = { ...this.persistedMapProps, ...persistedMapProps };
 		this.props.setMapProps(this.persistedMapProps);
@@ -140,10 +145,12 @@ class Search extends Component<OurProps, OurState> {
 							handlePreview={this.handlePreview.bind(this)}
 							handleAddToCart={this.handleAddToCart.bind(this)}
 							handleAllCheckboxesChange={this.handleAllCheckboxesChange.bind(this)}
+							removeMapRect={this.handleRemoveMapRect.bind(this)}
 						/>
 						<SearchResultCompact
 							tabHeader="Compact view"
 							handlePreview={this.handlePreview.bind(this)}
+							removeMapRect={this.handleRemoveMapRect.bind(this)}
 						/>
 						<SearchResultMap
 							key={srid}
@@ -151,6 +158,7 @@ class Search extends Component<OurProps, OurState> {
 							persistedMapProps={this.persistedMapProps}
 							updatePersistedMapProps={this.updatePersistedMapProps.bind(this)}
 							updateMapSelectedSRID={this.updateMapSelectedSRID.bind(this)}
+							removeMapRect={this.handleRemoveMapRect.bind(this)}
 						/>
 					</Tabs>
 				</div>
