@@ -166,9 +166,6 @@ function ActiveFilters(props: OurProps) {
 
 	return (
 		<div className="active-filters d-flex flex-wrap border-bottom">
-			<span className="active-filters-label">
-				<i className="fas fa-filter" /> Active filters
-			</span>
 			{groups.map(group => (
 				<FilterTagGroup key={group.key} label={group.label} values={group.values} onRemoveAll={group.onRemoveAll} />
 			))}
