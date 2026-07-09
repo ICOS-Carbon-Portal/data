@@ -32,6 +32,8 @@ const advancedFilterTypeLabels: {[key in AdvancedFilter]: string} = {
 	filename: 'File name'
 };
 
+const collapseThreshold = 4;
+
 type TagValue = {
 	key: string
 	text: string
@@ -42,6 +44,7 @@ type TagGroup = {
 	key: string
 	label: string
 	values: TagValue[]
+	onRemoveAll?: () => void
 }
 
 function ActiveFilters(props: OurProps) {
@@ -77,7 +80,8 @@ function ActiveFilters(props: OurProps) {
 					key: `${colName}:${value}`,
 					text: getCategoryValueText(categoryName, value, countryCodesLookup, labelLookup) ?? String(value),
 					onRemove: () => updateFilter(colName, filterValues.filter(v => v !== value))
-				}))
+				})),
+				onRemoveAll: () => updateFilter(colName, [])
 			});
 		});
 
@@ -89,7 +93,8 @@ function ActiveFilters(props: OurProps) {
 					key: `keyword:${keyword}`,
 					text: keyword,
 					onRemove: () => setKeywordFilter(filterKeywords.filter(k => k !== keyword))
-				}))
+				})),
+				onRemoveAll: () => setKeywordFilter([])
 			});
 		}
 
@@ -163,7 +168,9 @@ function ActiveFilters(props: OurProps) {
 			<span className="active-filters-label">
 				<i className="fas fa-filter" /> Active filters
 			</span>
-			{groups.map(group => <FilterTagGroup key={group.key} label={group.label} values={group.values} />)}
+			{groups.map(group => (
+				<FilterTagGroup key={group.key} label={group.label} values={group.values} onRemoveAll={group.onRemoveAll} />
+			))}
 		</div>
 	);
 }
@@ -171,13 +178,19 @@ function ActiveFilters(props: OurProps) {
 type FilterTagGroupProps = {
 	label: string
 	values: TagValue[]
+	onRemoveAll?: () => void
 }
 
-function FilterTagGroup({label, values}: FilterTagGroupProps) {
+function FilterTagGroup({label, values, onRemoveAll}: FilterTagGroupProps) {
+	const isCollapsed = onRemoveAll !== undefined && values.length >= collapseThreshold;
+
 	return (
 		<div className="active-filter-group">
 			<span className="active-filter-category">{label}</span>
-			{values.map(value => <FilterTag key={value.key} label={value.text} onRemove={value.onRemove} />)}
+			{isCollapsed
+				? <FilterTag label={`${values.length} items`} onRemove={onRemoveAll} />
+				: values.map(value => <FilterTag key={value.key} label={value.text} onRemove={value.onRemove} />)
+			}
 		</div>
 	);
 }
