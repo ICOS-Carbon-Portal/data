@@ -1,6 +1,6 @@
 import {PortalThunkAction} from "../store";
 import SpecTable, {Filter, Value} from "../models/SpecTable";
-import {AdvancedFilter, State, TabsState, WhoAmI} from "../models/State";
+import {AdvancedFilter, State, WhoAmI} from "../models/State";
 import * as Payloads from "../reducers/actionpayloads";
 import {isInPidFilteringMode} from "../reducers/utils";
 import config from "../config";
@@ -36,11 +36,14 @@ import {PersistedMapPropsExtended} from "../models/InitMap";
 import scopedKeywords from "../backend/scopedKeywords";
 
 
-export default function bootstrapSearch(user: WhoAmI,tabs: TabsState): PortalThunkAction<void> {
+export default function bootstrapSearch(user: WhoAmI): PortalThunkAction<void> {
 	return (dispatch, getState) => {
 		const filters = getFilters(getState());
 		dispatch(getBackendTables(filters)).then(_ => {
-			dispatch(getFilteredDataObjects);
+			// Advanced tab boostraps its own results, so skip if on that tab
+			if (getState().tabs.searchTab !== 1) {
+				dispatch(getFilteredDataObjects);
+			}
 		});
 
 		dispatch(new Payloads.BootstrapRouteSearch());
