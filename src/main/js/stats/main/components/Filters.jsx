@@ -54,33 +54,38 @@ const LOADING_FILTER_NAMES = [
 	'contributors', 'submitters', 'dlfrom', 'dataOriginCountries'
 ];
 
-const inputPlaceholder = (width = 'w-100') =>
-	<span className={`placeholder d-block ${width}`} style={{height: '38px', borderRadius: '4px'}} />;
-
 const PanelBody = ({ hasHashIdFilter, filters, downloadStats, updateTableWithFilter, temporalFilterUpdate, grayDownloadFilterUpdate }) => {
 	if (!filters || !(filters.length > 0)) {
 		return (
-			<div className="placeholder-glow">
+			<>
 				{LOADING_FILTER_NAMES.map(name => (
-					<div className="row mt-2" key={name}>
-						<label className="col-lg-4 col-form-label">{placeholders[name]}</label>
-						<div className="col-lg-8">{inputPlaceholder()}</div>
-					</div>
+					<Filter key={name} placeholder={placeholders[name]} filter={{name}} disabled={true} value={[]} />
 				))}
-				<div className="row mt-2">
-					<label className="col-lg-4 col-form-label">{placeholders.dlDates}</label>
-					<div className="col-lg-8 d-flex flex-column gap-2">
-						{inputPlaceholder('w-75')}
-						{inputPlaceholder('w-75')}
+				<Filter placeholder={placeholders.dlDates} filter={{name: 'dlDates'}} value={[]}>
+					<div className="row">
+						<div className="col-md-12">
+							<div className="row mb-3">
+								<label className="col-lg-4 col-form-label">From</label>
+								<div className="col-lg-8">
+									<input className="form-control" type="date" disabled />
+								</div>
+							</div>
+							<div className="row mb-3">
+								<label className="col-lg-4 col-form-label">To</label>
+								<div className="col-lg-8">
+									<input className="form-control" type="date" disabled />
+								</div>
+							</div>
+						</div>
 					</div>
-				</div>
-				<div className="row mt-2">
-					<label className="col-lg-4 col-form-label">Search options</label>
-					<div className="col-lg-8 d-flex align-items-center">
-						<span className="placeholder d-block" style={{height: '20px', width: '180px', borderRadius: '4px'}} />
-					</div>
-				</div>
-			</div>
+				</Filter>
+				<Filter placeholder="Search options" filter={{name: 'searchOptions'}} value={[]}>
+					<label className="col-form-label">
+						<input className="form-check-input" type="checkbox" disabled readOnly />
+						<span className="ms-2">Include gray listed IPs</span>
+					</label>
+				</Filter>
+			</>
 		);
 	}
 
