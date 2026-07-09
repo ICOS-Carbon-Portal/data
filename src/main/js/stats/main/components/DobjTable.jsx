@@ -2,6 +2,28 @@ import React, { Component } from 'react';
 import './styles.css';
 import { getRowSwitch } from './TableRow';
 
+const PlaceholderRows = ({ colCount, rowCount }) => {
+	const rows = React.useMemo(() =>
+		Array.from({ length: rowCount }, (_, i) => (
+			<tr key={'ph-' + i}>
+				{Array.from({ length: colCount }, (_, j) => {
+					if (j === 0) {
+						const pxWidth = Math.floor(Math.random() * 180) + 200; // 200–380px
+						return <td key={j}><span className="placeholder" style={{width: `${pxWidth}px`}} /></td>;
+					}
+					if (j === colCount - 1) {
+						const chWidth = rowCount === 1 ? 5 : 5 - Math.round(i * 4 / (rowCount - 1)); // 5ch→1ch: count col, decreasing
+						return <td key={j}><span className="placeholder" style={{width: `${chWidth}ch`}} /></td>;
+					}
+					return <td key={j}><span className="placeholder" style={{width: '200px'}} /></td>;
+				})}
+			</tr>
+		)),
+		[colCount, rowCount]
+	);
+	return rows;
+};
+
 export default class DobjTable extends Component {
 	constructor(props) {
 		super(props);
@@ -14,11 +36,14 @@ export default class DobjTable extends Component {
 
 	render() {
 		const { dataList, paging, requestPage, panelTitle, tableHeaders, disablePaging, hasHashIdFilter, updateTableWithFilter } = this.props;
+		const isLoading = dataList === undefined;
+		const rowCount = disablePaging ? 5 : paging.pagesize;
 		const RowSwitch = dataList && dataList.length ? getRowSwitch(dataList[0], updateTableWithFilter) : undefined;
 
 		return (
 			<div className="card">
 				<Paging
+					isLoading={isLoading}
 					hasHashIdFilter={hasHashIdFilter}
 					disablePaging={disablePaging}
 					paging={paging}
@@ -26,11 +51,14 @@ export default class DobjTable extends Component {
 					panelTitle={panelTitle}
 				/>
 
-				<div className="card-body table-responsive" style={{ clear: 'both' }}>
+				<div className={`card-body table-responsive${isLoading ? ' placeholder-glow' : ''}`} style={{ clear: 'both' }}>
 					<table className="table">
 						<tbody>
 							<TableHeaders tableHeaders={tableHeaders} />
-							{RowSwitch && dataList.map((stat, idx) => <RowSwitch key={'row-' + idx} dobj={stat} onFileNameClick={this.onFileNameClick.bind(this)} />)}
+							{isLoading
+								? <PlaceholderRows colCount={tableHeaders.length} rowCount={rowCount} />
+								: RowSwitch && dataList.map((stat, idx) => <RowSwitch key={'row-' + idx} dobj={stat} onFileNameClick={this.onFileNameClick.bind(this)} />)
+							}
 						</tbody>
 					</table>
 				</div>
@@ -39,11 +67,26 @@ export default class DobjTable extends Component {
 	}
 }
 
-const Paging = ({ hasHashIdFilter, disablePaging, paging, requestPage, panelTitle }) => {
+const Paging = ({ isLoading, hasHashIdFilter, disablePaging, paging, requestPage, panelTitle }) => {
 	if (hasHashIdFilter) {
 		return (
 			<div className="card-header">
 				<h5 className="card-title">Stats for single data object</h5>
+			</div>
+		);
+	}
+
+	if (isLoading) {
+		return (
+			<div className="card-header placeholder-glow">
+				<h5 className="d-flex align-items-center" style={{gap:'5px'}}>
+					{panelTitle}
+					<span className="placeholder" style={{width:'1ch'}} />
+					to
+					<span className="placeholder" style={{width:'3ch'}} />
+					of
+					<span className="placeholder" style={{width:'6ch'}} />
+				</h5>
 			</div>
 		);
 	}

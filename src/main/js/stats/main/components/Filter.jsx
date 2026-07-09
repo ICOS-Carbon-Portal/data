@@ -35,7 +35,7 @@ export default class Filter extends Component {
 
 	render() {
 		const { open } = this.state;
-		const { placeholder, filter, value, children } = this.props;
+		const { placeholder, filter, value, children, disabled } = this.props;
 
 		return (
 			<div className="row mt-2" key={filter.name}>
@@ -43,17 +43,19 @@ export default class Filter extends Component {
 				<div className="col-lg-8">
 					{children
 						? children
-						: <Multiselect
-							open={open}
-							placeholder={placeholder}
-							dataKey="id"
-							textField="label"
-							data={value == "" ? filter.values.filter(f => f.count > 0) : filter.values}
-							value={value}
-							filter="contains"
-							onChange={this.handleSelectionChange.bind(this, filter)}
-							onToggle={this.handleToggle.bind(this, value)}
-						/>
+						: disabled
+							? <Multiselect disabled placeholder={placeholder} data={[]} value={[]} dataKey="id" textField="label" />
+							: <Multiselect
+								open={open}
+								placeholder={placeholder}
+								dataKey="id"
+								textField="label"
+								data={value == "" ? filter.values.filter(f => f.count > 0) : filter.values}
+								value={value}
+								filter="contains"
+								onChange={this.handleSelectionChange.bind(this, filter)}
+								onToggle={this.handleToggle.bind(this, value)}
+							/>
 					}
 				</div>
 			</div>
