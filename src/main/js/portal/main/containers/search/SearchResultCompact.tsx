@@ -16,6 +16,7 @@ type DispatchProps = ReturnType<typeof dispatchToProps>;
 type IncomingActions = {
 	handlePreview: (id: UrlStr[]) => void
 	removeMapRect: () => void
+	clearAllFilters: () => void
 }
 type OurProps = StateProps & DispatchProps & IncomingActions & {tabHeader: string};
 
@@ -30,12 +31,12 @@ class SearchResultCompact extends Component<OurProps> {
 	render(){
 		const {preview, cart, objectsTable, addToCart, lookup, paging, sorting, searchOptions,
 			toggleSort, requestStep, removeFromCart, handlePreview,
-			getAllFilteredDataObjects, exportQuery, extendedDobjInfo, user, removeMapRect} = this.props;
+			getAllFilteredDataObjects, exportQuery, extendedDobjInfo, user, removeMapRect, clearAllFilters} = this.props;
 		const sortProps: SortProps = {sorting, toggleSort};
 
 		return (
 			<div className="card">
-				<ActiveFilters removeMapRect={removeMapRect} />
+				<ActiveFilters removeMapRect={removeMapRect} clearAllFilters={clearAllFilters} />
 
 				<Paging
 					searchOptions={searchOptions}
