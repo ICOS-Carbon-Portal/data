@@ -7,6 +7,7 @@ import { UrlStr } from "./declarations";
 import {distinct} from '../utils';
 import { envriFilteringFromClauses, objectFilterClauses } from "../sparqlQueries";
 import { QueryParameters } from "../actions/types";
+import { matchesNoResults } from "../backend";
 
 export type SpecLookupByKeyword = {[keyword: string]: UrlStr[] | undefined}
 
@@ -38,6 +39,9 @@ where{
 }
 
 function getUniqueKeywords(query: QueryParameters): Promise<string[]>{
+	if (matchesNoResults(query)){
+		return Promise.resolve([]);
+	}
 	return sparqlFetchAndParse(
 		filteredKeywordsQuery(query),
 		commonConfig.sparqlEndpoint,
