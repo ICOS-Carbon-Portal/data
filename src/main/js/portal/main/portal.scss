@@ -67,6 +67,47 @@ ul.dashed > li:before {
 	user-select: none;
 }
 
+.active-filters {
+	align-items: center;
+	gap: 14px;
+	padding: 10px 15px;
+}
+
+.active-filters-label {
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: #495057;
+	white-space: nowrap;
+}
+
+.active-filter-group {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.active-filter-category {
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: #6c757d;
+	white-space: nowrap;
+}
+
+.active-filter-tag {
+	display: inline-flex;
+	align-items: center;
+	background-color: #dee2e6;
+	border-radius: 3px;
+	padding: 2px 8px;
+	font-size: 0.85rem;
+	user-select: none;
+
+	.fa-times {
+		cursor: pointer;
+		margin-left: 6px;
+	}
+}
+
 .dropdown-details .dropdown {
 	position: absolute;
 	top: auto;
