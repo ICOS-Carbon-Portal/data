@@ -5,7 +5,7 @@ import {sparqlFetchAndParse} from './SparqlFetch'
 import { sparqlParsers } from "./sparql";
 import { UrlStr } from "./declarations";
 import {distinct} from '../utils';
-import { envriFilteringFromClauses, objectFilterClauses } from "../sparqlQueries";
+import { objectFilterClauses } from "../sparqlQueries";
 import { QueryParameters } from "../actions/types";
 import { matchesNoResults } from "../backend";
 
