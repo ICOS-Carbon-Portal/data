@@ -419,15 +419,13 @@ export function filteredObjectsQuery(params: QueryParameters, selections: string
 	// because the FROM clauses do not include the RDF graph that the object's own triples belong to;
 	// in contrast, the magic part of query execution uses the FROM clauses solely to determine the ENVRI
 	const hasKnownObjects = params.filters.filter(isPidFilter).flatMap(f => f.pids || []).length > 0
-	const fromClauses = ""
 
 	return `
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 prefix xsd: <http://www.w3.org/2001/XMLSchema#>
 prefix geo: <http://www.opengis.net/ont/geosparql#>
-select ${selections}
-${fromClauses}where {
+select ${selections} where {
 ${objectFilterClauses(params)}
 }
 ${orderBy}
