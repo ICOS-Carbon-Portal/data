@@ -22,6 +22,9 @@ function fromUrl(v: SparqlResultValue): UrlStr {
 	return v.value
 }
 
+// Virtuoso returns booleans as integer 1 or 0, for example in BIND(EXISTS(...)).
+// This behaviour is covered by many GH issues, and the root cause is https://docs.openlinksw.com/virtuoso/rdfinternalfunctions/
+// where we can see that xsd:boolean() returns integer.
 function fromBoolean(v: SparqlResultValue): boolean {
 	if(!resultIsLiteralValue(v)) throw new Error(`SPARQL result parsing error, ${v} was not literal`)
 	// The standard backend serializes xsd:boolean results as "true"/"false", whereas Virtuoso
