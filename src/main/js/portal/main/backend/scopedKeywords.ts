@@ -20,18 +20,18 @@ export default{
 const config = Object.assign(commonConfig, localConfig);
 
 //proj keywords are inherited
-export function specKeywordsQuery(): Query<'spec' | 'keywords', never>{
+export function specKeywordsQuery(): Query<'spec' | 'keyword', never>{
 	const text = `# spec keywords
 prefix cpmeta: <${commonConfig.cpmetaOntoUri}>
 prefix xsd: <http://www.w3.org/2001/XMLSchema#>
-select ?spec ?keywords
+select ?spec ?keyword
 from <${config.metaResourceGraph[config.envri]}>
 where{
 	?spec cpmeta:hasAssociatedProject ?proj
 	{
-		{?proj cpmeta:hasKeyword ?keywords }
+		{?proj cpmeta:hasKeyword ?keyword }
 		UNION
-		{?spec cpmeta:hasKeyword ?keywords }
+		{?spec cpmeta:hasKeyword ?keyword }
 	}
 	filter not exists {?proj cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
 }`;
@@ -46,25 +46,25 @@ function getUniqueKeywords(query: QueryParameters): Promise<string[]>{
 		filteredKeywordsQuery(query),
 		commonConfig.sparqlEndpoint,
 		b => ({
-			keywords: sparqlParsers.fromString(b.keywords)
+			keyword: sparqlParsers.fromString(b.keyword)
 		})
-	).then(res => distinct(res.rows.flatMap(r => r.keywords)));
+	).then(res => distinct(res.rows.map(r => r.keyword)));
 }
 
-function filteredKeywordsQuery(params: QueryParameters): Query<'keywords', never>{
+function filteredKeywordsQuery(params: QueryParameters): Query<'keyword', never>{
 	return {text: `
 		prefix cpmeta: <${config.cpmetaOntoUri}>
 		prefix prov: <http://www.w3.org/ns/prov#>
 		prefix xsd: <http://www.w3.org/2001/XMLSchema#>
 		prefix geo: <http://www.opengis.net/ont/geosparql#>
-		select distinct ?keywords where{
+		select distinct ?keyword where{
 			${objectFilterClauses(params)}
 			{
-				?dobj cpmeta:hasKeyword ?keywords
+				?dobj cpmeta:hasKeyword ?keyword
 			} UNION {
-				?spec cpmeta:hasKeyword ?keywords
+				?spec cpmeta:hasKeyword ?keyword
 			} UNION {
-				?spec cpmeta:hasAssociatedProject/cpmeta:hasKeyword ?keywords
+				?spec cpmeta:hasAssociatedProject/cpmeta:hasKeyword ?keyword
 			}
 		}`
 	};

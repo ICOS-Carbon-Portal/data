@@ -49,7 +49,6 @@ export const sparqlParsers = {
 	fromDateTime: makeParser("http://www.w3.org/2001/XMLSchema#dateTime", s => new Date(s)),
 	fromBoolean: liftToOptional(fromBoolean),
 	fromString: makeParser(undefined, s => s),
-	fromCommaSepListString: makeParser(undefined, s => s.split(',').map(s => s.trim())),
 	fromUrl: liftToOptional(fromUrl)
 }
 
