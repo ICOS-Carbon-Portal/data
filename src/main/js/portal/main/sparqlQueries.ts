@@ -480,25 +480,26 @@ function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): 
 }
 
 function renderKeywordFilters(filters: KeywordFilterRequest[]): string {
-	const keywords = filters.flatMap(filter => filter.keywords);
+	const keywordValues = filters.flatMap(filter =>
+		filter.keywords.map(keyword =>
+			`"${keyword.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+		)
+	);
 
-	if (keywords.length === 0) {
+	if (keywordValues.length === 0) {
 		return "";
 	}
 
-	return keywords.map(keyword => {
-		const escapedKeyword = keyword.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-
-		return `FILTER EXISTS {
+	return `FILTER EXISTS {
+		VALUES ?keyword { ${keywordValues.join(' ')} }
 		{
-			?dobj cpmeta:hasKeyword "${escapedKeyword}"^^xsd:string
+			?dobj cpmeta:hasKeyword ?keyword
 		} UNION {
-			?dobj cpmeta:hasObjectSpec/cpmeta:hasKeyword "${escapedKeyword}"^^xsd:string
+			?dobj cpmeta:hasObjectSpec/cpmeta:hasKeyword ?keyword
 		} UNION {
-			?dobj cpmeta:hasObjectSpec/cpmeta:hasAssociatedProject/cpmeta:hasKeyword "${escapedKeyword}"^^xsd:string
+			?dobj cpmeta:hasObjectSpec/cpmeta:hasAssociatedProject/cpmeta:hasKeyword ?keyword
 		}
 	}`;
-	}).join('\n');
 }
 
 function getNumberFilterConds(numberFilter: NumberFilterRequest): string {
