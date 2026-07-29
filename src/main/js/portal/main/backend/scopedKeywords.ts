@@ -29,9 +29,9 @@ from <${config.metaResourceGraph[config.envri]}>
 where{
 	?spec cpmeta:hasAssociatedProject ?proj
 	{
-		{?proj cpmeta:hasKeywords ?keywords }
+		{?proj cpmeta:hasKeyword ?keywords }
 		UNION
-		{?spec cpmeta:hasKeywords ?keywords }
+		{?spec cpmeta:hasKeyword ?keywords }
 	}
 	filter not exists {?proj cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
 }`;
@@ -46,16 +46,26 @@ function getUniqueKeywords(query: QueryParameters): Promise<string[]>{
 		filteredKeywordsQuery(query),
 		commonConfig.sparqlEndpoint,
 		b => ({
-			keywords: sparqlParsers.fromCommaSepListString(b.keywords)
+			keywords: sparqlParsers.fromString(b.keywords)
 		})
 	).then(res => distinct(res.rows.flatMap(r => r.keywords)));
 }
 
 function filteredKeywordsQuery(params: QueryParameters): Query<'keywords', never>{
 	return {text: `
-		prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+		prefix cpmeta: <${config.cpmetaOntoUri}>
+		prefix prov: <http://www.w3.org/ns/prov#>
+		prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+		prefix geo: <http://www.opengis.net/ont/geosparql#>
 		select distinct ?keywords where{
-			?dobj cpmeta:hasKeywords ?keywords .
+			${objectFilterClauses(params)}
+			{
+				?dobj cpmeta:hasKeyword ?keywords
+			} UNION {
+				?spec cpmeta:hasKeyword ?keywords
+			} UNION {
+				?spec cpmeta:hasAssociatedProject/cpmeta:hasKeyword ?keywords
+			}
 		}`
 	};
 }

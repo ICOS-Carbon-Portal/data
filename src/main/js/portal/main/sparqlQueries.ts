@@ -480,17 +480,25 @@ function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): 
 }
 
 function renderKeywordFilters(filters: KeywordFilterRequest[]): string {
-	const keywordQueries = filters.flatMap(filter =>
-		filter.keywords.map(keyword =>
-			`?dobj cpmeta:hasKeyword "${keyword}"^^xsd:string`
-		)
-	)
+	const keywords = filters.flatMap(filter => filter.keywords);
 
-	if (keywordQueries.length === 0) {
+	if (keywords.length === 0) {
 		return "";
 	}
 
-	return keywordQueries.join('.\n');
+	return keywords.map(keyword => {
+		const escapedKeyword = keyword.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+
+		return `FILTER EXISTS {
+		{
+			?dobj cpmeta:hasKeyword "${escapedKeyword}"^^xsd:string
+		} UNION {
+			?dobj cpmeta:hasObjectSpec/cpmeta:hasKeyword "${escapedKeyword}"^^xsd:string
+		} UNION {
+			?dobj cpmeta:hasObjectSpec/cpmeta:hasAssociatedProject/cpmeta:hasKeyword "${escapedKeyword}"^^xsd:string
+		}
+	}`;
+	}).join('\n');
 }
 
 function getNumberFilterConds(numberFilter: NumberFilterRequest): string {
