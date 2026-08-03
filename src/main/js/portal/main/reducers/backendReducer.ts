@@ -7,7 +7,9 @@ import {
 	BackendOriginsTable,
 	BackendUpdateSpecFilter,
 	BackendObjectsFetched,
+	BackendKeywordsFetchStarted,
 	BackendKeywordsFetched,
+	BackendKeywordsFetchFailed,
 	BackendExtendedDataObjInfo,
 	BackendTsSettings,
 	BackendBatchDownload,
@@ -61,10 +63,25 @@ export default function(state: State, payload: BackendPayload): State {
 		return stateUtils.update(state, handleObjectsFetched(state, payload));
 	}
 
-	if (payload instanceof BackendKeywordsFetched){
+	if (payload instanceof BackendKeywordsFetchStarted){
 		return stateUtils.update(state, {
-			scopedKeywords: payload.scopedKeywords
+			scopedKeywords: [],
+			isFetchingScopedKeywords: true,
+			scopedKeywordsRequestId: payload.requestId
 		});
+	}
+
+	if (payload instanceof BackendKeywordsFetched){
+		if (payload.requestId !== state.scopedKeywordsRequestId) return state;
+		return stateUtils.update(state, {
+			scopedKeywords: payload.scopedKeywords,
+			isFetchingScopedKeywords: false
+		});
+	}
+
+	if (payload instanceof BackendKeywordsFetchFailed){
+		if (payload.requestId !== state.scopedKeywordsRequestId) return state;
+		return stateUtils.update(state, {isFetchingScopedKeywords: false});
 	}
 
 	if (payload instanceof BackendExportQuery) {

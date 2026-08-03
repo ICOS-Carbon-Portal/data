@@ -15,6 +15,7 @@ type Props = {
 	placeholder: string
 	data: Item[]
 	value: Item[]
+	disabled?: boolean
 }
 
 type State = {
@@ -112,10 +113,11 @@ export default class MultiSelectFilter extends Component<Props, State> {
 
 	render(){
 		const {open} = this.state;
-		const {placeholder, data, value, name, shouldUseExternalListEntry} = this.props;
+		const {placeholder, data, value, name, shouldUseExternalListEntry, disabled} = this.props;
 
 		return (
 			<Multiselect
+				disabled={disabled}
 				open={open}
 				placeholder={placeholder}
 				textField="text"

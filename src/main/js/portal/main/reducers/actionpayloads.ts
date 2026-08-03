@@ -112,8 +112,16 @@ export class BackendObjectsFetched extends BackendPayload{
 	constructor(readonly objectsTable: ObjectsTableLike, readonly isDataEndReached: boolean){super();}
 }
 
+export class BackendKeywordsFetchStarted extends BackendPayload {
+	constructor(readonly requestId: number){super();}
+}
+
 export class BackendKeywordsFetched extends BackendPayload {
-	constructor(readonly scopedKeywords: string[]){super();}
+	constructor(readonly requestId: number, readonly scopedKeywords: string[]){super();}
+}
+
+export class BackendKeywordsFetchFailed extends BackendPayload {
+	constructor(readonly requestId: number){super();}
 }
 
 export class BackendExportQuery extends BackendPayload {

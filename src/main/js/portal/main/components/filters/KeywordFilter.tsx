@@ -9,18 +9,21 @@ import HelpButton from "../../containers/help/HelpButton";
 
 interface OurProps {
 	scopedKeywords: string[]
+	isFetchingScopedKeywords: boolean
 	filterKeywords: string[]
 	setKeywordFilter: (filterKeywords: string[]) => void
 }
 
 export const KeywordFilter: React.FunctionComponent<OurProps> = props => {
-	const {scopedKeywords, filterKeywords, setKeywordFilter} = props;
+	const {scopedKeywords, isFetchingScopedKeywords, filterKeywords, setKeywordFilter} = props;
 
 	const value: Item[] = filterKeywords.map(kw => ({text: kw, value: kw, helpStorageListEntry: []}));
 	const data: Item[] = scopedKeywords
 		.map(txt => ({text: txt, value: txt, helpStorageListEntry: []}))
 		.filter(item => !value.some(v => v.value == item.value));
-	const placeholder = data.length === 1
+	const placeholder = isFetchingScopedKeywords
+		? 'Loading keywords…'
+		: data.length === 1
 		? `${data[0].text}`
 		: `(${data.length} items)`;
 	
@@ -35,7 +38,7 @@ export const KeywordFilter: React.FunctionComponent<OurProps> = props => {
 
 					<div>
 						<FilterOperationBtn
-							enabled={value.length > 0}
+							enabled={value.length > 0 && !isFetchingScopedKeywords}
 							filterName="keywordFilter"
 							title="Reset this filter"
 							baseStyle={{fontSize: 16, marginLeft: 12}}
@@ -55,6 +58,7 @@ export const KeywordFilter: React.FunctionComponent<OurProps> = props => {
 						placeholder={placeholder}
 						data={data}
 						value={value}
+						disabled={isFetchingScopedKeywords}
 					/>
 				</div>
 			</div>

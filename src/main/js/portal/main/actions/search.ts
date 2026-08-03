@@ -58,10 +58,19 @@ const dataObjectsFetcher = config.useDataObjectsCache
 	? new CachedDataObjectsFetcher(config.dobjCacheFetchLimit)
 	: new DataObjectsFetcher();
 
+let scopedKeywordsRequestId = 0;
+
+function beginScopedKeywordsFetch(dispatch: Parameters<PortalThunkAction<void>>[0]): number {
+	const requestId = ++scopedKeywordsRequestId;
+	dispatch(new Payloads.BackendKeywordsFetchStarted(requestId));
+	return requestId;
+}
+
 export const getOriginsThenDobjList: PortalThunkAction<void> = getDobjOriginsAndCounts(true);
 
 function getDobjOriginsAndCounts(fetchObjListWhenDone: boolean): PortalThunkAction<void> {
 	return (dispatch, getState) => {
+		const keywordRequestId = fetchObjListWhenDone ? beginScopedKeywordsFetch(dispatch) : undefined;
 		const filters = getFilters(getState());
 
 		fetchDobjOriginsAndCounts(filters).then(
@@ -71,7 +80,12 @@ function getDobjOriginsAndCounts(fetchObjListWhenDone: boolean): PortalThunkActi
 				if(fetchObjListWhenDone) dispatch(getFilteredDataObjects);
 
 			},
-			failWithError(dispatch)
+			err => {
+				if (keywordRequestId !== undefined) {
+					dispatch(new Payloads.BackendKeywordsFetchFailed(keywordRequestId));
+				}
+				failWithError(dispatch)(err);
+			}
 		);
 
 	};
@@ -80,6 +94,7 @@ function getDobjOriginsAndCounts(fetchObjListWhenDone: boolean): PortalThunkActi
 export const getFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getState) => {
 	const state = getState();
 	const options = getOptions(state);
+	const keywordRequestId = beginScopedKeywordsFetch(dispatch);
 
 	const sparqQuery = listFilteredDataObjects(options);
 	const sparqClientQuery = makeQuerySubmittable(sparqQuery.text);
@@ -88,9 +103,12 @@ export const getFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getSt
 
 	scopedKeywords.fetch(options).then(
 		(scopedKeywords) => {
-			dispatch(new Payloads.BackendKeywordsFetched(scopedKeywords))
+			dispatch(new Payloads.BackendKeywordsFetched(keywordRequestId, scopedKeywords))
 		},
-		failWithError(dispatch)
+		err => {
+			dispatch(new Payloads.BackendKeywordsFetchFailed(keywordRequestId));
+			failWithError(dispatch)(err);
+		}
 	)
 
 	dataObjectsFetcher.fetch(options).then(

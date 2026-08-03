@@ -200,6 +200,8 @@ export interface State {
 	tsSettings: TsSettings
 	helpStorage: HelpStorage
 	scopedKeywords: string[]
+	isFetchingScopedKeywords: boolean
+	scopedKeywordsRequestId: number
 	filterKeywords: string[]
 	exportQuery: ExportQuery
 }
@@ -265,6 +267,8 @@ export const defaultState: State = {
 	tsSettings: {},
 	helpStorage: new HelpStorage(),
 	scopedKeywords: [],
+	isFetchingScopedKeywords: false,
+	scopedKeywordsRequestId: 0,
 	filterKeywords: [],
 	exportQuery: {
 		isFetchingCVS: false,
