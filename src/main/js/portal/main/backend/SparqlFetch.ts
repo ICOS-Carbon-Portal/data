@@ -1,4 +1,24 @@
-import {sparql, SparqlResultBinding, SparqlResult, Query} from 'icos-cp-backend';
+import {sparql as executeSparql, SparqlResultBinding, SparqlResult, Query} from 'icos-cp-backend';
+
+function logSparqlQuery(queryTxt: string, sparqlEndpoint: string): void {
+	const trimmedQuery = queryTxt.trim();
+	const queryName = trimmedQuery.match(/^#\s*([^\r\n]+)/)?.[1];
+	const label = queryName ? `SPARQL: ${queryName}` : 'SPARQL query';
+
+	console.groupCollapsed(`%c${label}`, 'color: #087f5b; font-weight: bold');
+	console.log(trimmedQuery);
+	console.log('Endpoint:', sparqlEndpoint);
+	console.groupEnd();
+}
+
+export function sparqlQuery<Mandatories extends string, Optionals extends string>(
+	query: Query<Mandatories, Optionals>,
+	sparqlEndpoint: string,
+	acceptCachedResults: boolean
+): Promise<SparqlResult<Mandatories, Optionals>> {
+	logSparqlQuery(query.text, sparqlEndpoint);
+	return executeSparql(query, sparqlEndpoint, acceptCachedResults);
+}
 
 export function sparqlFetchAndParse<Mandatories extends string, Optionals extends string, Res extends Row<Mandatories, Optionals>>(
 	query: Query<Mandatories, Optionals>,
@@ -6,7 +26,7 @@ export function sparqlFetchAndParse<Mandatories extends string, Optionals extend
 	parser: (resp: SparqlResultBinding<Mandatories, Optionals>) => Res
 ): Promise<{colNames: (Mandatories | Optionals)[], rows: Res[]}> {
 
-	return sparql(query, sparqlEndpoint, true)
+	return sparqlQuery(query, sparqlEndpoint, true)
 		.then((sparqlRes: SparqlResult<Mandatories, Optionals>) => {
 			try {
 				return {
@@ -24,6 +44,8 @@ export function sparqlFetchAndParse<Mandatories extends string, Optionals extend
 export type SparqlResponseType = 'JSON' | 'CSV' | 'XML' | 'TSV or Turtle'
 
 export function sparqlFetch(queryTxt: string, sparqlEndpoint: string, sparqlResponseType: SparqlResponseType, acceptCachedResults?: boolean): Promise<Response> {
+	logSparqlQuery(queryTxt, sparqlEndpoint);
+
 	const getType = (): string => {
 		switch (sparqlResponseType) {
 			case 'JSON': return 'application/json';
