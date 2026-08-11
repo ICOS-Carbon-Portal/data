@@ -6,22 +6,21 @@ import { PortalDispatch } from '../../store';
 import { failWithError } from '../../actions/common';
 import { Value } from '../../models/SpecTable';
 import { Copyright } from 'icos-cp-copyright';
-import ActiveFilters from './ActiveFilters';
 
+
+const mapAspectRatio = '16 / 15';
+const mapMaxHeight = 'calc(100vh - 140px)'; // accounts for margin and header
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
 type incommingProps = {
-	tabHeader: string
 	persistedMapProps: PersistedMapPropsExtended
 	updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void
 	updateMapSelectedSRID: UpdateMapSelectedSRID
-	removeMapRect: () => void
-	clearAllFilters: () => void
 }
 type OurProps = StateProps & DispatchProps & incommingProps
 
-class SearchResultMap extends Component<OurProps> {
+class StationsMap extends Component<OurProps> {
 	private initMap?: InitMap = undefined;
 
 	constructor(props: OurProps) {
@@ -40,26 +39,22 @@ class SearchResultMap extends Component<OurProps> {
 
 	render() {
 		return (
-			<>
-				<ActiveFilters removeMapRect={this.props.removeMapRect} clearAllFilters={this.props.clearAllFilters} />
-
-				<div id="map" style={{ width: '100%', height: '90vh', position:'relative' }} tabIndex={1}>
-					<div id="stationFilterCtrl" className="ol-control ol-layer-control-ur" style={{ top: 70, fontSize: 20 }}></div>
-					<div id="popover" className="ol-popup"></div>
-					<div id="projSwitchCtrl" className="ol-layer-control ol-layer-control-lr" style={{ zIndex: 99, marginRight: 10, padding: 0 }}></div>
-					<div id="layerCtrl" className="ol-layer-control ol-layer-control-ur"></div>
-					<div id="attribution" className="ol-attribution ol-unselectable ol-control ol-uncollapsible" style={{right: 15}}>
-						<ul>
-							<li>
-								<Copyright />
-							</li>
-						</ul>
-						<ul>
-							<li id="baseMapAttribution" />
-						</ul>
-					</div>
+			<div id="map" style={{ width: '100%', aspectRatio: mapAspectRatio, maxHeight: mapMaxHeight, position:'relative' }} tabIndex={1}>
+				<div id="stationFilterCtrl" className="ol-control ol-layer-control-ur" style={{ top: 70, fontSize: 20 }}></div>
+				<div id="popover" className="ol-popup"></div>
+				<div id="projSwitchCtrl" className="ol-layer-control ol-layer-control-lr" style={{ zIndex: 99, marginRight: 10, padding: 0 }}></div>
+				<div id="layerCtrl" className="ol-layer-control ol-layer-control-ur"></div>
+				<div id="attribution" className="ol-attribution ol-unselectable ol-control ol-uncollapsible" style={{right: 15}}>
+					<ul>
+						<li>
+							<Copyright />
+						</li>
+					</ul>
+					<ul>
+						<li id="baseMapAttribution" />
+					</ul>
 				</div>
-			</>
+			</div>
 		);
 	}
 
@@ -112,4 +107,4 @@ function dispatchToProps(dispatch: PortalDispatch) {
 	};
 }
 
-export default connect(stateToProps, dispatchToProps)(SearchResultMap);
+export default connect(stateToProps, dispatchToProps)(StationsMap);

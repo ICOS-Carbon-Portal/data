@@ -1,5 +1,6 @@
 import React, {Component, ReactNode} from 'react';
 import { connect } from 'react-redux';
+import { Modal } from 'react-bootstrap';
 import {debounce, Events} from 'icos-cp-utils';
 import Tabs from '../../components/ui/Tabs';
 import SearchResultRegular from './SearchResultRegular';
@@ -12,7 +13,7 @@ import {addToCart, updateRoute} from "../../actions/common";
 import Filters from "./Filters";
 import SearchResultCompact from "./SearchResultCompact";
 import Advanced from "./Advanced";
-import SearchResultMap from './SearchResultMap';
+import StationsMap from './StationsMap';
 import { SupportedSRIDs } from 'icos-cp-ol';
 import config from '../../config';
 import { PersistedMapPropsExtended } from '../../models/InitMap';
@@ -25,6 +26,7 @@ type OurProps = StateProps & DispatchProps & { HelpSection: ReactNode };
 type OurState = {
 	expandedFilters: boolean
 	srid?: SupportedSRIDs
+	isStationsMapOpen: boolean
 };
 
 class Search extends Component<OurProps, OurState> {
@@ -52,8 +54,17 @@ class Search extends Component<OurProps, OurState> {
 
 		this.state = {
 			expandedFilters: !isSmallDevice(),
-			srid: this.persistedMapProps.srid
+			srid: this.persistedMapProps.srid,
+			isStationsMapOpen: false
 		};
+	}
+
+	openStationsMap() {
+		this.setState({isStationsMapOpen: true});
+	}
+
+	closeStationsMap() {
+		this.setState({isStationsMapOpen: false});
 	}
 
 	handlePreview(urls: UrlStr[]){
@@ -99,7 +110,7 @@ class Search extends Component<OurProps, OurState> {
 			visibleToggles,
 			srid
 		};
-		// Using srid as key for SearchResultMap forces React to recreate the component when it changes
+		// Using srid as key for StationsMap forces React to recreate the component when it changes
 		this.setState({ srid });
 	}
 
@@ -131,7 +142,7 @@ class Search extends Component<OurProps, OurState> {
 
 					<div style={expandedFilters}>
 						<Tabs tabName="searchTab" selectedTabId={tabs.searchTab} switchTab={switchTab}>
-							<Filters tabHeader="Filters" />
+							<Filters tabHeader="Filters" openStationsMap={this.openStationsMap.bind(this)} />
 							<Advanced tabHeader="Advanced" />
 						</Tabs>
 					</div>
@@ -154,17 +165,29 @@ class Search extends Component<OurProps, OurState> {
 							removeMapRect={this.handleRemoveMapRect.bind(this)}
 							clearAllFilters={this.handleFilterReset.bind(this)}
 						/>
-						<SearchResultMap
+					</Tabs>
+				</div>
+
+				<Modal
+					show={this.state.isStationsMapOpen}
+					onHide={this.closeStationsMap.bind(this)}
+					size="xl"
+					centered
+					backdrop={true}
+					keyboard={true}
+				>
+					<Modal.Header closeButton>
+						<Modal.Title>Stations map</Modal.Title>
+					</Modal.Header>
+					<Modal.Body className="p-0" style={{overflow: 'hidden'}}>
+						<StationsMap
 							key={srid}
-							tabHeader="Stations map"
 							persistedMapProps={this.persistedMapProps}
 							updatePersistedMapProps={this.updatePersistedMapProps.bind(this)}
 							updateMapSelectedSRID={this.updateMapSelectedSRID.bind(this)}
-							removeMapRect={this.handleRemoveMapRect.bind(this)}
-							clearAllFilters={this.handleFilterReset.bind(this)}
 						/>
-					</Tabs>
-				</div>
+					</Modal.Body>
+				</Modal>
 			</div>
 		);
 	}

@@ -19,6 +19,7 @@ type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
 type incommingProps = {
 	tabHeader: string
+	openStationsMap: () => void
 }
 type OurProps = StateProps & DispatchProps & incommingProps;
 
@@ -27,7 +28,7 @@ class Filters extends Component<OurProps> {
 		const {
 			specTable, filterTemporal, helpStorage, labelLookup, updateFilter,
 			setFilterTemporal, setNumberFilter, filterNumbers,
-			scopedKeywords, filterKeywords, setKeywordFilter, countryCodesLookup
+			scopedKeywords, filterKeywords, setKeywordFilter, countryCodesLookup, openStationsMap
 		} = this.props;
 
 		return (
@@ -46,6 +47,7 @@ class Filters extends Component<OurProps> {
 					filterKeywords={filterKeywords}
 					setKeywordFilter={setKeywordFilter}
 					startCollapsed={false}
+					openStationsMap={openStationsMap}
 				/>
 
 			</div>
