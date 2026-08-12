@@ -4,7 +4,9 @@ import { Modal } from 'react-bootstrap';
 import {debounce, Events} from 'icos-cp-utils';
 import Tabs from '../../components/ui/Tabs';
 import SearchResultRegular from './SearchResultRegular';
-import {updateCheckedObjectsInSearch, switchTab, filtersReset, setMapProps} from '../../actions/search';
+import {updateCheckedObjectsInSearch, switchTab, filtersReset, setMapProps, requestStep, getAllFilteredDataObjects} from '../../actions/search';
+import {Paging} from '../../components/buttons/Paging';
+import ActiveFilters from './ActiveFilters';
 import {getLastSegmentsInUrls, isSmallDevice} from '../../utils';
 import {Sha256Str, UrlStr} from "../../backend/declarations";
 import {PortalDispatch} from "../../store";
@@ -14,11 +16,15 @@ import Filters from "./Filters";
 import SearchResultCompact from "./SearchResultCompact";
 import Advanced from "./Advanced";
 import StationsMap from './StationsMap';
+import {ResultViewSwitch} from '../../components/searchResult/ResultViewSwitch';
 import { SupportedSRIDs } from 'icos-cp-ol';
 import config from '../../config';
 import { PersistedMapPropsExtended } from '../../models/InitMap';
 import { getPersistedMapProps } from '../../backend';
 import { addingToCartProhibition } from '../../models/CartItem';
+
+const defaultViewTabId = 0;
+const compactViewTabId = 1;
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
@@ -57,6 +63,10 @@ class Search extends Component<OurProps, OurState> {
 			srid: this.persistedMapProps.srid,
 			isStationsMapOpen: false
 		};
+	}
+
+	setCompactView(isCompact: boolean) {
+		this.props.switchTab('resultTab', isCompact ? compactViewTabId : defaultViewTabId);
 	}
 
 	openStationsMap() {
@@ -123,10 +133,23 @@ class Search extends Component<OurProps, OurState> {
 	}
 
 	render(){
-		const { HelpSection, tabs, switchTab } = this.props;
+		const { HelpSection, tabs, switchTab, paging, searchOptions, exportQuery,
+			requestStep, getAllFilteredDataObjects } = this.props;
 		const { srid } = this.state;
 		const expandedFilters = this.state.expandedFilters ? {} : {height: 0, overflow: 'hidden'};
 		const filterIconClass = this.state.expandedFilters ? "fas fa-angle-up float-end" : "fas fa-angle-down float-end";
+
+		const isCompact = tabs.resultTab === compactViewTabId;
+
+		const resultsView = isCompact
+			? <SearchResultCompact
+				handlePreview={this.handlePreview.bind(this)}
+			/>
+			: <SearchResultRegular
+				handlePreview={this.handlePreview.bind(this)}
+				handleAddToCart={this.handleAddToCart.bind(this)}
+				handleAllCheckboxesChange={this.handleAllCheckboxesChange.bind(this)}
+			/>;
 
 		return (
 			<div className="row" style={{ position: 'relative' }}>
@@ -150,22 +173,29 @@ class Search extends Component<OurProps, OurState> {
 				</div>
 
 				<div className="col-sm-8 col-md-9">
-					<Tabs tabName="resultTab" selectedTabId={tabs.resultTab} switchTab={switchTab}>
-						<SearchResultRegular
-							tabHeader="Search results"
-							handlePreview={this.handlePreview.bind(this)}
-							handleAddToCart={this.handleAddToCart.bind(this)}
-							handleAllCheckboxesChange={this.handleAllCheckboxesChange.bind(this)}
+					<div className="card">
+						<div className="card-header d-flex justify-content-between align-items-center">
+							Search results
+
+							<ResultViewSwitch isCompact={isCompact} setCompact={this.setCompactView.bind(this)} />
+						</div>
+
+						<ActiveFilters
 							removeMapRect={this.handleRemoveMapRect.bind(this)}
 							clearAllFilters={this.handleFilterReset.bind(this)}
 						/>
-						<SearchResultCompact
-							tabHeader="Compact view"
-							handlePreview={this.handlePreview.bind(this)}
-							removeMapRect={this.handleRemoveMapRect.bind(this)}
-							clearAllFilters={this.handleFilterReset.bind(this)}
+
+						<Paging
+							searchOptions={searchOptions}
+							type="header"
+							paging={paging}
+							requestStep={requestStep}
+							getAllFilteredDataObjects={getAllFilteredDataObjects}
+							exportQuery={exportQuery}
 						/>
-					</Tabs>
+
+						{resultsView}
+					</div>
 				</div>
 
 				<Modal
@@ -197,7 +227,10 @@ function stateToProps(state: State){
 	return {
 		checkedObjectsInSearch: state.checkedObjectsInSearch,
 		objectsTable: state.objectsTable,
-		tabs: state.tabs
+		tabs: state.tabs,
+		paging: state.paging,
+		searchOptions: state.searchOptions,
+		exportQuery: state.exportQuery
 	};
 }
 
@@ -208,7 +241,9 @@ function dispatchToProps(dispatch: PortalDispatch){
 		updateCheckedObjects: (ids: UrlStr[] | UrlStr) => dispatch(updateCheckedObjectsInSearch(ids)),
 		switchTab: (tabName: string, selectedTabId: number) => dispatch(switchTab(tabName, selectedTabId)),
 		setMapProps: (mapProps: PersistedMapPropsExtended) => dispatch(setMapProps(mapProps)),
-		filtersReset: () => dispatch(filtersReset)
+		filtersReset: () => dispatch(filtersReset),
+		requestStep: (direction: -1 | 1) => dispatch(requestStep(direction)),
+		getAllFilteredDataObjects: () => dispatch(getAllFilteredDataObjects())
 	};
 }
 
