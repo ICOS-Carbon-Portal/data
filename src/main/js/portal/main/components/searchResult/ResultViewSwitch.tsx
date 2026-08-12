@@ -6,7 +6,7 @@ interface OurProps {
 	setCompact: (isCompact: boolean) => void
 }
 
-export const ResultViewSwitch: React.FunctionComponent<OurProps> = props => {
+export function ResultViewSwitch(props: OurProps) {
 	const {isCompact, setCompact} = props;
 
 	return (
@@ -40,4 +40,4 @@ export const ResultViewSwitch: React.FunctionComponent<OurProps> = props => {
 			</label>
 		</div>
 	);
-};
+}

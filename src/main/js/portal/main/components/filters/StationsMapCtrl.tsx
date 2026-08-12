@@ -6,7 +6,7 @@ interface OurProps {
 	openStationsMap: () => void
 }
 
-export const StationsMapCtrl: React.FunctionComponent<OurProps> = props => {
+export function StationsMapCtrl(props: OurProps) {
 	const {openStationsMap} = props;
 
 	return (
@@ -27,4 +27,4 @@ export const StationsMapCtrl: React.FunctionComponent<OurProps> = props => {
 			</div>
 		</>
 	);
-};
+}
