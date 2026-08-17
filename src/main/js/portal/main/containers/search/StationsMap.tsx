@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, CSSProperties } from 'react';
 import { connect } from 'react-redux';
 import { State } from "../../models/State";
 import InitMap, { PersistedMapPropsExtended, UpdateMapSelectedSRID } from '../../models/InitMap';
@@ -6,10 +6,14 @@ import { PortalDispatch } from '../../store';
 import { failWithError } from '../../actions/common';
 import { Value } from '../../models/SpecTable';
 import { Copyright } from 'icos-cp-copyright';
+import config from '../../config';
 
 
-const mapAspectRatio = '16 / 15';
+const mapAspectRatio = '1 / 1';
 const mapMaxHeight = 'calc(100vh - 140px)'; // accounts for margin and header
+// The preview and the full map are on the page at the same time, and the element
+// ids they look up have to tell them apart
+const previewIdPrefix = 'preview-';
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
@@ -17,6 +21,7 @@ type incommingProps = {
 	persistedMapProps: PersistedMapPropsExtended
 	updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void
 	updateMapSelectedSRID: UpdateMapSelectedSRID
+	isPreview?: boolean
 }
 type OurProps = StateProps & DispatchProps & incommingProps
 
@@ -37,21 +42,32 @@ class StationsMap extends Component<OurProps> {
 		});
 	}
 
+	private get idPrefix() {
+		return this.props.isPreview ? previewIdPrefix : '';
+	}
+
 	render() {
+		const { isPreview } = this.props;
+		const idPrefix = this.idPrefix;
+		// A preview fills the frame it is given; on its own the map sizes itself
+		const style: CSSProperties = isPreview
+			? { position: 'absolute', inset: 0 }
+			: { width: '100%', aspectRatio: mapAspectRatio, maxHeight: mapMaxHeight, position: 'relative' };
+
 		return (
-			<div id="map" style={{ width: '100%', aspectRatio: mapAspectRatio, maxHeight: mapMaxHeight, position:'relative' }} tabIndex={1}>
-				<div id="stationFilterCtrl" className="ol-control ol-layer-control-ur" style={{ top: 70, fontSize: 20 }}></div>
-				<div id="popover" className="ol-popup"></div>
-				<div id="projSwitchCtrl" className="ol-layer-control ol-layer-control-lr" style={{ zIndex: 99, marginRight: 10, padding: 0 }}></div>
-				<div id="layerCtrl" className="ol-layer-control ol-layer-control-ur"></div>
-				<div id="attribution" className="ol-attribution ol-unselectable ol-control ol-uncollapsible" style={{right: 15}}>
+			<div id={idPrefix + 'map'} className={isPreview ? 'stations-map-preview' : undefined} style={style} tabIndex={isPreview ? -1 : 1}>
+				<div id={idPrefix + 'stationFilterCtrl'} className="ol-control ol-layer-control-ur" style={{ top: 70, fontSize: 20 }}></div>
+				<div id={idPrefix + 'popover'} className="ol-popup"></div>
+				<div id={idPrefix + 'projSwitchCtrl'} className="ol-layer-control ol-layer-control-lr" style={{ zIndex: 99, marginRight: 10, padding: 0 }}></div>
+				<div id={idPrefix + 'layerCtrl'} className="ol-layer-control ol-layer-control-ur"></div>
+				<div id={idPrefix + 'attribution'} className="ol-attribution ol-unselectable ol-control ol-uncollapsible" style={{right: 15}}>
 					<ul>
 						<li>
 							<Copyright />
 						</li>
 					</ul>
 					<ul>
-						<li id="baseMapAttribution" />
+						<li id={idPrefix + 'baseMapAttribution'} />
 					</ul>
 				</div>
 			</div>
@@ -66,7 +82,10 @@ class StationsMap extends Component<OurProps> {
 				'../../models/InitMap'
 			);
 			this.initMap = new InitMap({
-				mapRootElement: document.getElementById('map')!,
+				mapRootElement: document.getElementById(this.idPrefix + 'map')!,
+				idPrefix: this.idPrefix,
+				iconStyles: this.props.isPreview ? config.olMapSettings.smallIconStyles : undefined,
+				keepFitted: this.props.isPreview,
 				allStations: this.props.allStations,
 				stationPos4326Lookup: this.props.stationPos4326Lookup,
 				persistedMapProps: this.props.persistedMapProps,

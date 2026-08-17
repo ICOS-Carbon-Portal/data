@@ -5,7 +5,7 @@ import {LabelLookup, MapProps, State, StationPos4326Lookup} from './State';
 import { UrlStr } from '../backend/declarations';
 import {difference, throwError} from '../utils';
 import {Filter, Value} from './SpecTable';
-import config from '../config';
+import config, { OlMapSettings } from '../config';
 import { Coordinate } from 'ol/coordinate';
 import Point from 'ol/geom/Point';
 import VectorLayer from 'ol/layer/Vector';
@@ -50,6 +50,13 @@ interface Props extends UpdateProps {
 	persistedMapProps: PersistedMapPropsExtended
 	updatePersistedMapProps: (persistedMapProps: PersistedMapPropsExtended) => void
 	updateMapSelectedSRID: UpdateMapSelectedSRID
+	// Set when more than one map shares the page, so that the element ids each
+	// one looks up stay unique
+	idPrefix?: string
+	iconStyles?: OlMapSettings['iconStyles']
+	// Set for a map in a responsive container, to keep it fitted to the extent as
+	// it is resized
+	keepFitted?: boolean
 }
 interface UpdateProps {
 	allStations: UrlStr[]
@@ -75,11 +82,15 @@ export default class InitMap {
 	private countriesTopo?: CountriesTopo;
 	private persistedMapProps: PersistedMapPropsExtended<BaseMapId | 'Countries'>;
 	private readonly getStationPosLookup: () => StationPosLookup
+	private readonly idPrefix: string
+	private readonly iconStyles: OlMapSettings['iconStyles']
 
 	constructor(props: Props) {
 		const {mapRootElement, persistedMapProps, updatePersistedMapProps} = props;
 
 		this.persistedMapProps = persistedMapProps;
+		this.idPrefix = props.idPrefix ?? '';
+		this.iconStyles = props.iconStyles ?? olMapSettings.iconStyles;
 		this.fetchCountriesTopo();
 
 		this.allStations = props.allStations
@@ -100,7 +111,7 @@ export default class InitMap {
 
 		const selectedBaseMap = persistedMapProps.baseMap ?? olMapSettings.defaultBaseMap;
 		const tileLayers = getBaseMapLayers(selectedBaseMap, olMapSettings.baseMapFilter);
-		this.popup = new Popup('popover');
+		this.popup = new Popup(this.idPrefix + 'popover');
 
 		const controls: Control[] = getDefaultControls(projection);
 
@@ -120,14 +131,14 @@ export default class InitMap {
 		this.stationPosLookup = this.getStationPosLookup()
 
 		this.stationFilterControl = new StationFilterControl({
-			element: document.getElementById('stationFilterCtrl') ?? undefined,
+			element: document.getElementById(this.idPrefix + 'stationFilterCtrl') ?? undefined,
 			isActive: persistedMapProps.isStationFilterCtrlActive ?? false,
 			updatePersistedMapProps
 		});
 		controls.push(this.stationFilterControl);
 
 		this.layerControl = new LayerControl({
-			element: document.getElementById('layerCtrl') ?? undefined,
+			element: document.getElementById(this.idPrefix + 'layerCtrl') ?? undefined,
 			selectedBaseMap,
 			updateCtrl: this.updateLayerCtrl
 		});
@@ -156,6 +167,11 @@ export default class InitMap {
 		this.olWrapper = new OLWrapper(olProps);
 		this.addInteractivity();
 
+		// OpenLayers keeps resolution and center when its container is resized, so
+		// what was a snug fit turns into either a cropped map or slack around it
+		if (props.keepFitted)
+			this.olWrapper.map.on('change:size', () => this.fitView());
+
 		this.olWrapper.map.on("moveend", e => {
 			const map = e.target as Map;
 			const view = map.getView();
@@ -167,10 +183,17 @@ export default class InitMap {
 		if (width < minWidth) return;
 
 		getESRICopyRight(esriBaseMapNames).then(attributions => {
-			this.olWrapper.attributionUpdater = new Copyright(attributions, projection, 'baseMapAttribution', minWidth);
+			this.olWrapper.attributionUpdater = new Copyright(attributions, projection, this.idPrefix + 'baseMapAttribution', minWidth);
 		});
 
 		this.updatePoints(props.mapProps)
+	}
+
+	private fitView() {
+		const size = this.olWrapper.map.getSize();
+		if (size === undefined || size[0] === 0 || size[1] === 0) return;
+
+		this.olWrapper.map.getView().fit(this.olWrapper.viewParams.extent);
 	}
 
 	private async fetchCountriesTopo() {
@@ -212,7 +235,7 @@ export default class InitMap {
 
 	private createProjectionControl(persistedMapProps: PersistedMapPropsExtended, updateMapSelectedSRID: UpdateMapSelectedSRID) {
 		return new ProjectionControl({
-			element: document.getElementById('projSwitchCtrl') ?? undefined,
+			element: document.getElementById(this.idPrefix + 'projSwitchCtrl') ?? undefined,
 			supportedSRIDs: olMapSettings.sridsInMap,
 			selectedSRID: persistedMapProps.srid ?? olMapSettings.defaultSRID,
 			switchProjAction: updateMapSelectedSRID
@@ -230,7 +253,7 @@ export default class InitMap {
 			layerType: 'toggle',
 			geoType: 'point',
 			data: excludedStations,
-			style: olMapSettings.iconStyles.excludedStation,
+			style: this.iconStyles.excludedStation,
 			zIndex: 110,
 			interactive: true
 		});
@@ -240,7 +263,7 @@ export default class InitMap {
 			layerType: 'toggle',
 			geoType: 'point',
 			data: includedStations,
-			style: olMapSettings.iconStyles.includedStation,
+			style: this.iconStyles.includedStation,
 			zIndex: 120,
 			interactive: true
 		});

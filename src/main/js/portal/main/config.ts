@@ -113,12 +113,27 @@ const excludedStation = {
 	ICOSCities: cirlcePointStyle('white', 'DarkRed', 4, 2)
 }
 
+// The stations map preview in the filters panel is a fraction of the width of
+// the full map, where markers of the size above cover most of the land
+const includedStationSmall = {
+	ICOS: cirlcePointStyle('tomato', 'white', 3, 1),
+	SITES: cirlcePointStyle('Magenta', 'white', 3, 1),
+	ICOSCities: cirlcePointStyle('tomato', 'white', 3, 1)
+}
+
+const excludedStationSmall = {
+	ICOS: cirlcePointStyle('white', 'DarkRed', 2, 1),
+	SITES: cirlcePointStyle('white', 'DarkMagenta', 2, 1),
+	ICOSCities: cirlcePointStyle('white', 'DarkRed', 2, 1)
+}
+
 export type OlMapSettings = {
 	sridsInMap: Record<SupportedSRIDs, string>
 	defaultSRID: SupportedSRIDs
 	defaultBaseMap: BaseMapId
 	baseMapFilter: BaseMapFilter
 	iconStyles: Record<string, Style>
+	smallIconStyles: Record<string, Style>
 }
 const olMapSettings: OlMapSettings = {
 	sridsInMap: sridsInMap[envri],
@@ -128,6 +143,10 @@ const olMapSettings: OlMapSettings = {
 	iconStyles: {
 		includedStation: includedStation[envri],
 		excludedStation: excludedStation[envri]
+	},
+	smallIconStyles: {
+		includedStation: includedStationSmall[envri],
+		excludedStation: excludedStationSmall[envri]
 	}
 };
 

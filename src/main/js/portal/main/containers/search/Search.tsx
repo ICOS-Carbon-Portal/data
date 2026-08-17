@@ -16,8 +16,9 @@ import Filters from "./Filters";
 import SearchResultCompact from "./SearchResultCompact";
 import Advanced from "./Advanced";
 import StationsMap from './StationsMap';
+import {StationsMapCtrl} from '../../components/filters/StationsMapCtrl';
 import {ResultViewSwitch} from '../../components/searchResult/ResultViewSwitch';
-import { SupportedSRIDs } from 'icos-cp-ol';
+import { EpsgCode, getViewParams, SupportedSRIDs } from 'icos-cp-ol';
 import config from '../../config';
 import { PersistedMapPropsExtended } from '../../models/InitMap';
 import { getPersistedMapProps } from '../../backend';
@@ -25,6 +26,22 @@ import { addingToCartProhibition } from '../../models/CartItem';
 
 const defaultViewTabId = 0;
 const compactViewTabId = 1;
+
+// The preview map must not persist anything: its viewport is far smaller than
+// the modal's, so the center and zoom it fits to are not the ones the full map
+// should open with. Its own controls are hidden, so nothing else can fire.
+function ignoreMapProps() {}
+
+// The preview fits the whole extent of its projection, and the map is centered
+// in whichever direction is left over, so a frame shaped like anything other
+// than that extent just pads the map out with slack. The extents differ wildly
+// between projections: LAEA Europe is square, World Robinson is 2:1.
+function previewAspectRatio(srid: SupportedSRIDs | undefined) {
+	const epsgCode = `EPSG:${srid ?? config.olMapSettings.defaultSRID}` as EpsgCode;
+	const [minX, minY, maxX, maxY] = getViewParams(epsgCode).extent;
+
+	return (maxX - minX) / (maxY - minY);
+}
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
@@ -141,6 +158,24 @@ class Search extends Component<OurProps, OurState> {
 
 		const isCompact = tabs.resultTab === compactViewTabId;
 
+		// The preview fits the whole extent instead of following the full map: the
+		// center and zoom the modal persists are for a far larger viewport
+		const {center, zoom, ...previewMapProps} = this.persistedMapProps;
+
+		const mapPreview = <StationsMap
+			key={srid}
+			isPreview={true}
+			persistedMapProps={previewMapProps}
+			updatePersistedMapProps={ignoreMapProps}
+			updateMapSelectedSRID={ignoreMapProps}
+		/>;
+
+		const stationsMapCtrl = <StationsMapCtrl
+			openStationsMap={this.openStationsMap.bind(this)}
+			mapPreview={mapPreview}
+			aspectRatio={previewAspectRatio(srid)}
+		/>;
+
 		const resultsView = isCompact
 			? <SearchResultCompact
 				handlePreview={this.handlePreview.bind(this)}
@@ -165,7 +200,7 @@ class Search extends Component<OurProps, OurState> {
 
 					<div style={expandedFilters}>
 						<Tabs tabName="searchTab" selectedTabId={tabs.searchTab} switchTab={switchTab}>
-							<Filters tabHeader="Filters" openStationsMap={this.openStationsMap.bind(this)} />
+							<Filters tabHeader="Filters" stationsMapCtrl={stationsMapCtrl} />
 							<Advanced tabHeader="Advanced" />
 						</Tabs>
 					</div>

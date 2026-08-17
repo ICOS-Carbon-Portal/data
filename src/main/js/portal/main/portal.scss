@@ -121,3 +121,49 @@ ul.dashed > li:before {
 	background: white;
 	box-shadow: 9px 8px 20px -18px rgba(0, 0, 0, 0.75);
 }
+
+// The stations map in the filters panel is a preview of the full, interactive
+// map in the modal it opens, so its own controls and attribution are hidden and
+// an overlay keeps it from consuming the click.
+// The aspect ratio is set inline, from the extent of the map's projection
+.stations-map-frame {
+	position: relative;
+	overflow: hidden;
+	cursor: pointer;
+
+	// The frame is the last thing in its card, so it has to follow whatever
+	// rounding the card has at the bottom
+	border-bottom-left-radius: inherit;
+	border-bottom-right-radius: inherit;
+}
+
+.stations-map-frame-overlay {
+	position: absolute;
+	inset: 0;
+	z-index: 50;
+}
+
+.stations-map-expand {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	border-radius: 4px;
+	color: #333;
+	background-color: rgba(255, 255, 255, 0.85);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.stations-map-preview {
+	.ol-control,
+	.ol-layer-control,
+	.ol-popup,
+	// The scale line is not an .ol-control, so it needs naming on its own
+	.ol-scale-line {
+		display: none;
+	}
+}

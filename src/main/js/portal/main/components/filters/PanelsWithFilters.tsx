@@ -10,7 +10,6 @@ import {FilterNumber, FilterNumbers} from "../../models/FilterNumbers";
 import FilterTemporal from "../../models/FilterTemporal";
 import PickDates from "./PickDates";
 import {KeywordFilter} from "./KeywordFilter";
-import {StationsMapCtrl} from "./StationsMapCtrl";
 import { LabelLookup } from '../../models/State';
 import HelpStorage, {HelpItem} from "../../models/HelpStorage";
 import {isDefined} from "../../utils";
@@ -32,15 +31,13 @@ interface PanelsWithMultiselects extends CommonProps {
 	filterKeywords: string[]
 	setKeywordFilter: (filterKeywords: string[]) => void
 	startCollapsed?: boolean
-	openStationsMap?: () => void
 }
 
 const availableFilters = filters[config.envri];
 
 export const PanelsWithFilters: React.FunctionComponent<PanelsWithMultiselects> = props => {
 	const {specTable, labelLookup, helpStorage, updateFilter, setNumberFilter, filterNumbers, startCollapsed = false,
-		filterTemporal, setFilterTemporal, scopedKeywords, filterKeywords, setKeywordFilter, countryCodesLookup,
-		openStationsMap} = props;
+		filterTemporal, setFilterTemporal, scopedKeywords, filterKeywords, setKeywordFilter, countryCodesLookup} = props;
 
 	return (
 		<>
@@ -62,7 +59,6 @@ export const PanelsWithFilters: React.FunctionComponent<PanelsWithMultiselects> 
 					filterKeywords={filterKeywords}
 					setKeywordFilter={setKeywordFilter}
 					startCollapsed={startCollapsed}
-					openStationsMap={i === 0 ? openStationsMap : undefined}
 				/>
 			)}
 		</>
@@ -78,18 +74,12 @@ interface Panel extends CommonProps {
 	filterKeywords: string[]
 	setKeywordFilter: (filterKeywords: string[]) => void
 	startCollapsed?: boolean
-	openStationsMap?: () => void
 }
 
 const Panel: React.FunctionComponent<Panel> = props => {
 	const { header, filterList, specTable, labelLookup, helpStorage, updateFilter, setNumberFilter, filterNumbers, countryCodesLookup,
-		startCollapsed = false, filterTemporal, setFilterTemporal, scopedKeywords, filterKeywords, setKeywordFilter,
-		openStationsMap } = props;
+		startCollapsed = false, filterTemporal, setFilterTemporal, scopedKeywords, filterKeywords, setKeywordFilter } = props;
 	if (filterList.length === 0) return null;
-
-	const stationsMap = openStationsMap
-		? <StationsMapCtrl openStationsMap={openStationsMap} />
-		: null;
 
 	return (
 		<FilterPanel header={header} startCollapsed={startCollapsed}>
@@ -111,7 +101,6 @@ const Panel: React.FunctionComponent<Panel> = props => {
 					setKeywordFilter={setKeywordFilter}
 				/>
 			)}
-			{stationsMap}
 		</FilterPanel>
 	);
 };
