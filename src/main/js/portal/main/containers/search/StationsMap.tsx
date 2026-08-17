@@ -86,6 +86,7 @@ class StationsMap extends Component<OurProps> {
 				idPrefix: this.idPrefix,
 				iconStyles: this.props.isPreview ? config.olMapSettings.smallIconStyles : undefined,
 				keepFitted: this.props.isPreview,
+				showDeleteRectBtns: !this.props.isPreview,
 				allStations: this.props.allStations,
 				stationPos4326Lookup: this.props.stationPos4326Lookup,
 				persistedMapProps: this.props.persistedMapProps,

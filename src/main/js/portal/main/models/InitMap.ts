@@ -57,6 +57,7 @@ interface Props extends UpdateProps {
 	// Set for a map in a responsive container, to keep it fitted to the extent as
 	// it is resized
 	keepFitted?: boolean
+	showDeleteRectBtns?: boolean
 }
 interface UpdateProps {
 	allStations: UrlStr[]
@@ -133,7 +134,8 @@ export default class InitMap {
 		this.stationFilterControl = new StationFilterControl({
 			element: document.getElementById(this.idPrefix + 'stationFilterCtrl') ?? undefined,
 			isActive: persistedMapProps.isStationFilterCtrlActive ?? false,
-			updatePersistedMapProps
+			updatePersistedMapProps,
+			showDeleteRectBtns: props.showDeleteRectBtns
 		});
 		controls.push(this.stationFilterControl);
 
