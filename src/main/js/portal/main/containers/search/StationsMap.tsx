@@ -8,7 +8,7 @@ import { Value } from '../../models/SpecTable';
 import { Copyright } from 'icos-cp-copyright';
 
 
-const mapAspectRatio = '16 / 15';
+const mapAspectRatio = '1 / 1';
 const mapMaxHeight = 'calc(100vh - 140px)'; // accounts for margin and header
 
 type StateProps = ReturnType<typeof stateToProps>;
