@@ -11,8 +11,7 @@ const titles = {
 	previewCsvDownload: "CSV download",
 	previewURL: "Preview chart URL",
 	keywordFilter: "Keyword",
-	textFilters: "Advanced: Text filters",
-	stationsMap: "Stations map"
+	textFilters: "Advanced: Text filters"
 };
 
 type HelpId = HelpItemName | UrlStr
@@ -156,9 +155,6 @@ const initItems: HelpItem[] = [
 
 	new HelpItem('station', 'If applicable, the research station that produced the original data for this data object. ' +
 		'Typically, all data except elaborated products have a station of origin.'),
-
-	new HelpItem('stationsMap', 'The stations map allows filtering based on geographic sampling location, and highlights stations ' +
-		'found with the currently selected filters. Data can be filtered using the "draw rectangle" icon on the right.'),
 
 	new HelpItem(
 		'stationclass',

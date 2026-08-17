@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, {Component, ReactNode} from 'react';
 import {connect} from 'react-redux';
 import {Value} from "../../models/SpecTable";
 import {State} from "../../models/State";
@@ -19,7 +19,7 @@ type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
 type incommingProps = {
 	tabHeader: string
-	openStationsMap: () => void
+	stationsMapCtrl: ReactNode
 }
 type OurProps = StateProps & DispatchProps & incommingProps;
 
@@ -28,7 +28,7 @@ class Filters extends Component<OurProps> {
 		const {
 			specTable, filterTemporal, helpStorage, labelLookup, updateFilter,
 			setFilterTemporal, setNumberFilter, filterNumbers,
-			scopedKeywords, filterKeywords, setKeywordFilter, countryCodesLookup, openStationsMap
+			scopedKeywords, filterKeywords, setKeywordFilter, countryCodesLookup, stationsMapCtrl
 		} = this.props;
 
 		return (
@@ -47,9 +47,8 @@ class Filters extends Component<OurProps> {
 					filterKeywords={filterKeywords}
 					setKeywordFilter={setKeywordFilter}
 					startCollapsed={false}
-					openStationsMap={openStationsMap}
+					stationsMapCtrl={stationsMapCtrl}
 				/>
-
 			</div>
 		);
 	}

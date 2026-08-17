@@ -16,6 +16,8 @@ import Filters from "./Filters";
 import SearchResultCompact from "./SearchResultCompact";
 import Advanced from "./Advanced";
 import StationsMap from './StationsMap';
+import {StationsMapPreview} from './StationsMapPreview';
+import {StationsMapCtrl} from '../../components/filters/StationsMapCtrl';
 import {ResultViewSwitch} from '../../components/searchResult/ResultViewSwitch';
 import { SupportedSRIDs } from 'icos-cp-ol';
 import config from '../../config';
@@ -141,6 +143,12 @@ class Search extends Component<OurProps, OurState> {
 
 		const isCompact = tabs.resultTab === compactViewTabId;
 
+		const stationsMapCtrl = <StationsMapCtrl
+			openStationsMap={this.openStationsMap.bind(this)}
+			mapPreview={<StationsMapPreview persistedMapProps={this.persistedMapProps} />}
+			srid={srid}
+		/>;
+
 		const resultsView = isCompact
 			? <SearchResultCompact
 				handlePreview={this.handlePreview.bind(this)}
@@ -165,7 +173,7 @@ class Search extends Component<OurProps, OurState> {
 
 					<div style={expandedFilters}>
 						<Tabs tabName="searchTab" selectedTabId={tabs.searchTab} switchTab={switchTab}>
-							<Filters tabHeader="Filters" openStationsMap={this.openStationsMap.bind(this)} />
+							<Filters tabHeader="Filters" stationsMapCtrl={stationsMapCtrl} />
 							<Advanced tabHeader="Advanced" />
 						</Tabs>
 					</div>

@@ -26,6 +26,7 @@ export interface DrawFeature {
 export interface StationFilterControlOptions extends Options {
 	isActive: boolean
 	updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void
+	showDeleteRectBtns?: boolean
 }
 
 enum DrawEventType {
@@ -77,6 +78,7 @@ export class StationFilterControl extends Control {
 		this.deleteRectBtnSource = new VectorSource();
 		this.deleteRectBtnLayer = new VectorLayer({
 			source: this.deleteRectBtnSource,
+			visible: options.showDeleteRectBtns ?? true,
 			zIndex: 410
 		});
 
