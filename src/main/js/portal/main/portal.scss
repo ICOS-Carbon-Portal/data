@@ -122,12 +122,18 @@ ul.dashed > li:before {
 	box-shadow: 9px 8px 20px -18px rgba(0, 0, 0, 0.75);
 }
 
+.stations-map-frame-container {
+	display: flex;
+	justify-content: center;
+	margin-left: calc(var(--bs-card-spacer-x) * -1);
+	margin-right: calc(var(--bs-card-spacer-x) * -1);
+}
+
 .stations-map-frame {
 	position: relative;
 	overflow: hidden;
 	cursor: pointer;
-	margin-left: calc(var(--bs-card-spacer-x) * -1);
-	margin-right: calc(var(--bs-card-spacer-x) * -1);
+	width: 100%;
 }
 
 .stations-map-frame-overlay {

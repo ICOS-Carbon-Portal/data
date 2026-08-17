@@ -9,9 +9,8 @@ interface OurProps {
 	srid?: SupportedSRIDs
 }
 
-// The preview fits the whole extent of its projection and centers the map in
-// whichever direction is left over, so a frame shaped like anything other than
-// that extent just pads the map out with slack
+const maxPreviewHeight = 300;
+
 function previewMapAspectRatio(srid: SupportedSRIDs | undefined) {
 	const epsgCode = `EPSG:${srid ?? config.olMapSettings.defaultSRID}` as EpsgCode;
 	const [minX, minY, maxX, maxY] = getViewParams(epsgCode).extent;
@@ -21,6 +20,7 @@ function previewMapAspectRatio(srid: SupportedSRIDs | undefined) {
 
 export function StationsMapCtrl(props: OurProps) {
 	const {openStationsMap, mapPreview, srid} = props;
+	const aspectRatio = previewMapAspectRatio(srid);
 
 	function handleKeyDown(event: KeyboardEvent) {
 		if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -30,21 +30,23 @@ export function StationsMapCtrl(props: OurProps) {
 	}
 
 	return (
-		<div
-			className="stations-map-frame bg-light"
-			style={{aspectRatio: String(previewMapAspectRatio(srid))}}
-			role="button"
-			tabIndex={0}
-			title="Open the stations map"
-			onClick={openStationsMap}
-			onKeyDown={handleKeyDown}
-		>
-			{mapPreview}
+		<div className="stations-map-frame-container">
+			<div
+				className="stations-map-frame bg-light"
+				style={{aspectRatio: String(aspectRatio), maxWidth: `${maxPreviewHeight * aspectRatio}px`}}
+				role="button"
+				tabIndex={0}
+				title="Open the stations map"
+				onClick={openStationsMap}
+				onKeyDown={handleKeyDown}
+			>
+				{mapPreview}
 
-			<div className="stations-map-frame-overlay">
-				<span className="stations-map-expand">
-					<i className="fas fa-expand-arrows-alt" aria-hidden="true" />
-				</span>
+				<div className="stations-map-frame-overlay">
+					<span className="stations-map-expand">
+						<i className="fas fa-expand-arrows-alt" aria-hidden="true" />
+					</span>
+				</div>
 			</div>
 		</div>
 	);
