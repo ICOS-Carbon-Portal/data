@@ -33,8 +33,6 @@ class Filters extends Component<OurProps> {
 
 		return (
 			<div>
-				{stationsMapCtrl}
-
 				<PanelsWithFilters
 					filterNumbers={filterNumbers}
 					specTable={specTable}
@@ -49,6 +47,7 @@ class Filters extends Component<OurProps> {
 					filterKeywords={filterKeywords}
 					setKeywordFilter={setKeywordFilter}
 					startCollapsed={false}
+					stationsMapCtrl={stationsMapCtrl}
 				/>
 			</div>
 		);

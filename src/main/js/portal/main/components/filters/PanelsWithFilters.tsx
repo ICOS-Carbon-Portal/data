@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {Fragment, ReactNode} from 'react';
 import config, {filters, CategoryType, NumberFilterCategories, FilterName} from "../../config";
 import CompositeSpecTable, {ColNames} from "../../models/CompositeSpecTable";
 import {Value} from "../../models/SpecTable";
@@ -31,35 +31,42 @@ interface PanelsWithMultiselects extends CommonProps {
 	filterKeywords: string[]
 	setKeywordFilter: (filterKeywords: string[]) => void
 	startCollapsed?: boolean
+	stationsMapCtrl?: ReactNode
 }
 
 const availableFilters = filters[config.envri];
 
 export const PanelsWithFilters: React.FunctionComponent<PanelsWithMultiselects> = props => {
 	const {specTable, labelLookup, helpStorage, updateFilter, setNumberFilter, filterNumbers, startCollapsed = false,
-		filterTemporal, setFilterTemporal, scopedKeywords, filterKeywords, setKeywordFilter, countryCodesLookup} = props;
+		filterTemporal, setFilterTemporal, scopedKeywords, filterKeywords, setKeywordFilter, countryCodesLookup,
+		stationsMapCtrl} = props;
 
 	return (
 		<>
 			{availableFilters.map((filterPanel, i: number) =>
-				<Panel
-					key={"i" + i}
-					header={filterPanel.panelTitle}
-					filterList={filterPanel.filterList}
-					filterNumbers={filterNumbers}
-					specTable={specTable}
-					helpStorage={helpStorage}
-					labelLookup={labelLookup}
-					countryCodesLookup={countryCodesLookup}
-					updateFilter={updateFilter}
-					setNumberFilter={setNumberFilter}
-					filterTemporal={filterTemporal}
-					setFilterTemporal={setFilterTemporal}
-					scopedKeywords={scopedKeywords}
-					filterKeywords={filterKeywords}
-					setKeywordFilter={setKeywordFilter}
-					startCollapsed={startCollapsed}
-				/>
+				<Fragment key={"i" + i}>
+					<Panel
+						header={filterPanel.panelTitle}
+						filterList={filterPanel.filterList}
+						filterNumbers={filterNumbers}
+						specTable={specTable}
+						helpStorage={helpStorage}
+						labelLookup={labelLookup}
+						countryCodesLookup={countryCodesLookup}
+						updateFilter={updateFilter}
+						setNumberFilter={setNumberFilter}
+						filterTemporal={filterTemporal}
+						setFilterTemporal={setFilterTemporal}
+						scopedKeywords={scopedKeywords}
+						filterKeywords={filterKeywords}
+						setKeywordFilter={setKeywordFilter}
+						startCollapsed={startCollapsed}
+					/>
+
+					{/* The map is a filter in its own right, so it sits among the panels
+					    rather than above or below all of them */}
+					{i === 0 ? stationsMapCtrl : null}
+				</Fragment>
 			)}
 		</>
 	);
