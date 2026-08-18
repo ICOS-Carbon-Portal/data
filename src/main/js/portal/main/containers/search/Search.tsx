@@ -10,7 +10,7 @@ import ActiveFilters from './ActiveFilters';
 import {getLastSegmentsInUrls, isSmallDevice} from '../../utils';
 import {Sha256Str, UrlStr} from "../../backend/declarations";
 import {PortalDispatch} from "../../store";
-import {Route, State} from "../../models/State";
+import {DrawRectBbox, Route, State} from "../../models/State";
 import {addToCart, updateRoute} from "../../actions/common";
 import Filters from "./Filters";
 import SearchResultCompact from "./SearchResultCompact";
@@ -22,6 +22,8 @@ import {ResultViewSwitch} from '../../components/searchResult/ResultViewSwitch';
 import { SupportedSRIDs } from 'icos-cp-ol';
 import config from '../../config';
 import { PersistedMapPropsExtended } from '../../models/InitMap';
+import { rectsToDrawFeatures } from '../../models/MapProps';
+import deepEqual from 'deep-equal';
 import { getPersistedMapProps } from '../../backend';
 import { addingToCartProhibition } from '../../models/CartItem';
 
@@ -41,6 +43,7 @@ class Search extends Component<OurProps, OurState> {
 	private events: typeof Events;
 	private handleResize: Function;
 	private persistedMapProps: PersistedMapPropsExtended;
+	private mapRectsSnapshot?: DrawRectBbox[];
 
 	constructor(props: OurProps) {
 		super(props);
@@ -72,11 +75,28 @@ class Search extends Component<OurProps, OurState> {
 	}
 
 	openStationsMap() {
+		this.mapRectsSnapshot = this.props.spatialRects;
 		this.setState({isStationsMapOpen: true});
 	}
 
-	closeStationsMap() {
+	applyStationsMap() {
+		this.mapRectsSnapshot = undefined;
 		this.setState({isStationsMapOpen: false});
+	}
+
+	cancelStationsMap() {
+		const snapshot = this.mapRectsSnapshot;
+		this.mapRectsSnapshot = undefined;
+		this.setState({isStationsMapOpen: false});
+
+		if (snapshot === undefined) return;
+
+		this.updatePersistedMapProps({drawFeatures: rectsToDrawFeatures(snapshot)});
+	}
+
+	private mapFilterChangedInMap(): boolean {
+		return this.mapRectsSnapshot !== undefined
+			&& !deepEqual(this.props.spatialRects, this.mapRectsSnapshot);
 	}
 
 	handlePreview(urls: UrlStr[]){
@@ -116,12 +136,17 @@ class Search extends Component<OurProps, OurState> {
 
 	updateMapSelectedSRID(srid: SupportedSRIDs) {
 		const { isStationFilterCtrlActive, baseMap, visibleToggles } = this.persistedMapProps;
-		this.persistedMapProps = { 
+		this.updatePersistedMapProps({
 			isStationFilterCtrlActive,
 			baseMap,
 			visibleToggles,
-			srid
-		};
+			srid,
+			center: undefined,
+			zoom: undefined,
+			drawFeatures: []
+		});
+
+		this.mapRectsSnapshot = this.state.isStationsMapOpen ? [] : undefined;
 		// Using srid as key for StationsMap forces React to recreate the component when it changes
 		this.setState({ srid });
 	}
@@ -148,6 +173,17 @@ class Search extends Component<OurProps, OurState> {
 			mapPreview={<StationsMapPreview persistedMapProps={this.persistedMapProps} />}
 			srid={srid}
 		/>;
+
+		const stationsMapButtons = this.mapFilterChangedInMap()
+			? <div className="stations-map-actions d-flex gap-2 me-4">
+				<button type="button" className="btn btn-outline-secondary px-3" onClick={this.cancelStationsMap.bind(this)}>
+					Cancel
+				</button>
+				<button type="button" className="btn btn-primary px-3" onClick={this.applyStationsMap.bind(this)}>
+					Apply
+				</button>
+			</div>
+			: null;
 
 		const resultsView = isCompact
 			? <SearchResultCompact
@@ -208,14 +244,16 @@ class Search extends Component<OurProps, OurState> {
 
 				<Modal
 					show={this.state.isStationsMapOpen}
-					onHide={this.closeStationsMap.bind(this)}
+					onHide={this.applyStationsMap.bind(this)}
 					size="xl"
 					centered
 					backdrop={true}
 					keyboard={true}
 				>
 					<Modal.Header closeButton>
-						<Modal.Title>Stations map</Modal.Title>
+						<Modal.Title className="flex-grow-1">Stations map</Modal.Title>
+
+						{stationsMapButtons}
 					</Modal.Header>
 					<Modal.Body className="p-0" style={{overflow: 'hidden'}}>
 						<StationsMap
@@ -238,7 +276,8 @@ function stateToProps(state: State){
 		tabs: state.tabs,
 		paging: state.paging,
 		searchOptions: state.searchOptions,
-		exportQuery: state.exportQuery
+		exportQuery: state.exportQuery,
+		spatialRects: state.mapProps.rects ?? []
 	};
 }
 

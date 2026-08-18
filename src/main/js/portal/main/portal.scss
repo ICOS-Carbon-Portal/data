@@ -165,3 +165,17 @@ ul.dashed > li:before {
 		display: none;
 	}
 }
+
+.stations-map-actions {
+	animation: fade-in 0.2s ease-in;
+
+	.btn {
+		padding-top: 0.125rem;
+		padding-bottom: 0.125rem;
+	}
+}
+
+@keyframes fade-in {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}

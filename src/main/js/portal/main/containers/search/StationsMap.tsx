@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { State } from "../../models/State";
 import InitMap, { PersistedMapPropsExtended, UpdateMapSelectedSRID } from '../../models/InitMap';
 import { PortalDispatch } from '../../store';
-import { failWithError } from '../../actions/common';
+import { failWithError, showWarning } from '../../actions/common';
 import { Value } from '../../models/SpecTable';
 import { Copyright } from 'icos-cp-copyright';
 import config from '../../config';
@@ -90,6 +90,7 @@ class StationsMap extends Component<OurProps> {
 				mapProps: this.props.mapProps,
 				updateMapSelectedSRID: this.props.updateMapSelectedSRID,
 				updatePersistedMapProps: this.props.updatePersistedMapProps,
+				showWarning: this.props.showWarning,
 				labelLookup: this.props.labelLookup,
 				selectedStations: this.props.selectedStations
 			})
@@ -121,6 +122,7 @@ function stateToProps(state: State) {
 function dispatchToProps(dispatch: PortalDispatch) {
 	return {
 		failWithError: (error: Error) => failWithError(dispatch)(error),
+		showWarning: (message: string) => showWarning(dispatch)(message),
 	};
 }
 
