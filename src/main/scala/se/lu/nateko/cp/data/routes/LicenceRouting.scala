@@ -1,9 +1,7 @@
 package se.lu.nateko.cp.data.routes
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport.*
-import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.Uri
-import akka.http.scaladsl.model.headers.HttpCookie
 import akka.http.scaladsl.server.Directive1
 import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.Route
@@ -12,33 +10,31 @@ import se.lu.nateko.cp.meta.core.HandleProxiesConfig
 import se.lu.nateko.cp.meta.core.crypto.JsonSupport.given
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.EnvriConfigs
-import se.lu.nateko.cp.meta.core.data.collectionPathPrefix
-import se.lu.nateko.cp.meta.core.data.objectPathPrefix
 import spray.json.*
 import DefaultJsonProtocol.*
 
 import scala.util.Try
 import eu.icoscp.envri.Envri
 
-class LicenceRouting(userOpt: Directive1[Option[UserId]], handleProxies: HandleProxiesConfig)(using EnvriConfigs) {
+class LicenceRouting(
+	userOpt: Directive1[Option[UserId]],
+	handleProxies: HandleProxiesConfig,
+	downloadRouting: DownloadRouting
+)(using EnvriConfigs) {
 
 	import LicenceRouting._
 
 	private def dataLicence(prof: LicenceProfile): Route = dataLicenceRoute(prof, userOpt, handleProxies)
 
-	def route: Route = parameter("ids".as[Array[Sha256Sum]], "fileName".?, "isColl".as[Boolean] ? false){(hashes, fileOpt, isColl) =>
+	def route: Route = parameter("ids".as[Array[Sha256Sum]], "fileName".?, "isColl".as[Boolean] ? false){(hashArray, fileOpt, isColl) =>
+
+		val hashes = hashArray.toIndexedSeq
 
 		val profile = new UriLicenceProfile(hashes.toIndexedSeq, fileOpt, isColl)
 
 		path(LicenceAcceptPath){
-			val target = profile.downloadUri
-			val cookie = HttpCookie(
-				LicenceCookieName,
-				hashes.map(_.base64Url).mkString("|"),
-				path = Some(target.path.toString)
-			)
-			setCookie(cookie){
-				redirect(target, StatusCodes.Found)
+			UploadRouting.extractEnvriDirective{
+				downloadRouting.licenceAcceptedBatchDownload(hashes, fileOpt, isColl)
 			}
 		} ~
 		path(LicencePath){
@@ -69,15 +65,6 @@ object LicenceRouting{
 		)
 	}
 	class UriLicenceProfile(hashes: Seq[Sha256Sum], fileName: Option[String], isColl: Boolean) extends LicenceProfile{
-
-		def downloadUri = {
-			val prefix = (if(isColl) collectionPathPrefix else objectPathPrefix).stripSuffix("/")
-
-			if(hashes.size == 1 && (isColl || fileName.isEmpty))
-				Uri(s"/${prefix}/${hashes.head.id}")
-			else
-				hashesUri("/" + prefix, false)
-		}
 
 		def licenceAcceptUri: Option[Uri] = if(hashes.isEmpty) None else Some(hashesUri("/" + LicenceAcceptPath))
 

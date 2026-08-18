@@ -159,6 +159,21 @@ class DownloadRouting(
 		}
 	}
 
+	def licenceAcceptedBatchDownload(
+		hashes: IndexedSeq[Sha256Sum], fileOpt: Option[String], isColl: Boolean
+	)(using Envri): Route =
+		if(hashes.isEmpty) complete(StatusCodes.BadRequest -> "Expected at least one SHA-256 hash in 'ids' URL parameter")
+		else if(isColl) onSuccess(metaClient.lookupCollection(hashes.head)){(coll, members) =>
+			val memberHashes = members.collect{case obj: PlainStaticObject => obj.hash}
+			batchDownload(memberHashes, fileOpt.getOrElse(coll.title), logCollDownload(coll))
+		}
+		else fileOpt match
+			case Some(fileName) => batchDownload(hashes, fileName)
+			case None if hashes.size == 1 => onSuccess(uploadService.meta.lookupObject(hashes.head)){obj =>
+				batchDownload(hashes, obj.fileName)
+			}
+			case None => batchDownload(hashes, "data")
+
 	private val batchObjectDownload: Route = pathEnd { extractEnvri{
 		get{
 			parameters("ids".as[IndexedSeq[Sha256Sum]], "fileName"){(hashes, fileName) =>
