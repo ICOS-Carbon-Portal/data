@@ -4,7 +4,7 @@ import {AdvancedFilter, State} from "../../models/State";
 import {PortalDispatch} from "../../store";
 import {ColNames} from "../../models/CompositeSpecTable";
 import {Value} from "../../models/SpecTable";
-import config, {CategoryType, numericFilterLabels, placeholders} from "../../config";
+import config, {CategoryType, filters, FilterName, numericFilterLabels, placeholders} from "../../config";
 import FilterTemporal from "../../models/FilterTemporal";
 import {FilterNumber} from "../../models/FilterNumbers";
 import {
@@ -35,6 +35,18 @@ const advancedFilterTypeLabels: {[key in AdvancedFilter]: string} = {
 
 const collapseThreshold = 4;
 
+type GroupName = FilterName | 'map' | 'advanced';
+
+const filterOrder: ReadonlyArray<GroupName> = [
+	'map',
+	...filters[config.envri].flatMap(panel => panel.filterList)
+];
+
+function filterOrderIndex(groupName: GroupName): number {
+	const index = filterOrder.indexOf(groupName);
+	return index === -1 ? filterOrder.length : index;
+}
+
 type TagValue = {
 	key: string
 	text: string
@@ -42,7 +54,7 @@ type TagValue = {
 }
 
 type TagGroup = {
-	key: string
+	name: GroupName
 	label: string
 	values: TagValue[]
 	onRemoveAll?: () => void
@@ -59,7 +71,7 @@ function ActiveFilters(props: OurProps) {
 
 	if (isInPidFilteringMode(tabs, filterPids)) {
 		groups.push({
-			key: 'advanced',
+			name: 'advanced',
 			label: advancedFilterTypeLabels[filterAdvancedType],
 			values: [{
 				key: 'advanced',
@@ -75,7 +87,7 @@ function ActiveFilters(props: OurProps) {
 			const categoryName = colName as unknown as CategoryType;
 
 			groups.push({
-				key: `category:${colName}`,
+				name: categoryName,
 				label: placeholders[config.envri][categoryName],
 				values: filterValues.map(value => ({
 					key: `${colName}:${value}`,
@@ -88,7 +100,7 @@ function ActiveFilters(props: OurProps) {
 
 		if (filterKeywords.length > 0) {
 			groups.push({
-				key: 'keywords',
+				name: 'keywordFilter',
 				label: 'Keyword',
 				values: filterKeywords.map(keyword => ({
 					key: `keyword:${keyword}`,
@@ -101,7 +113,7 @@ function ActiveFilters(props: OurProps) {
 
 		filterNumbers.validFilters.forEach(filterNumber => {
 			groups.push({
-				key: `number:${filterNumber.category}`,
+				name: filterNumber.category,
 				label: numericFilterLabels[filterNumber.category],
 				values: [{
 					key: `number:${filterNumber.category}`,
@@ -129,7 +141,7 @@ function ActiveFilters(props: OurProps) {
 			});
 		}
 		if (dataTimeValues.length > 0) {
-			groups.push({key: 'dataTime', label: 'Sampling date', values: dataTimeValues});
+			groups.push({name: 'dataTime', label: 'Sampling date', values: dataTimeValues});
 		}
 
 		const submissionValues: TagValue[] = [];
@@ -148,17 +160,19 @@ function ActiveFilters(props: OurProps) {
 			});
 		}
 		if (submissionValues.length > 0) {
-			groups.push({key: 'submission', label: 'Submission date', values: submissionValues});
+			groups.push({name: 'submission', label: 'Submission date', values: submissionValues});
 		}
 
 		if (spatialRects && spatialRects.length > 0) {
 			groups.push({
-				key: 'map',
+				name: 'map',
 				label: 'Map filter',
 				values: [{key: 'map', text: 'Active', onRemove: removeMapRect}]
 			});
 		}
 	}
+
+	groups.sort((group, otherGroup) => filterOrderIndex(group.name) - filterOrderIndex(otherGroup.name));
 
 	if (groups.length === 0) {
 		return null;
@@ -167,7 +181,7 @@ function ActiveFilters(props: OurProps) {
 	return (
 		<div className="active-filters d-flex flex-wrap border-bottom">
 			{groups.map(group => (
-				<FilterTagGroup key={group.key} label={group.label} values={group.values} onRemoveAll={group.onRemoveAll} />
+				<FilterTagGroup key={group.name} label={group.label} values={group.values} onRemoveAll={group.onRemoveAll} />
 			))}
 			<span className="active-filter-tag active-filter-tag-warning" onClick={clearAllFilters}>
 				Clear all
