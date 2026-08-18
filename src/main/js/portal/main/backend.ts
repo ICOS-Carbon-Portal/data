@@ -171,8 +171,13 @@ export const fetchKnownDataObjects = (dobjs: string[]) => {
 		: Promise.resolve({colNames: [], rows: []});
 };
 
+export function matchesNoResults(options: QueryParameters) {
+	return (Filter.allowsNothing(options.specs) || Filter.allowsNothing(options.submitters) ||
+		Filter.allowsNothing(options.stations) || Filter.allowsNothing(options.sites));
+}
+
 export function fetchFilteredDataObjects(options: QueryParameters){
-	return Filter.allowsNothing(options.specs) || Filter.allowsNothing(options.submitters) || Filter.allowsNothing(options.stations)
+	return matchesNoResults(options)
 		? Promise.resolve({
 			colNames: [],
 			rows: []

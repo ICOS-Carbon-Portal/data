@@ -41,11 +41,11 @@ export function loadApp(user: WhoAmI): PortalThunkAction<void> {
 
 export function bootstrapRoute(user: WhoAmI, route: Route, previewPids?: Sha256Str[]): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		const {id, tabs} = getState();
+		const {id} = getState();
 
 		switch (route) {
 			case 'search':
-				dispatch(bootstrapSearch(user, tabs));
+				dispatch(bootstrapSearch(user));
 				break;
 
 			case 'preview':

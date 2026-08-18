@@ -1,7 +1,7 @@
 import React from 'react';
-import LinkifyIt from 'linkify-it';
+import linkifyit from 'linkify-it';
 
-const linkifyIt = LinkifyIt();
+const linkifyIt = new linkifyit();
 interface Props {
 	text: string,
 	style?: object
