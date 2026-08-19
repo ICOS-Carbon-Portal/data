@@ -6,6 +6,7 @@ from typing import Literal, TypeAlias, TypedDict
 from ..sparql import Binding, as_long, as_uri, as_opt_uri, as_string, as_datetime, as_opt_float
 from ..metacore import UriResource
 from ..geofeaturemeta import Point
+from ..envri import EnvriConfig, ICOS_CONFIG
 
 
 @dataclass(frozen=True)
@@ -122,11 +123,13 @@ def _selector_values_clause(varname: str, uris: list[str]) -> str:
 	else:
 		return f"VALUES ?{varname} {{ {'<' + '> <'.join(uris) + '>'} }}"
 
-def _get_uri_list(selector: CategorySelector) -> list[str]:
+def _get_uri_list(selector: CategorySelector, conf: EnvriConfig) -> list[str]:
 	if selector is None: return []
 	def to_uri(uri_or_res: object) -> str:
 		uri = getattr(uri_or_res, "uri", None) or str(uri_or_res)
-		return uri.replace("https://", "http://")
+		if conf.meta_instance_prefix.startswith("http://"):
+			return uri.replace("https://", "http://", 1)
+		return uri
 	if type(selector) is list:
 		return [to_uri(uri_or_res) for uri_or_res in selector]
 	return [to_uri(selector)]
@@ -138,11 +141,12 @@ def dataobj_lite_list(
 	include_deprecated: bool,
 	order_by: OrderBy | OrderByProp | None,
 	limit: int,
-	offset: int
+	offset: int,
+	conf: EnvriConfig = ICOS_CONFIG
 ) -> str:
 
-	specUris =  _get_uri_list(datatype)
-	stationUris = _get_uri_list(station)
+	specUris =  _get_uri_list(datatype, conf)
+	stationUris = _get_uri_list(station, conf)
 	stationMandatory = "?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station ."
 	stationLink = f"OPTIONAL{{ {stationMandatory} }}" if len(stationUris) == 0 else stationMandatory
 	samplingHeightPresent = any(f is SamplingHeightFilter for f in filters)
