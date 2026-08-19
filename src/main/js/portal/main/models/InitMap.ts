@@ -238,7 +238,6 @@ export default class InitMap {
 	}
 
 	private toggleLayerVisibility(layerId: string): boolean {
-		// The preview is too small to make sense of the stations that a filter left out
 		if (this.hideExcludedStations && layerId === excludedStationsId) return false;
 
 		const visibleToggles = this.persistedMapProps.visibleToggles;
@@ -327,22 +326,15 @@ export default class InitMap {
 		}
 	}
 
-	// The preview and the modal map are mounted at the same time, so a base map picked in one
-	// has to be applied to the other. Which layers are visible is deliberately not shared,
-	// and the rest of the persisted props are only read while a map is being created
 	baseMapUpdated(baseMap: PersistedMapPropsExtended['baseMap']): void {
 		if (baseMap === undefined || baseMap === this.layerControl.selectedBaseMap) return;
 
 		this.layerControl.toggleBaseMaps(baseMap);
-		// Base maps added later, the countries one, read their visibility from here
 		this.persistedMapProps = {...this.persistedMapProps, baseMap};
 		this.layerControl.updateCtrl();
 	}
 
 	updateLayerCtrl(self: LayerControl): () => void {
-		// LayerControl.createId knows nothing about the map instance, so the preview and the
-		// modal map would otherwise build inputs sharing ids and a radio group name. A label
-		// then targets whichever input the document holds first, i.e. the wrong map
 		const createId = (ctrlType: 'radio' | 'toggle', layerId: string) =>
 			this.idPrefix + self.createId(ctrlType, layerId);
 		const baseMapGroupName = this.idPrefix + 'basemap';

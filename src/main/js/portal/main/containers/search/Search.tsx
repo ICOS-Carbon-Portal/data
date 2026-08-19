@@ -30,16 +30,19 @@ import { addingToCartProhibition } from '../../models/CartItem';
 const defaultViewTabId = 0;
 const compactViewTabId = 1;
 
+function mainElement() {
+	return document.querySelector<HTMLElement>('main');
+}
+
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
 type OurProps = StateProps & DispatchProps & { HelpSection: ReactNode };
 type OurState = {
 	expandedFilters: boolean
 	srid?: SupportedSRIDs
-	// Kept in state, unlike the other persisted map props, so that a base map picked in the
-	// modal map reaches the preview while both are mounted
 	baseMap?: BaseMapId
 	isStationsMapOpen: boolean
+	isMapFilterReset: boolean
 };
 
 class Search extends Component<OurProps, OurState> {
@@ -70,7 +73,8 @@ class Search extends Component<OurProps, OurState> {
 			expandedFilters: !isSmallDevice(),
 			srid: this.persistedMapProps.srid,
 			baseMap: this.persistedMapProps.baseMap,
-			isStationsMapOpen: false
+			isStationsMapOpen: false,
+			isMapFilterReset: false
 		};
 	}
 
@@ -80,27 +84,36 @@ class Search extends Component<OurProps, OurState> {
 
 	openStationsMap() {
 		this.mapRectsSnapshot = this.props.spatialRects;
-		this.setState({isStationsMapOpen: true});
+		this.setState({isStationsMapOpen: true, isMapFilterReset: false});
 	}
 
 	applyStationsMap() {
 		this.mapRectsSnapshot = undefined;
-		this.setState({isStationsMapOpen: false});
+		this.setState({isStationsMapOpen: false, isMapFilterReset: false});
 	}
 
 	cancelStationsMap() {
 		const snapshot = this.mapRectsSnapshot;
 		this.mapRectsSnapshot = undefined;
-		this.setState({isStationsMapOpen: false});
+		this.setState({isStationsMapOpen: false, isMapFilterReset: false});
 
 		if (snapshot === undefined) return;
 
 		this.updatePersistedMapProps({drawFeatures: rectsToDrawFeatures(snapshot)});
 	}
 
+	resetStationsMap() {
+		this.setState({isMapFilterReset: true});
+		this.clearMapRects();
+	}
+
 	private mapFilterChangedInMap(): boolean {
-		return this.mapRectsSnapshot !== undefined
-			&& !deepEqual(this.props.spatialRects, this.mapRectsSnapshot);
+		if (this.mapRectsSnapshot === undefined) return false;
+
+		// A reset is a change to be applied even when it happens to leave the rectangles as
+		// the map was opened with, such as after drawing one and then resetting
+		return this.state.isMapFilterReset
+			|| !deepEqual(this.props.spatialRects, this.mapRectsSnapshot);
 	}
 
 	handlePreview(urls: UrlStr[]){
@@ -128,9 +141,8 @@ class Search extends Component<OurProps, OurState> {
 		this.props.filtersReset();
 	}
 
-	handleRemoveMapRect() {
-		this.persistedMapProps = {...this.persistedMapProps, drawFeatures: []};
-		this.props.setMapProps(this.persistedMapProps);
+	clearMapRects() {
+		this.updatePersistedMapProps({drawFeatures: []});
 	}
 
 	updatePersistedMapProps(persistedMapProps: PersistedMapPropsExtended) {
@@ -176,9 +188,6 @@ class Search extends Component<OurProps, OurState> {
 
 		const isCompact = tabs.resultTab === compactViewTabId;
 
-		// Without a center and a zoom the preview fits the whole extent of its projection, and
-		// without visibleToggles it shows every layer it is given. Taking the base map from
-		// state is what makes the preview follow the one picked in the modal map
 		const previewMapProps = {
 			...this.persistedMapProps,
 			baseMap: this.state.baseMap,
@@ -193,16 +202,27 @@ class Search extends Component<OurProps, OurState> {
 			srid={srid}
 		/>;
 
-		const stationsMapButtons = this.mapFilterChangedInMap()
-			? <div className="stations-map-actions d-flex gap-2 me-4">
-				<button type="button" className="btn btn-outline-secondary px-3" onClick={this.cancelStationsMap.bind(this)}>
-					Cancel
-				</button>
-				<button type="button" className="btn btn-primary px-3" onClick={this.applyStationsMap.bind(this)}>
-					Apply
-				</button>
-			</div>
-			: null;
+		const stationsMapButtons = <div className="d-flex gap-2">
+			<button
+				type="button"
+				className="btn btn-primary"
+				disabled={!this.mapFilterChangedInMap()}
+				onClick={this.applyStationsMap.bind(this)}
+			>
+				Apply
+			</button>
+			<button
+				type="button"
+				className="btn btn-secondary"
+				disabled={this.props.spatialRects.length === 0}
+				onClick={this.resetStationsMap.bind(this)}
+			>
+				Reset
+			</button>
+			<button type="button" className="btn btn-outline-secondary" onClick={this.cancelStationsMap.bind(this)}>
+				Cancel
+			</button>
+		</div>;
 
 		const resultsView = isCompact
 			? <SearchResultCompact
@@ -255,7 +275,7 @@ class Search extends Component<OurProps, OurState> {
 						</div>
 
 						<ActiveFilters
-							removeMapRect={this.handleRemoveMapRect.bind(this)}
+							removeMapRect={this.clearMapRects.bind(this)}
 							clearAllFilters={this.handleFilterReset.bind(this)}
 						/>
 
@@ -266,12 +286,14 @@ class Search extends Component<OurProps, OurState> {
 				<Modal
 					show={this.state.isStationsMapOpen}
 					onHide={this.applyStationsMap.bind(this)}
+					container={mainElement}
 					size="xl"
 					centered
 					backdrop={true}
 					keyboard={true}
 				>
-					<Modal.Header closeButton>
+					<Modal.Header>
+						{/* Growing the title keeps the buttons at the far end of the header */}
 						<Modal.Title className="flex-grow-1">Stations map</Modal.Title>
 
 						{stationsMapButtons}
