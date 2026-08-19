@@ -218,13 +218,13 @@ type FilterTagProps = {
 
 function FilterTag({label, onRemove}: FilterTagProps) {
 	return (
-		<span className="active-filter-tag">
+		<span
+			className="active-filter-tag"
+			onClick={onRemove}
+			title="Remove this filter"
+		>
 			{label}
-			<i
-				className="fas fa-times"
-				title="Remove this filter"
-				onClick={onRemove}
-			/>
+			<i className="fas fa-times" />
 		</span>
 	);
 }

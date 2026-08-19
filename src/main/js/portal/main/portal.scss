@@ -68,6 +68,7 @@ ul.dashed > li:before {
 }
 
 .active-filter-tag {
+	cursor: pointer;
 	display: inline-flex;
 	align-items: center;
 	background-color: var(--bs-secondary-bg);
@@ -76,7 +77,6 @@ ul.dashed > li:before {
 	user-select: none;
 
 	.fa-times {
-		cursor: pointer;
 		margin-left: 6px;
 	}
 }
