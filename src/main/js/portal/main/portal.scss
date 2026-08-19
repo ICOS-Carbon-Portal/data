@@ -92,9 +92,14 @@ ul.dashed > li:before {
 	border-radius: 4px;
 	padding: 2px 8px;
 	user-select: none;
+	transition: filter 0.2s;
 
 	.fa-times {
 		margin-left: 6px;
+	}
+
+	&:hover {
+		filter: brightness(80%);
 	}
 }
 
