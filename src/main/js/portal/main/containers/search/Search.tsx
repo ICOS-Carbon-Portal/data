@@ -10,7 +10,7 @@ import ActiveFilters from './ActiveFilters';
 import {getLastSegmentsInUrls, isSmallDevice} from '../../utils';
 import {Sha256Str, UrlStr} from "../../backend/declarations";
 import {PortalDispatch} from "../../store";
-import {DrawRectBbox, Route, State} from "../../models/State";
+import {Route, State} from "../../models/State";
 import {addToCart, updateRoute} from "../../actions/common";
 import Filters from "./Filters";
 import SearchResultCompact from "./SearchResultCompact";
@@ -22,8 +22,6 @@ import {ResultViewSwitch} from '../../components/searchResult/ResultViewSwitch';
 import { BaseMapId, SupportedSRIDs } from 'icos-cp-ol';
 import config from '../../config';
 import { PersistedMapPropsExtended } from '../../models/InitMap';
-import { rectsToDrawFeatures } from '../../models/MapProps';
-import deepEqual from 'deep-equal';
 import { getPersistedMapProps } from '../../backend';
 import { addingToCartProhibition } from '../../models/CartItem';
 
@@ -38,14 +36,12 @@ type OurState = {
 	srid?: SupportedSRIDs
 	baseMap?: BaseMapId
 	isStationsMapOpen: boolean
-	isMapFilterReset: boolean
 };
 
 class Search extends Component<OurProps, OurState> {
 	private events: typeof Events;
 	private handleResize: Function;
 	private persistedMapProps: PersistedMapPropsExtended;
-	private mapRectsSnapshot?: DrawRectBbox[];
 
 	constructor(props: OurProps) {
 		super(props);
@@ -69,8 +65,7 @@ class Search extends Component<OurProps, OurState> {
 			expandedFilters: !isSmallDevice(),
 			srid: this.persistedMapProps.srid,
 			baseMap: this.persistedMapProps.baseMap,
-			isStationsMapOpen: false,
-			isMapFilterReset: false
+			isStationsMapOpen: false
 		};
 	}
 
@@ -79,35 +74,11 @@ class Search extends Component<OurProps, OurState> {
 	}
 
 	openStationsMap() {
-		this.mapRectsSnapshot = this.props.spatialRects;
-		this.setState({isStationsMapOpen: true, isMapFilterReset: false});
+		this.setState({isStationsMapOpen: true});
 	}
 
-	applyStationsMap() {
-		this.mapRectsSnapshot = undefined;
-		this.setState({isStationsMapOpen: false, isMapFilterReset: false});
-	}
-
-	cancelStationsMap() {
-		const snapshot = this.mapRectsSnapshot;
-		this.mapRectsSnapshot = undefined;
-		this.setState({isStationsMapOpen: false, isMapFilterReset: false});
-
-		if (snapshot === undefined) return;
-
-		this.updatePersistedMapProps({drawFeatures: rectsToDrawFeatures(snapshot)});
-	}
-
-	resetStationsMap() {
-		this.setState({isMapFilterReset: true});
-		this.clearMapRects();
-	}
-
-	private mapFilterChangedInMap(): boolean {
-		if (this.mapRectsSnapshot === undefined) return false;
-
-		return this.state.isMapFilterReset
-			|| !deepEqual(this.props.spatialRects, this.mapRectsSnapshot);
+	closeStationsMap() {
+		this.setState({isStationsMapOpen: false});
 	}
 
 	handlePreview(urls: UrlStr[]){
@@ -160,7 +131,6 @@ class Search extends Component<OurProps, OurState> {
 			drawFeatures: []
 		});
 
-		this.mapRectsSnapshot = this.state.isStationsMapOpen ? [] : undefined;
 		// Using srid as key for StationsMap forces React to recreate the component when it changes
 		this.setState({ srid });
 	}
@@ -199,22 +169,14 @@ class Search extends Component<OurProps, OurState> {
 		const stationsMapButtons = <div className="d-flex gap-2">
 			<button
 				type="button"
-				className="btn btn-primary"
-				disabled={!this.mapFilterChangedInMap()}
-				onClick={this.applyStationsMap.bind(this)}
-			>
-				Apply
-			</button>
-			<button
-				type="button"
 				className="btn btn-secondary"
 				disabled={this.props.spatialRects.length === 0}
-				onClick={this.resetStationsMap.bind(this)}
+				onClick={this.clearMapRects.bind(this)}
 			>
 				Reset
 			</button>
-			<button type="button" className="btn btn-outline-secondary" onClick={this.cancelStationsMap.bind(this)}>
-				Cancel
+			<button type="button" className="btn btn-primary" onClick={this.closeStationsMap.bind(this)}>
+				Done
 			</button>
 		</div>;
 
@@ -279,7 +241,7 @@ class Search extends Component<OurProps, OurState> {
 
 				<Modal
 					show={this.state.isStationsMapOpen}
-					onHide={this.applyStationsMap.bind(this)}
+					onHide={this.closeStationsMap.bind(this)}
 					container={mainElement}
 					size="xl"
 					centered

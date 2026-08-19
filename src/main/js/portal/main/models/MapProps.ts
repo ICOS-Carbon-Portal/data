@@ -2,7 +2,7 @@ import deepEqual from 'deep-equal';
 import { SupportedSRIDs } from 'icos-cp-ol';
 import type { Coordinate } from 'ol/coordinate';
 import config from '../config';
-import { drawRectBoxToCoords, round } from '../utils';
+import { round } from '../utils';
 import type { DrawRectBbox, MapProps } from './State';
 import type { DrawFeature } from './StationFilterControl';
 
@@ -38,14 +38,6 @@ export function coordsToRect(coords: Coordinate[][], srid: SupportedSRIDs): Draw
 
 export function drawFeaturesToRects(drawFeatures: DrawFeature[], srid: SupportedSRIDs): DrawRectBbox[] {
 	return drawFeatures.map(drawFeature => coordsToRect(drawFeature.coords, srid));
-}
-
-export function rectsToDrawFeatures(rects: DrawRectBbox[]): DrawFeature[] {
-	return rects.map(rect => ({
-		id: Symbol(),
-		type: stationFilterRectType,
-		coords: [drawRectBoxToCoords(rect)]
-	}));
 }
 
 export function deriveMapProps(source: MapPropsSource, currentMapProps: MapProps): MapProps {
