@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { CSSProperties } from 'react';
 import {connect} from 'react-redux';
 import {AdvancedFilter, State} from "../../models/State";
 import {PortalDispatch} from "../../store";
@@ -179,14 +179,14 @@ function ActiveFilters(props: OurProps) {
 	}
 
 	return (
-		<div className="active-filters d-flex flex-wrap border-bottom">
+		<div className="align-items-center gap-3 p-3 d-flex flex-wrap border-bottom">
 			{groups.map(group => (
 				<FilterTagGroup key={group.name} label={group.label} values={group.values} onRemoveAll={group.onRemoveAll} />
 			))}
-			<span className="active-filter-tag active-filter-tag-warning" onClick={clearAllFilters}>
+			<a className="active-filter-clear text-decoration-none user-select-none" onClick={clearAllFilters}>
 				Clear all
-				<i className="fas fa-trash" />
-			</span>
+				<i className="fas fa-trash ms-1" />
+			</a>
 		</div>
 	);
 }
@@ -201,8 +201,8 @@ function FilterTagGroup({label, values, onRemoveAll}: FilterTagGroupProps) {
 	const isCollapsed = onRemoveAll !== undefined && values.length >= collapseThreshold;
 
 	return (
-		<div className="active-filter-group">
-			<span className="active-filter-category">{label}</span>
+		<div className="d-inline-flex align-items-center gap-2">
+			<span className="fs-sm fw-semibold text-dark">{label}</span>
 			{isCollapsed
 				? <FilterTag label={`${values.length} items`} onRemove={onRemoveAll} />
 				: values.map(value => <FilterTag key={value.key} label={value.text} onRemove={value.onRemove} />)
