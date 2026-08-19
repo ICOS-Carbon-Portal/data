@@ -19,7 +19,7 @@ import StationsMap from './StationsMap';
 import {StationsMapPreview} from './StationsMapPreview';
 import {StationsMapCtrl} from '../../components/filters/StationsMapCtrl';
 import {ResultViewSwitch} from '../../components/searchResult/ResultViewSwitch';
-import { SupportedSRIDs } from 'icos-cp-ol';
+import { BaseMapId, SupportedSRIDs } from 'icos-cp-ol';
 import config from '../../config';
 import { PersistedMapPropsExtended } from '../../models/InitMap';
 import { rectsToDrawFeatures } from '../../models/MapProps';
@@ -36,6 +36,9 @@ type OurProps = StateProps & DispatchProps & { HelpSection: ReactNode };
 type OurState = {
 	expandedFilters: boolean
 	srid?: SupportedSRIDs
+	// Kept in state, unlike the other persisted map props, so that a base map picked in the
+	// modal map reaches the preview while both are mounted
+	baseMap?: BaseMapId
 	isStationsMapOpen: boolean
 };
 
@@ -66,6 +69,7 @@ class Search extends Component<OurProps, OurState> {
 		this.state = {
 			expandedFilters: !isSmallDevice(),
 			srid: this.persistedMapProps.srid,
+			baseMap: this.persistedMapProps.baseMap,
 			isStationsMapOpen: false
 		};
 	}
@@ -132,6 +136,10 @@ class Search extends Component<OurProps, OurState> {
 	updatePersistedMapProps(persistedMapProps: PersistedMapPropsExtended) {
 		this.persistedMapProps = { ...this.persistedMapProps, ...persistedMapProps };
 		this.props.setMapProps(this.persistedMapProps);
+
+		const baseMap = this.persistedMapProps.baseMap;
+		if (baseMap !== this.state.baseMap)
+			this.setState({ baseMap });
 	}
 
 	updateMapSelectedSRID(srid: SupportedSRIDs) {
@@ -168,9 +176,20 @@ class Search extends Component<OurProps, OurState> {
 
 		const isCompact = tabs.resultTab === compactViewTabId;
 
+		// Without a center and a zoom the preview fits the whole extent of its projection, and
+		// without visibleToggles it shows every layer it is given. Taking the base map from
+		// state is what makes the preview follow the one picked in the modal map
+		const previewMapProps = {
+			...this.persistedMapProps,
+			baseMap: this.state.baseMap,
+			visibleToggles: undefined,
+			center: undefined,
+			zoom: undefined
+		};
+
 		const stationsMapCtrl = <StationsMapCtrl
 			openStationsMap={this.openStationsMap.bind(this)}
-			mapPreview={<StationsMapPreview persistedMapProps={this.persistedMapProps} />}
+			mapPreview={<StationsMapPreview previewMapProps={previewMapProps} />}
 			srid={srid}
 		/>;
 

@@ -56,6 +56,7 @@ interface Props extends UpdateProps {
 	iconStyles?: OlMapSettings['iconStyles']
 	keepFitted?: boolean
 	showDeleteRectBtns?: boolean
+	hideExcludedStations?: boolean
 }
 interface UpdateProps {
 	allStations: UrlStr[]
@@ -65,6 +66,8 @@ interface UpdateProps {
 export type StationPosLookup = Record<UrlStr, { coord: number[], stationLbl: string }>
 
 const countryBordersId = 'countryBorders';
+const excludedStationsId = 'excludedStations';
+const includedStationsId = 'includedStations';
 const olMapSettings = config.olMapSettings;
 const isIncludedStation = 'isIncluded';
 
@@ -84,6 +87,7 @@ export default class InitMap {
 	private readonly getStationPosLookup: () => StationPosLookup
 	private readonly idPrefix: string
 	private readonly iconStyles: OlMapSettings['iconStyles']
+	private readonly hideExcludedStations: boolean
 
 	constructor(props: Props) {
 		const {mapRootElement, persistedMapProps, updatePersistedMapProps} = props;
@@ -91,6 +95,7 @@ export default class InitMap {
 		this.persistedMapProps = persistedMapProps;
 		this.idPrefix = props.idPrefix ?? '';
 		this.iconStyles = props.iconStyles ?? olMapSettings.iconStyles;
+		this.hideExcludedStations = props.hideExcludedStations ?? false;
 		this.fetchCountriesTopo();
 
 		this.allStations = props.allStations
@@ -144,7 +149,7 @@ export default class InitMap {
 		this.layerControl = new LayerControl({
 			element: document.getElementById(this.idPrefix + 'layerCtrl') ?? undefined,
 			selectedBaseMap,
-			updateCtrl: this.updateLayerCtrl
+			updateCtrl: this.updateLayerCtrl.bind(this)
 		});
 		this.layerControl.on('change', e => {
 			const layerCtrl = e.target as LayerControl;
@@ -233,6 +238,9 @@ export default class InitMap {
 	}
 
 	private toggleLayerVisibility(layerId: string): boolean {
+		// The preview is too small to make sense of the stations that a filter left out
+		if (this.hideExcludedStations && layerId === excludedStationsId) return false;
+
 		const visibleToggles = this.persistedMapProps.visibleToggles;
 		return visibleToggles === undefined || visibleToggles.includes(layerId);
 	}
@@ -252,7 +260,7 @@ export default class InitMap {
 		const includedStations = createPointData(this.selectedStations, this.stationPosLookup, {[isIncludedStation]: true});
 
 		const excludedStationsToggle: LayerWrapper = this.getLayerWrapper({
-			id: 'excludedStations',
+			id: excludedStationsId,
 			label: 'Station filtered out',
 			layerType: 'toggle',
 			geoType: 'point',
@@ -262,7 +270,7 @@ export default class InitMap {
 			interactive: true
 		});
 		const includedStationsToggle: LayerWrapper = this.getLayerWrapper({
-			id: 'includedStations',
+			id: includedStationsId,
 			label: 'Station',
 			layerType: 'toggle',
 			geoType: 'point',
@@ -319,7 +327,26 @@ export default class InitMap {
 		}
 	}
 
+	// The preview and the modal map are mounted at the same time, so a base map picked in one
+	// has to be applied to the other. Which layers are visible is deliberately not shared,
+	// and the rest of the persisted props are only read while a map is being created
+	baseMapUpdated(baseMap: PersistedMapPropsExtended['baseMap']): void {
+		if (baseMap === undefined || baseMap === this.layerControl.selectedBaseMap) return;
+
+		this.layerControl.toggleBaseMaps(baseMap);
+		// Base maps added later, the countries one, read their visibility from here
+		this.persistedMapProps = {...this.persistedMapProps, baseMap};
+		this.layerControl.updateCtrl();
+	}
+
 	updateLayerCtrl(self: LayerControl): () => void {
+		// LayerControl.createId knows nothing about the map instance, so the preview and the
+		// modal map would otherwise build inputs sharing ids and a radio group name. A label
+		// then targets whichever input the document holds first, i.e. the wrong map
+		const createId = (ctrlType: 'radio' | 'toggle', layerId: string) =>
+			this.idPrefix + self.createId(ctrlType, layerId);
+		const baseMapGroupName = this.idPrefix + 'basemap';
+
 		return () => {
 			if (self.map === undefined)
 				return;
@@ -337,11 +364,11 @@ export default class InitMap {
 
 				baseMaps.forEach(bm => {
 					const row = document.createElement('div');
-					const id = self.createId('radio', bm.get('id'));
+					const id = createId('radio', bm.get('id'));
 
 					const radio = document.createElement('input');
 					radio.setAttribute('id', id);
-					radio.setAttribute('name', 'basemap');
+					radio.setAttribute('name', baseMapGroupName);
 					radio.setAttribute('type', 'radio');
 					radio.setAttribute('style', 'margin:0px 5px 0px 0px;');
 					if (bm.getVisible()) {
@@ -366,7 +393,7 @@ export default class InitMap {
 					const legendItem = getLayerIcon(toggleLayer);
 					const row = document.createElement('div');
 					row.setAttribute('style', 'display:table;');
-					const id = self.createId('toggle', toggleLayer.get('id'));
+					const id = createId('toggle', toggleLayer.get('id'));
 
 					const toggle = document.createElement('input');
 					toggle.setAttribute('id', id);

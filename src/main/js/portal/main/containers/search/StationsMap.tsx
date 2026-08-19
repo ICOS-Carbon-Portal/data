@@ -33,6 +33,8 @@ class StationsMap extends Component<OurProps> {
 	componentDidUpdate(){
 		if (this.initMap === undefined) return;
 
+		this.initMap.baseMapUpdated(this.props.persistedMapProps.baseMap);
+
 		this.initMap.incomingPropsUpdated({
 			allStations: this.props.allStations,
 			mapProps: this.props.mapProps,
@@ -84,6 +86,7 @@ class StationsMap extends Component<OurProps> {
 				iconStyles: this.props.isPreview ? config.olMapSettings.smallIconStyles : undefined,
 				keepFitted: this.props.isPreview,
 				showDeleteRectBtns: !this.props.isPreview,
+				hideExcludedStations: this.props.isPreview,
 				allStations: this.props.allStations,
 				stationPos4326Lookup: this.props.stationPos4326Lookup,
 				persistedMapProps: this.props.persistedMapProps,

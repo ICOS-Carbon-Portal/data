@@ -4,14 +4,12 @@ import StationsMap from './StationsMap';
 
 
 interface OurProps {
-	persistedMapProps: PersistedMapPropsExtended
+	previewMapProps: PersistedMapPropsExtended
 }
 
 function ignoreMapProps() {}
 
-export function StationsMapPreview(props: OurProps) {
-	const previewMapProps = {...props.persistedMapProps, center: undefined, zoom: undefined};
-
+export function StationsMapPreview({previewMapProps}: OurProps) {
 	// Using srid as key forces React to recreate the map when the projection changes
 	return (
 		<StationsMap
