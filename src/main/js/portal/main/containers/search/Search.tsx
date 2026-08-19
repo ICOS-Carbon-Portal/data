@@ -30,10 +30,6 @@ import { addingToCartProhibition } from '../../models/CartItem';
 const defaultViewTabId = 0;
 const compactViewTabId = 1;
 
-function mainElement() {
-	return document.querySelector<HTMLElement>('main');
-}
-
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
 type OurProps = StateProps & DispatchProps & { HelpSection: ReactNode };
@@ -110,8 +106,6 @@ class Search extends Component<OurProps, OurState> {
 	private mapFilterChangedInMap(): boolean {
 		if (this.mapRectsSnapshot === undefined) return false;
 
-		// A reset is a change to be applied even when it happens to leave the rectangles as
-		// the map was opened with, such as after drawing one and then resetting
 		return this.state.isMapFilterReset
 			|| !deepEqual(this.props.spatialRects, this.mapRectsSnapshot);
 	}
@@ -309,6 +303,11 @@ class Search extends Component<OurProps, OurState> {
 			</div>
 		);
 	}
+}
+
+// mount modal to "main" if present for styling inheritance
+function mainElement() {
+	return document.querySelector<HTMLElement>('main') ?? document.body;
 }
 
 function stateToProps(state: State){
