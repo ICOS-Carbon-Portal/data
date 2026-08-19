@@ -20,7 +20,7 @@ export function ResultViewSwitch(props: OurProps) {
 				checked={!isCompact}
 				onChange={() => setCompact(false)}
 			/>
-			<label className="btn btn-outline-secondary d-flex align-items-center" htmlFor="result-view-default" title="View default results">
+			<label className="btn btn-outline-secondary d-flex align-items-center py-1" htmlFor="result-view-default" title="View default results">
 				<i className="fas fa-list me-2" />
 				Default
 			</label>
@@ -34,7 +34,7 @@ export function ResultViewSwitch(props: OurProps) {
 				checked={isCompact}
 				onChange={() => setCompact(true)}
 			/>
-			<label className="btn btn-outline-secondary d-flex align-items-center" htmlFor="result-view-compact" title="View compact results">
+			<label className="btn btn-outline-secondary d-flex align-items-center py-1" htmlFor="result-view-compact" title="View compact results">
 				<i className="fas fa-table me-2" />
 				Compact
 			</label>

@@ -1,4 +1,3 @@
-
 .panel-srollable-controls {
 	position: sticky;
 	top: 0;
@@ -19,6 +18,24 @@
 
 .tab-pane .card:last-child {
 	border-radius: 0 0 0.4rem 0.4rem;
+}
+
+.aligned-card-header, .aligned-card-header-with-tabs {
+	min-height: 48px;
+	padding-top: 0;
+}
+
+.aligned-card-header {
+	padding-bottom: 0;
+}
+
+/* account for tabs reaching bottom of header */
+.aligned-card-header-with-tabs {
+	padding-bottom: var(--bs-card-cap-padding-y);
+}
+
+.paging-count {
+	flex: 1 1 0;
 }
 
 .extended-info-item {

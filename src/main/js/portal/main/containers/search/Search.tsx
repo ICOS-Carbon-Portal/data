@@ -5,7 +5,7 @@ import {debounce, Events} from 'icos-cp-utils';
 import Tabs from '../../components/ui/Tabs';
 import SearchResultRegular from './SearchResultRegular';
 import {updateCheckedObjectsInSearch, switchTab, filtersReset, setMapProps, requestStep, getAllFilteredDataObjects} from '../../actions/search';
-import {Paging} from '../../components/buttons/Paging';
+import {PagingCount, PagingSteps} from '../../components/buttons/Paging';
 import ActiveFilters from './ActiveFilters';
 import {getLastSegmentsInUrls, isSmallDevice} from '../../utils';
 import {Sha256Str, UrlStr} from "../../backend/declarations";
@@ -218,24 +218,26 @@ class Search extends Component<OurProps, OurState> {
 
 				<div className="col-sm-8 col-md-9">
 					<div className="card">
-						<div className="card-header d-flex justify-content-between align-items-center">
-							Search results
+						<div className="card-header aligned-card-header d-flex justify-content-between align-items-center gap-3">
+							<PagingCount
+								paging={paging}
+								searchOptions={searchOptions}
+								getAllFilteredDataObjects={getAllFilteredDataObjects}
+								exportQuery={exportQuery}
+							/>
 
-							<ResultViewSwitch isCompact={isCompact} setCompact={this.setCompactView.bind(this)} />
+							<div className="d-flex flex-wrap justify-content-end align-items-center column-gap-3 row-gap-1">
+								<ResultViewSwitch isCompact={isCompact} setCompact={this.setCompactView.bind(this)} />
+
+								<div className="lh-sm text-nowrap">
+									<PagingSteps paging={paging} onStep={requestStep} />
+								</div>
+							</div>
 						</div>
 
 						<ActiveFilters
 							removeMapRect={this.handleRemoveMapRect.bind(this)}
 							clearAllFilters={this.handleFilterReset.bind(this)}
-						/>
-
-						<Paging
-							searchOptions={searchOptions}
-							type="header"
-							paging={paging}
-							requestStep={requestStep}
-							getAllFilteredDataObjects={getAllFilteredDataObjects}
-							exportQuery={exportQuery}
 						/>
 
 						{resultsView}

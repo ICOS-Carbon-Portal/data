@@ -5,53 +5,73 @@ import config from "../../config";
 import {ExportQuery, SearchOptions} from "../../models/State";
 import { FileDownload } from './FileDownload';
 
-interface Paging {
-	type: 'header' | 'footer'
-	paging: P
-	requestStep: (direction: -1 | 1) => void | undefined
-	searchOptions: SearchOptions | undefined
-	getAllFilteredDataObjects: () => void
-	exportQuery: ExportQuery
-}
-
-export const Paging = (props: Paging) => {
-	const { type, paging, requestStep, searchOptions, getAllFilteredDataObjects, exportQuery } = props;
-
+function pagingCounts(paging: P) {
 	const {offset, objCount, pageCount} = paging;
 	const minObjs = Math.min(offset + pageCount, objCount);
 	const to = minObjs < pageCount
 		? pageCount
 		: minObjs;
 	const count = pageCount < config.stepsize ? to : objCount;
-	const isForwardEnabled = to < count;
+
+	return {offset, to, count, isForwardEnabled: to < count};
+}
+
+interface PagingCount {
+	paging: P
+	searchOptions: SearchOptions | undefined
+	getAllFilteredDataObjects: () => void
+	exportQuery: ExportQuery
+}
+
+export const PagingCount = (props: PagingCount) => {
+	const { paging, searchOptions, getAllFilteredDataObjects, exportQuery } = props;
+
+	const {offset, to, count} = pagingCounts(paging);
 	const showDeprecated = searchOptions ? searchOptions.showDeprecated : false;
 
-	if (type === "header") {
-		return (
-			<div className="card-header bg-transparent">
-				<span className="align-middle">
-					<CountHeader objCount={count} to={to} offset={offset} showDeprecated={showDeprecated} />
+	return (
+		<span className="paging-count py-1">
+			<CountHeader objCount={count} to={to} offset={offset} showDeprecated={showDeprecated} />
 
-					<FileDownload exportQuery={exportQuery} getAllFilteredDataObjects={getAllFilteredDataObjects} searchResultsCount={count} />
-				</span>
-				<div className="float-end lh-sm">
-					<StepButton direction="step-backward" enabled={offset > 0} onStep={() => requestStep(-1)}/>
-					<StepButton direction="step-forward" enabled={isForwardEnabled} onStep={() => requestStep(1)}/>
-				</div>
+			<FileDownload exportQuery={exportQuery} getAllFilteredDataObjects={getAllFilteredDataObjects} searchResultsCount={count} />
+		</span>
+	);
+};
+
+interface PagingSteps {
+	paging: P
+	onStep: (direction: -1 | 1) => void
+}
+
+export const PagingSteps = ({paging, onStep}: PagingSteps) => {
+	const {offset, isForwardEnabled} = pagingCounts(paging);
+
+	return (
+		<>
+			<StepButton direction="step-backward" enabled={offset > 0} onStep={() => onStep(-1)}/>
+			<StepButton direction="step-forward" enabled={isForwardEnabled} onStep={() => onStep(1)}/>
+		</>
+	);
+};
+
+interface PagingFooter {
+	paging: P
+	requestStep: (direction: -1 | 1) => void
+}
+
+export const PagingFooter = ({paging, requestStep}: PagingFooter) => {
+	const onStep = (direction: -1 | 1) => {
+		window.scrollTo(0, 0);
+		requestStep(direction);
+	};
+
+	return (
+		<div className="card-footer">
+			<div style={{textAlign: 'right', lineHeight: '1rem'}}>
+				<PagingSteps paging={paging} onStep={onStep} />
 			</div>
-		);
-	} else if (type === "footer") {
-		return (
-			<div className="card-footer">
-				<div style={{textAlign: 'right', lineHeight: '1rem'}}>
-					<StepButton direction="step-backward" enabled={offset > 0} onStep={() => {window.scrollTo(0, 0);requestStep(-1)}} />
-					<StepButton direction="step-forward" enabled={isForwardEnabled} onStep={() => {window.scrollTo(0, 0);requestStep(1)}} />
-				</div>
-			</div>
-		);
-	} else {
-		return null;
-	}
+		</div>
+	);
 };
 
 interface CountHeader {
