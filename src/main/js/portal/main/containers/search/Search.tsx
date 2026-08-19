@@ -293,8 +293,7 @@ class Search extends Component<OurProps, OurState> {
 					keyboard={true}
 				>
 					<Modal.Header>
-						{/* Growing the title keeps the buttons at the far end of the header */}
-						<Modal.Title className="flex-grow-1">Stations map</Modal.Title>
+						<Modal.Title className="flex-grow-1">Filter by geographic region</Modal.Title>
 
 						{stationsMapButtons}
 					</Modal.Header>
