@@ -50,7 +50,6 @@ export const KeywordFilter: React.FunctionComponent<OurProps> = props => {
 					<MultiSelectFilter
 						name={"keywordFilter"}
 						shouldUseExternalListEntry={false}
-						search={{}}
 						updateFilter={(_: any, keywords: Value[]) => setKeywordFilter(keywords.filter(isDefined).map(kw => kw + ''))}
 						placeholder={placeholder}
 						data={data}

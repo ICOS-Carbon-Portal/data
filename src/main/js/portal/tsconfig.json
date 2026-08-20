@@ -12,7 +12,16 @@
     "jsx": "react",
     "moduleResolution": "node",
     "skipLibCheck": true,
-    "strict": true
+    "strict": true,
+    // Temporary, for as long as icos-cp-multiselect is consumed via a `file:`/link
+    // symlink: TypeScript resolves the package through its real path and would
+    // otherwise also pull in the copy of @types/react installed in that package's own
+    // node_modules, giving two incompatible sets of React types. Remove this once the
+    // package is installed from the registry.
+    "baseUrl": ".",
+    "paths": {
+      "react": [ "node_modules/@types/react" ]
+    }
   },
   "files": [ "main/main.tsx", "main/vite-env.d.ts" ],
   "include": [

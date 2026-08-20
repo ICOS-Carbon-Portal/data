@@ -37,6 +37,19 @@ module.exports = defineConfig(({ mode }) => {
 		define: {
 			'import.meta.env.VITE_SENTRY_RELEASE': JSON.stringify(release || ''),
 		},
+		// Temporary, for as long as icos-cp-multiselect is consumed via a `file:`/link
+		// symlink. Vite resolves the package through its real path, which sits outside
+		// this app's node_modules, so React would resolve from that package's own
+		// node_modules and give two React instances ("Invalid hook call"). `dedupe`
+		// pins them to this app's copy; `optimizeDeps.include` pre-bundles the linked
+		// package, which Vite skips for linked deps and which it needs because the
+		// package ships CommonJS. Remove both once it is installed from the registry.
+		resolve: {
+			dedupe: ['react', 'react-dom'],
+		},
+		optimizeDeps: {
+			include: ['icos-cp-multiselect'],
+		},
 	build: {
 		outDir,
 		emptyOutDir: true,
