@@ -2,9 +2,9 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { KnownDataObject, State} from "../../models/State";
 import {PortalDispatch} from "../../store";
-import {getAllFilteredDataObjects, requestStep, toggleSort, updateCheckedObjectsInSearch} from "../../actions/search";
+import {requestStep, toggleSort, updateCheckedObjectsInSearch} from "../../actions/search";
 import {UrlStr} from "../../backend/declarations";
-import {Paging} from "../../components/buttons/Paging";
+import {PagingFooter} from "../../components/buttons/Paging";
 import CheckAllBoxes from "../../components/controls/CheckAllBoxes";
 import Dropdown from "../../components/controls/Dropdown";
 import CartBtn from "../../components/buttons/CartBtn";
@@ -23,7 +23,7 @@ type IncomingActions = {
 	handleAddToCart: (objInfo: UrlStr[]) => void
 	handleAllCheckboxesChange: () => void
 }
-type OurProps = StateProps & DispatchProps & IncomingActions & {tabHeader: string};
+type OurProps = StateProps & DispatchProps & IncomingActions;
 
 const dropdownLookup = {
 	fileName: 'File name',
@@ -34,10 +34,10 @@ const dropdownLookup = {
 };
 
 function SearchResultRegular(props: OurProps) {
-	const {preview, objectsTable, previewLookup, paging, sorting, searchOptions,
+	const {preview, objectsTable, previewLookup, paging, sorting,
 		toggleSort, requestStep, labelLookup, checkedObjectsInSearch, extendedDobjInfo,
 		updateCheckedObjects, handlePreview, handleAddToCart,
-		handleAllCheckboxesChange, getAllFilteredDataObjects, exportQuery, user } = props;
+		handleAllCheckboxesChange, user } = props;
 
 	const objectText = checkedObjectsInSearch.length <= 1 ? "object" : "objects";
 	const checkedUriSet = new Set<string>(checkedObjectsInSearch);
@@ -47,16 +47,7 @@ function SearchResultRegular(props: OurProps) {
 		extendedDobjInfo, labelLookup});
 
 	return (
-		<div className="card">
-			<Paging
-				searchOptions={searchOptions}
-				type="header"
-				paging={paging}
-				requestStep={requestStep}
-				getAllFilteredDataObjects={getAllFilteredDataObjects}
-				exportQuery={exportQuery}
-			/>
-
+		<>
 			<div className="card-body pb-0">
 
 				<div className="panel-srollable-controls d-flex justify-content-between flex-wrap">
@@ -141,15 +132,8 @@ function SearchResultRegular(props: OurProps) {
 					}
 				</div>
 			</div>
-			<Paging
-				searchOptions={undefined}
-				type="footer"
-				paging={paging}
-				requestStep={requestStep}
-				getAllFilteredDataObjects={getAllFilteredDataObjects}
-				exportQuery={exportQuery}
-			/>
-		</div>
+			<PagingFooter paging={paging} requestStep={requestStep} />
+		</>
 	);
 }
 
@@ -163,9 +147,7 @@ function stateToProps(state: State){
 		cart: state.cart,
 		paging: state.paging,
 		sorting: state.sorting,
-		searchOptions: state.searchOptions,
 		extendedDobjInfo: state.extendedDobjInfo,
-		exportQuery: state.exportQuery,
 		user: state.user
 	};
 }
@@ -175,7 +157,6 @@ function dispatchToProps(dispatch: PortalDispatch){
 		updateCheckedObjects: (ids: UrlStr[] | UrlStr) => dispatch(updateCheckedObjectsInSearch(ids)),
 		toggleSort: (varName: string) => dispatch(toggleSort(varName)),
 		requestStep: (direction: -1 | 1) => dispatch(requestStep(direction)),
-		getAllFilteredDataObjects: () => dispatch(getAllFilteredDataObjects()),
 	};
 }
 

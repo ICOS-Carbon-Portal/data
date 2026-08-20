@@ -5,7 +5,7 @@ import {LabelLookup, MapProps, State, StationPos4326Lookup} from './State';
 import { UrlStr } from '../backend/declarations';
 import {difference, throwError} from '../utils';
 import {Filter, Value} from './SpecTable';
-import config from '../config';
+import config, { OlMapSettings } from '../config';
 import { Coordinate } from 'ol/coordinate';
 import Point from 'ol/geom/Point';
 import VectorLayer from 'ol/layer/Vector';
@@ -31,6 +31,7 @@ import {
 } from "icos-cp-ol";
 import VectorSource from 'ol/source/Vector';
 import Geometry from 'ol/geom/Geometry';
+import deepEqual from 'deep-equal';
 
 
 export type UpdateMapSelectedSRID = (srid: SupportedSRIDs) => void
@@ -50,6 +51,12 @@ interface Props extends UpdateProps {
 	persistedMapProps: PersistedMapPropsExtended
 	updatePersistedMapProps: (persistedMapProps: PersistedMapPropsExtended) => void
 	updateMapSelectedSRID: UpdateMapSelectedSRID
+	showWarning: (message: string) => void
+	idPrefix?: string
+	iconStyles?: OlMapSettings['iconStyles']
+	keepFitted?: boolean
+	showDeleteRectBtns?: boolean
+	hideExcludedStations?: boolean
 }
 interface UpdateProps {
 	allStations: UrlStr[]
@@ -59,6 +66,8 @@ interface UpdateProps {
 export type StationPosLookup = Record<UrlStr, { coord: number[], stationLbl: string }>
 
 const countryBordersId = 'countryBorders';
+const excludedStationsId = 'excludedStations';
+const includedStationsId = 'includedStations';
 const olMapSettings = config.olMapSettings;
 const isIncludedStation = 'isIncluded';
 
@@ -71,19 +80,27 @@ export default class InitMap {
 	private readonly stationFilterControl: StationFilterControl;
 	private allStations: UrlStr[]
 	private selectedStations: UrlStr[]
+	private mapProps: MapProps
 	private stationPosLookup: StationPosLookup
 	private countriesTopo?: CountriesTopo;
 	private persistedMapProps: PersistedMapPropsExtended<BaseMapId | 'Countries'>;
 	private readonly getStationPosLookup: () => StationPosLookup
+	private readonly idPrefix: string
+	private readonly iconStyles: OlMapSettings['iconStyles']
+	private readonly hideExcludedStations: boolean
 
 	constructor(props: Props) {
 		const {mapRootElement, persistedMapProps, updatePersistedMapProps} = props;
 
 		this.persistedMapProps = persistedMapProps;
+		this.idPrefix = props.idPrefix ?? '';
+		this.iconStyles = props.iconStyles ?? olMapSettings.iconStyles;
+		this.hideExcludedStations = props.hideExcludedStations ?? false;
 		this.fetchCountriesTopo();
 
 		this.allStations = props.allStations
 		this.selectedStations = props.selectedStations
+		this.mapProps = props.mapProps
 
 		const srid = persistedMapProps.srid === undefined
 			? olMapSettings.defaultSRID
@@ -100,7 +117,7 @@ export default class InitMap {
 
 		const selectedBaseMap = persistedMapProps.baseMap ?? olMapSettings.defaultBaseMap;
 		const tileLayers = getBaseMapLayers(selectedBaseMap, olMapSettings.baseMapFilter);
-		this.popup = new Popup('popover');
+		this.popup = new Popup(this.idPrefix + 'popover');
 
 		const controls: Control[] = getDefaultControls(projection);
 
@@ -120,16 +137,19 @@ export default class InitMap {
 		this.stationPosLookup = this.getStationPosLookup()
 
 		this.stationFilterControl = new StationFilterControl({
-			element: document.getElementById('stationFilterCtrl') ?? undefined,
+			element: document.getElementById(this.idPrefix + 'stationFilterCtrl') ?? undefined,
 			isActive: persistedMapProps.isStationFilterCtrlActive ?? false,
-			updatePersistedMapProps
+			updatePersistedMapProps,
+			showDeleteRectBtns: props.showDeleteRectBtns,
+			srid,
+			onDrawRejected: props.showWarning
 		});
 		controls.push(this.stationFilterControl);
 
 		this.layerControl = new LayerControl({
-			element: document.getElementById('layerCtrl') ?? undefined,
+			element: document.getElementById(this.idPrefix + 'layerCtrl') ?? undefined,
 			selectedBaseMap,
-			updateCtrl: this.updateLayerCtrl
+			updateCtrl: this.updateLayerCtrl.bind(this)
 		});
 		this.layerControl.on('change', e => {
 			const layerCtrl = e.target as LayerControl;
@@ -156,6 +176,9 @@ export default class InitMap {
 		this.olWrapper = new OLWrapper(olProps);
 		this.addInteractivity();
 
+		if (props.keepFitted)
+			this.olWrapper.map.on('change:size', () => this.fitView());
+
 		this.olWrapper.map.on("moveend", e => {
 			const map = e.target as Map;
 			const view = map.getView();
@@ -163,14 +186,23 @@ export default class InitMap {
 		});
 
 		const minWidth = 600;
-		const width = document.getElementsByTagName('body')[0].getBoundingClientRect().width;
-		if (width < minWidth) return;
+		const bodyWidth = document.getElementsByTagName('body')[0].getBoundingClientRect().width;
 
-		getESRICopyRight(esriBaseMapNames).then(attributions => {
-			this.olWrapper.attributionUpdater = new Copyright(attributions, projection, 'baseMapAttribution', minWidth);
-		});
+		// Copyright hides itself below minWidth anyway, so on narrow screens skip the fetch
+		if (bodyWidth >= minWidth) {
+			getESRICopyRight(esriBaseMapNames).then(attributions => {
+				this.olWrapper.attributionUpdater = new Copyright(attributions, projection, this.idPrefix + 'baseMapAttribution', minWidth);
+			});
+		}
 
-		this.updatePoints(props.mapProps)
+		this.updatePoints()
+	}
+
+	private fitView() {
+		const size = this.olWrapper.map.getSize();
+		if (size === undefined || size[0] === 0 || size[1] === 0) return;
+
+		this.olWrapper.map.getView().fit(this.olWrapper.viewParams.extent, { size });
 	}
 
 	private async fetchCountriesTopo() {
@@ -206,48 +238,50 @@ export default class InitMap {
 	}
 
 	private toggleLayerVisibility(layerId: string): boolean {
+		if (this.hideExcludedStations && layerId === excludedStationsId) return false;
+
 		const visibleToggles = this.persistedMapProps.visibleToggles;
-		return visibleToggles === undefined || visibleToggles.includes(layerId)
+		return visibleToggles === undefined || visibleToggles.includes(layerId);
 	}
 
 	private createProjectionControl(persistedMapProps: PersistedMapPropsExtended, updateMapSelectedSRID: UpdateMapSelectedSRID) {
 		return new ProjectionControl({
-			element: document.getElementById('projSwitchCtrl') ?? undefined,
+			element: document.getElementById(this.idPrefix + 'projSwitchCtrl') ?? undefined,
 			supportedSRIDs: olMapSettings.sridsInMap,
 			selectedSRID: persistedMapProps.srid ?? olMapSettings.defaultSRID,
 			switchProjAction: updateMapSelectedSRID
 		});
 	}
 
-	private updatePoints(mapProps: MapProps) {
-		const excludedUris = difference(this.allStations, this.selectedStations)
+	private updatePoints() {
+		const excludedUris = difference(this.allStations, this.selectedStations);
 		const excludedStations = createPointData(excludedUris, this.stationPosLookup, {[isIncludedStation]: false});
 		const includedStations = createPointData(this.selectedStations, this.stationPosLookup, {[isIncludedStation]: true});
 
 		const excludedStationsToggle: LayerWrapper = this.getLayerWrapper({
-			id: 'excludedStations',
+			id: excludedStationsId,
 			label: 'Station filtered out',
 			layerType: 'toggle',
 			geoType: 'point',
 			data: excludedStations,
-			style: olMapSettings.iconStyles.excludedStation,
+			style: this.iconStyles.excludedStation,
 			zIndex: 110,
 			interactive: true
 		});
 		const includedStationsToggle: LayerWrapper = this.getLayerWrapper({
-			id: 'includedStations',
+			id: includedStationsId,
 			label: 'Station',
 			layerType: 'toggle',
 			geoType: 'point',
 			data: includedStations,
-			style: olMapSettings.iconStyles.includedStation,
+			style: this.iconStyles.includedStation,
 			zIndex: 120,
 			interactive: true
 		});
 
 		this.olWrapper.addToggleLayers([includedStationsToggle, excludedStationsToggle]);
 		this.layerControl.updateCtrl();
-		this.stationFilterControl.reDrawFeaturesFromMapProps(mapProps)
+		this.stationFilterControl.reDrawFeaturesFromMapProps(this.mapProps);
 	}
 
 	getLayerWrapper({id, label, layerType, geoType, data, style, zIndex, interactive}: Omit<LayerWrapperArgs, 'visible'>): LayerWrapper {
@@ -269,22 +303,42 @@ export default class InitMap {
 	}
 
 	incomingPropsUpdated(props: UpdateProps): void {
-		const stationListIsSame = Filter.areEqual(this.allStations, props.allStations)
-		const spatFilterIsSame = Filter.areEqual(this.selectedStations, props.selectedStations)
+		const stationListIsSame = Filter.areEqual(this.allStations, props.allStations);
+		const spatFilterIsSame = Filter.areEqual(this.selectedStations, props.selectedStations);
+		const mapPropsIsSame = deepEqual(this.mapProps, props.mapProps);
 
-		if(stationListIsSame && spatFilterIsSame) return
-
-		this.allStations = props.allStations
-		this.selectedStations = props.selectedStations
-
-		if(!stationListIsSame){
-			this.stationPosLookup = this.getStationPosLookup()
+		if (stationListIsSame && spatFilterIsSame && mapPropsIsSame) {
+			return;
 		}
 
-		this.updatePoints(props.mapProps)
+		this.allStations = props.allStations;
+		this.selectedStations = props.selectedStations;
+		this.mapProps = props.mapProps;
+
+		if (!stationListIsSame){
+			this.stationPosLookup = this.getStationPosLookup();
+		}
+
+		if (stationListIsSame && spatFilterIsSame) {
+			this.stationFilterControl.reDrawFeaturesFromMapProps(this.mapProps);
+		} else {
+			this.updatePoints();
+		}
+	}
+
+	baseMapUpdated(baseMap: PersistedMapPropsExtended['baseMap']): void {
+		if (baseMap === undefined || baseMap === this.layerControl.selectedBaseMap) return;
+
+		this.layerControl.toggleBaseMaps(baseMap);
+		this.persistedMapProps = {...this.persistedMapProps, baseMap};
+		this.layerControl.updateCtrl();
 	}
 
 	updateLayerCtrl(self: LayerControl): () => void {
+		const createId = (ctrlType: 'radio' | 'toggle', layerId: string) =>
+			this.idPrefix + self.createId(ctrlType, layerId);
+		const baseMapGroupName = this.idPrefix + 'basemap';
+
 		return () => {
 			if (self.map === undefined)
 				return;
@@ -302,11 +356,11 @@ export default class InitMap {
 
 				baseMaps.forEach(bm => {
 					const row = document.createElement('div');
-					const id = self.createId('radio', bm.get('id'));
+					const id = createId('radio', bm.get('id'));
 
 					const radio = document.createElement('input');
 					radio.setAttribute('id', id);
-					radio.setAttribute('name', 'basemap');
+					radio.setAttribute('name', baseMapGroupName);
 					radio.setAttribute('type', 'radio');
 					radio.setAttribute('style', 'margin:0px 5px 0px 0px;');
 					if (bm.getVisible()) {
@@ -331,7 +385,7 @@ export default class InitMap {
 					const legendItem = getLayerIcon(toggleLayer);
 					const row = document.createElement('div');
 					row.setAttribute('style', 'display:table;');
-					const id = self.createId('toggle', toggleLayer.get('id'));
+					const id = createId('toggle', toggleLayer.get('id'));
 
 					const toggle = document.createElement('input');
 					toggle.setAttribute('id', id);

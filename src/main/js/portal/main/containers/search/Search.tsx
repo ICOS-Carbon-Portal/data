@@ -1,9 +1,12 @@
 import React, {Component, ReactNode} from 'react';
 import { connect } from 'react-redux';
+import { Modal } from 'react-bootstrap';
 import {debounce, Events} from 'icos-cp-utils';
 import Tabs from '../../components/ui/Tabs';
 import SearchResultRegular from './SearchResultRegular';
-import {updateCheckedObjectsInSearch, switchTab, filtersReset, setMapProps} from '../../actions/search';
+import {updateCheckedObjectsInSearch, switchTab, filtersReset, setMapProps, requestStep, getAllFilteredDataObjects} from '../../actions/search';
+import {PagingCount, PagingSteps} from '../../components/buttons/Paging';
+import ActiveFilters from './ActiveFilters';
 import {getLastSegmentsInUrls, isSmallDevice} from '../../utils';
 import {Sha256Str, UrlStr} from "../../backend/declarations";
 import {PortalDispatch} from "../../store";
@@ -12,12 +15,18 @@ import {addToCart, updateRoute} from "../../actions/common";
 import Filters from "./Filters";
 import SearchResultCompact from "./SearchResultCompact";
 import Advanced from "./Advanced";
-import SearchResultMap from './SearchResultMap';
-import { SupportedSRIDs } from 'icos-cp-ol';
+import StationsMap from './StationsMap';
+import {StationsMapPreview} from './StationsMapPreview';
+import {StationsMapCtrl} from '../../components/filters/StationsMapCtrl';
+import {ResultViewSwitch} from '../../components/searchResult/ResultViewSwitch';
+import { BaseMapId, SupportedSRIDs } from 'icos-cp-ol';
 import config from '../../config';
 import { PersistedMapPropsExtended } from '../../models/InitMap';
 import { getPersistedMapProps } from '../../backend';
 import { addingToCartProhibition } from '../../models/CartItem';
+
+const defaultViewTabId = 0;
+const compactViewTabId = 1;
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
@@ -25,6 +34,8 @@ type OurProps = StateProps & DispatchProps & { HelpSection: ReactNode };
 type OurState = {
 	expandedFilters: boolean
 	srid?: SupportedSRIDs
+	baseMap?: BaseMapId
+	isStationsMapOpen: boolean
 };
 
 class Search extends Component<OurProps, OurState> {
@@ -52,8 +63,22 @@ class Search extends Component<OurProps, OurState> {
 
 		this.state = {
 			expandedFilters: !isSmallDevice(),
-			srid: this.persistedMapProps.srid
+			srid: this.persistedMapProps.srid,
+			baseMap: this.persistedMapProps.baseMap,
+			isStationsMapOpen: false
 		};
+	}
+
+	setCompactView(isCompact: boolean) {
+		this.props.switchTab('resultTab', isCompact ? compactViewTabId : defaultViewTabId);
+	}
+
+	openStationsMap() {
+		this.setState({isStationsMapOpen: true});
+	}
+
+	closeStationsMap() {
+		this.setState({isStationsMapOpen: false});
 	}
 
 	handlePreview(urls: UrlStr[]){
@@ -81,20 +106,32 @@ class Search extends Component<OurProps, OurState> {
 		this.props.filtersReset();
 	}
 
+	clearMapRects() {
+		this.updatePersistedMapProps({drawFeatures: []});
+	}
+
 	updatePersistedMapProps(persistedMapProps: PersistedMapPropsExtended) {
 		this.persistedMapProps = { ...this.persistedMapProps, ...persistedMapProps };
 		this.props.setMapProps(this.persistedMapProps);
+
+		const baseMap = this.persistedMapProps.baseMap;
+		if (baseMap !== this.state.baseMap)
+			this.setState({ baseMap });
 	}
 
 	updateMapSelectedSRID(srid: SupportedSRIDs) {
 		const { isStationFilterCtrlActive, baseMap, visibleToggles } = this.persistedMapProps;
-		this.persistedMapProps = { 
+		this.updatePersistedMapProps({
 			isStationFilterCtrlActive,
 			baseMap,
 			visibleToggles,
-			srid
-		};
-		// Using srid as key for SearchResultMap forces React to recreate the component when it changes
+			srid,
+			center: undefined,
+			zoom: undefined,
+			drawFeatures: []
+		});
+
+		// Using srid as key for StationsMap forces React to recreate the component when it changes
 		this.setState({ srid });
 	}
 
@@ -107,10 +144,51 @@ class Search extends Component<OurProps, OurState> {
 	}
 
 	render(){
-		const { HelpSection, tabs, switchTab } = this.props;
+		const { HelpSection, tabs, switchTab, paging, searchOptions, exportQuery,
+			requestStep, getAllFilteredDataObjects } = this.props;
 		const { srid } = this.state;
 		const expandedFilters = this.state.expandedFilters ? {} : {height: 0, overflow: 'hidden'};
 		const filterIconClass = this.state.expandedFilters ? "fas fa-angle-up float-end" : "fas fa-angle-down float-end";
+
+		const isCompact = tabs.resultTab === compactViewTabId;
+
+		const previewMapProps = {
+			...this.persistedMapProps,
+			baseMap: this.state.baseMap,
+			visibleToggles: undefined,
+			center: undefined,
+			zoom: undefined
+		};
+
+		const stationsMapCtrl = <StationsMapCtrl
+			openStationsMap={this.openStationsMap.bind(this)}
+			mapPreview={<StationsMapPreview previewMapProps={previewMapProps} />}
+			srid={srid}
+		/>;
+
+		const stationsMapButtons = <div className="d-flex gap-2">
+			<button
+				type="button"
+				className="btn btn-secondary"
+				disabled={this.props.spatialRects.length === 0}
+				onClick={this.clearMapRects.bind(this)}
+			>
+				Reset
+			</button>
+			<button type="button" className="btn btn-primary" onClick={this.closeStationsMap.bind(this)}>
+				Done
+			</button>
+		</div>;
+
+		const resultsView = isCompact
+			? <SearchResultCompact
+				handlePreview={this.handlePreview.bind(this)}
+			/>
+			: <SearchResultRegular
+				handlePreview={this.handlePreview.bind(this)}
+				handleAddToCart={this.handleAddToCart.bind(this)}
+				handleAllCheckboxesChange={this.handleAllCheckboxesChange.bind(this)}
+			/>;
 
 		return (
 			<div className="row" style={{ position: 'relative' }}>
@@ -126,7 +204,7 @@ class Search extends Component<OurProps, OurState> {
 
 					<div style={expandedFilters}>
 						<Tabs tabName="searchTab" selectedTabId={tabs.searchTab} switchTab={switchTab}>
-							<Filters tabHeader="Filters" handleFilterReset={this.handleFilterReset.bind(this)} />
+							<Filters tabHeader="Filters" stationsMapCtrl={stationsMapCtrl} />
 							<Advanced tabHeader="Advanced" />
 						</Tabs>
 					</div>
@@ -134,36 +212,75 @@ class Search extends Component<OurProps, OurState> {
 				</div>
 
 				<div className="col-sm-8 col-md-9">
-					<Tabs tabName="resultTab" selectedTabId={tabs.resultTab} switchTab={switchTab}>
-						<SearchResultRegular
-							tabHeader="Search results"
-							handlePreview={this.handlePreview.bind(this)}
-							handleAddToCart={this.handleAddToCart.bind(this)}
-							handleAllCheckboxesChange={this.handleAllCheckboxesChange.bind(this)}
+					<div className="card">
+						<div className="card-header aligned-card-header d-flex justify-content-between align-items-center gap-3">
+							<PagingCount
+								paging={paging}
+								searchOptions={searchOptions}
+								getAllFilteredDataObjects={getAllFilteredDataObjects}
+								exportQuery={exportQuery}
+							/>
+
+							<div className="d-flex flex-wrap justify-content-end align-items-center column-gap-3 row-gap-1">
+								<ResultViewSwitch isCompact={isCompact} setCompact={this.setCompactView.bind(this)} />
+
+								<div className="lh-sm text-nowrap">
+									<PagingSteps paging={paging} onStep={requestStep} />
+								</div>
+							</div>
+						</div>
+
+						<ActiveFilters
+							removeMapRect={this.clearMapRects.bind(this)}
+							clearAllFilters={this.handleFilterReset.bind(this)}
 						/>
-						<SearchResultCompact
-							tabHeader="Compact view"
-							handlePreview={this.handlePreview.bind(this)}
-						/>
-						<SearchResultMap
+
+						{resultsView}
+					</div>
+				</div>
+
+				<Modal
+					show={this.state.isStationsMapOpen}
+					onHide={this.closeStationsMap.bind(this)}
+					container={mainElement}
+					size="xl"
+					centered
+					backdrop={true}
+					keyboard={true}
+				>
+					<Modal.Header>
+						<Modal.Title className="flex-grow-1">Filter by geographic region</Modal.Title>
+
+						{stationsMapButtons}
+					</Modal.Header>
+					<Modal.Body className="p-0" style={{overflow: 'hidden'}}>
+						<StationsMap
 							key={srid}
-							tabHeader="Stations map"
 							persistedMapProps={this.persistedMapProps}
 							updatePersistedMapProps={this.updatePersistedMapProps.bind(this)}
 							updateMapSelectedSRID={this.updateMapSelectedSRID.bind(this)}
 						/>
-					</Tabs>
-				</div>
+					</Modal.Body>
+				</Modal>
 			</div>
 		);
 	}
+}
+
+// mount modal to "main" if present for styling inheritance
+function mainElement() {
+	return document.querySelector<HTMLElement>('main') ?? document.body;
 }
 
 function stateToProps(state: State){
 	return {
 		checkedObjectsInSearch: state.checkedObjectsInSearch,
 		objectsTable: state.objectsTable,
-		tabs: state.tabs
+		tabs: state.tabs,
+		paging: state.paging,
+		searchOptions: state.searchOptions,
+		exportQuery: state.exportQuery,
+		spatialRects: state.mapProps.rects ?? []
 	};
 }
 
@@ -174,7 +291,9 @@ function dispatchToProps(dispatch: PortalDispatch){
 		updateCheckedObjects: (ids: UrlStr[] | UrlStr) => dispatch(updateCheckedObjectsInSearch(ids)),
 		switchTab: (tabName: string, selectedTabId: number) => dispatch(switchTab(tabName, selectedTabId)),
 		setMapProps: (mapProps: PersistedMapPropsExtended) => dispatch(setMapProps(mapProps)),
-		filtersReset: () => dispatch(filtersReset)
+		filtersReset: () => dispatch(filtersReset),
+		requestStep: (direction: -1 | 1) => dispatch(requestStep(direction)),
+		getAllFilteredDataObjects: () => dispatch(getAllFilteredDataObjects())
 	};
 }
 
