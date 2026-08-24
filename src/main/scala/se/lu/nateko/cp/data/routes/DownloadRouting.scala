@@ -35,6 +35,8 @@ import se.lu.nateko.cp.data.api.*
 
 import java.net.URI
 import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
@@ -165,14 +167,14 @@ class DownloadRouting(
 		if(hashes.isEmpty) complete(StatusCodes.BadRequest -> "Expected at least one SHA-256 hash in 'ids' URL parameter")
 		else if(isColl) onSuccess(metaClient.lookupCollection(hashes.head)){(coll, members) =>
 			val memberHashes = members.collect{case obj: PlainStaticObject => obj.hash}
-			batchDownload(memberHashes, fileOpt.getOrElse(coll.title), logCollDownload(coll))
+			batchDownload(memberHashes, timestampedBatchFileName(fileOpt.getOrElse(coll.title)), logCollDownload(coll))
 		}
 		else fileOpt match
-			case Some(fileName) => batchDownload(hashes, fileName)
+			case Some(fileName) => batchDownload(hashes, timestampedBatchFileName(fileName))
 			case None if hashes.size == 1 => onSuccess(uploadService.meta.lookupObject(hashes.head)){obj =>
-				batchDownload(hashes, obj.fileName)
+				batchDownload(hashes, timestampedBatchFileName(obj.fileName))
 			}
-			case None => batchDownload(hashes, "data")
+			case None => batchDownload(hashes, defaultBatchFileName)
 
 	private val batchObjectDownload: Route = pathEnd { extractEnvri{
 		get{
@@ -321,6 +323,15 @@ object DownloadRouting{
 
 	type ExtraBatchLog = (String, Option[UserId]) => Unit
 	val noopBatchLog: ExtraBatchLog = (_, _) => ()
+
+	private val batchFileNameTimeFmt = DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmm").withZone(ZoneOffset.UTC)
+
+	def timestampedBatchFileName(fileName: String): String =
+		val trimmed = fileName.trim
+		val base = if(trimmed.isEmpty) "downloaded_data" else trimmed
+		s"${batchFileNameTimeFmt.format(Instant.now())}_$base"
+
+	def defaultBatchFileName: String = timestampedBatchFileName("downloaded_data")
 
 	val licenceCookieHashsums: Directive1[Seq[Sha256Sum]] = cookie(LicenceCookieName).flatMap{licCookie =>
 		parseLicenceCookie(licCookie.value) match{
