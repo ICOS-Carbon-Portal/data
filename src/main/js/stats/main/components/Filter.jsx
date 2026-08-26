@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Multiselect } from 'icos-cp-multiselect';
+import { Multiselect } from '@icos-cp/multiselect';
 
 
 export default class Filter extends Component {

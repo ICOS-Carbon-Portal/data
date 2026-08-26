@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import { Multiselect } from 'icos-cp-multiselect';
+import { Multiselect } from '@icos-cp/multiselect';
 import HelpButton from "../../containers/help/HelpButton";
 import { ColNames } from '../../models/CompositeSpecTable';
 import { HelpItemName } from '../../models/HelpStorage';
