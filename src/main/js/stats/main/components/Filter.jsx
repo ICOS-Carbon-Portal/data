@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import { Multiselect } from '@icos-cp/multiselect';
 
+const resolveSelection = (filterValues, ids) =>
+	ids.map(id => filterValues.find(v => v.id === id) ?? { id, label: id });
 
 export default class Filter extends Component {
 	constructor(props) {
@@ -35,8 +37,8 @@ export default class Filter extends Component {
 							placeholder={placeholder}
 							dataKey="id"
 							textField="label"
-							data={value == "" ? filter.values.filter(f => f.count > 0) : filter.values}
-							value={value}
+							data={value.length === 0 ? filter.values.filter(f => f.count > 0) : filter.values}
+							value={resolveSelection(filter.values, value)}
 							onChange={this.handleSelectionChange.bind(this, filter)}
 							onToggle={this.handleToggle.bind(this)}
 						/>
