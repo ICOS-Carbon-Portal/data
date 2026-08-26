@@ -23,15 +23,19 @@ Alternatively, if you previously logged in to CPauth with `curl` and wrote the a
 
 ### Trying ingestion
 
-When developing client code for data upload, one may wish to test data objects for compliance with a certain format, to be sure that upload will work for a certain exact binary version of a data object. This is useful to avoid registering metadata packages for invalid data objects. The API is available through (similar to the standard upload) HTTP PUTing the data object contents to URL of the form
+When developing client code for data upload, one may wish to test data objects for compliance with a certain format, to check whether an exact binary version of a data object can pass the server-side ingestion/validation step used during upload. This is useful to avoid registering metadata packages for invalid data objects. This endpoint does not perform the complete standard upload flow: it does not check the object's hash, require upload authentication, store the object permanently, or complete a metadata package upload.
 
-`https://data.icos-cp.eu/tryingest?specUri=<obj spec uri>&nRows=<number of rows>` (for tabular data), or
+The API is available through HTTP PUTing the data object contents to URL of the form
+
+`https://data.icos-cp.eu/tryingest?specUri=<obj spec uri>&nRows=<number of rows>` (for tabular time-series data), or
 
 `https://data.icos-cp.eu/tryingest?specUri=<obj spec uri>&varnames=<variable names>` (for spatial NetCDF data), where
 
-- `specUri` is URL-encoded URL of the planned object specification ([examples](https://meta.icos-cp.eu/ontologies/cpmeta/SimpleObjectSpec))
-- `nRows` is the number of rows in the time series (not needed for ATC files)
-- `varnames` is URL-encoded JSON array with names of the variables that are expected to be previewable
+- `specUri` is URL-encoded URL of the planned object specification ([examples](https://meta.icos-cp.eu/ontologies/cpmeta/SimpleObjectSpec)); this parameter is mandatory
+- `nRows` is the number of rows in the time series; this is required for most tabular time-series formats, but not for formats where the ingester can infer the row count, such as ATC files
+- `varnames` is URL-encoded JSON array with names of the variables that are expected to be previewable; this is required for spatial NetCDF tryingestion
+
+On success, the response is either JSON with extracted ingestion metadata or a plain success message, depending on the object specification and ingester. Ingestion failures are returned as `400 Bad Request` with error details.
 
 With curl, the test can be performed for example as follows:
 
