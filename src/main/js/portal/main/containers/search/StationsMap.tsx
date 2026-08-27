@@ -1,4 +1,4 @@
-import React, { Component, CSSProperties } from 'react';
+import React, { CSSProperties, useEffect, useRef } from 'react';
 import { connect } from 'react-redux';
 import { State } from "../../models/State";
 import InitMap, { PersistedMapPropsExtended, UpdateMapSelectedSRID } from '../../models/InitMap';
@@ -15,100 +15,95 @@ const previewIdPrefix = 'preview-';
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
-type incommingProps = {
+type incomingProps = {
 	persistedMapProps: PersistedMapPropsExtended
 	updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void
 	updateMapSelectedSRID: UpdateMapSelectedSRID
 	isPreview?: boolean
 }
-type OurProps = StateProps & DispatchProps & incommingProps
+type OurProps = StateProps & DispatchProps & incomingProps
 
-class StationsMap extends Component<OurProps> {
-	private initMap?: InitMap = undefined;
+function StationsMap(props: OurProps) {
+	const {persistedMapProps, allStations, mapProps, selectedStations, isPreview, stationPos4326Lookup,
+		updateMapSelectedSRID, updatePersistedMapProps, showWarning, labelLookup, failWithError} = props;
+	const idPrefix = isPreview ? previewIdPrefix : '';
 
-	constructor(props: OurProps) {
-		super(props);
-	}
+	const initMapRef = useRef<InitMap | undefined>(undefined);
+	const mapRootRef = useRef<HTMLDivElement>(null);
 
-	componentDidUpdate(){
-		if (this.initMap === undefined) return;
-
-		this.initMap.baseMapUpdated(this.props.persistedMapProps.baseMap);
-
-		this.initMap.incomingPropsUpdated({
-			allStations: this.props.allStations,
-			mapProps: this.props.mapProps,
-			selectedStations: this.props.selectedStations
-		});
-	}
-
-	private get idPrefix() {
-		return this.props.isPreview ? previewIdPrefix : '';
-	}
-
-	render() {
-		const { isPreview } = this.props;
-		const idPrefix = this.idPrefix;
-		const style: CSSProperties = isPreview
-			? { position: 'absolute', inset: 0 }
-			: { width: '100%', aspectRatio: mapAspectRatio, maxHeight: mapMaxHeight, position: 'relative' };
-
-		return (
-			<div id={idPrefix + 'map'} className={isPreview ? 'stations-map-preview' : undefined} style={style} tabIndex={isPreview ? -1 : 1}>
-				<div id={idPrefix + 'stationFilterCtrl'} className="ol-control ol-layer-control-ur" style={{ top: 70, fontSize: 20 }}></div>
-				<div id={idPrefix + 'popover'} className="ol-popup"></div>
-				<div id={idPrefix + 'projSwitchCtrl'} className="ol-layer-control ol-layer-control-lr" style={{ zIndex: 99, marginRight: 10, padding: 0 }}></div>
-				<div id={idPrefix + 'layerCtrl'} className="ol-layer-control ol-layer-control-ur"></div>
-				<div id={idPrefix + 'attribution'} className="ol-attribution ol-unselectable ol-control ol-uncollapsible" style={{right: 15}}>
-					<ul>
-						<li>
-							<Copyright />
-						</li>
-					</ul>
-					<ul>
-						<li id={idPrefix + 'baseMapAttribution'} />
-					</ul>
-				</div>
-			</div>
-		);
-	}
-
-	componentDidMount() {
-		(async () => {
-			const { default: InitMap } = await import(
-				/* webpackMode: "lazy" */
-				/* webpackChunkName: "init-map" */
-				'../../models/InitMap'
-			);
-			this.initMap = new InitMap({
-				mapRootElement: document.getElementById(this.idPrefix + 'map')!,
-				idPrefix: this.idPrefix,
-				iconStyles: this.props.isPreview ? config.olMapSettings.smallIconStyles : undefined,
-				keepFitted: this.props.isPreview,
-				showDeleteRectBtns: !this.props.isPreview,
-				hideExcludedStations: this.props.isPreview,
-				allStations: this.props.allStations,
-				stationPos4326Lookup: this.props.stationPos4326Lookup,
-				persistedMapProps: this.props.persistedMapProps,
-				mapProps: this.props.mapProps,
-				updateMapSelectedSRID: this.props.updateMapSelectedSRID,
-				updatePersistedMapProps: this.props.updatePersistedMapProps,
-				showWarning: this.props.showWarning,
-				labelLookup: this.props.labelLookup,
-				selectedStations: this.props.selectedStations
-			})
-		})()
-			.catch(error => {
-				this.props.failWithError(error);
-			});
-	}
-
-	componentWillUnmount() {
-		if (this.initMap) {
-			this.initMap.olWrapper.destroyMap();
-			this.initMap = undefined;
+	useEffect(() => {
+		if (mapRootRef.current === null) {
+			return;
 		}
-	}
+
+		let initMap: InitMap;
+
+		try {
+			initMap = new InitMap({
+				mapRootElement: mapRootRef.current,
+				idPrefix,
+				iconStyles: isPreview ? config.olMapSettings.smallIconStyles : undefined,
+				keepFitted: isPreview,
+				showDeleteRectBtns: !isPreview,
+				hideExcludedStations: isPreview,
+				allStations,
+				stationPos4326Lookup,
+				persistedMapProps,
+				mapProps,
+				updateMapSelectedSRID,
+				updatePersistedMapProps,
+				showWarning,
+				labelLookup,
+				selectedStations
+			});
+		} catch (error) {
+			failWithError(error as Error);
+			return;
+		}
+
+		initMapRef.current = initMap;
+
+		return () => {
+			initMap.olWrapper.destroyMap();
+			initMapRef.current = undefined;
+		};
+	}, []);
+
+	useEffect(() => {
+		const initMap = initMapRef.current;
+		if (initMap === undefined) return;
+
+		initMap.baseMapUpdated(persistedMapProps.baseMap);
+
+		initMap.incomingPropsUpdated({
+			allStations,
+			mapProps,
+			selectedStations
+		});
+	});
+
+	const style: CSSProperties = isPreview
+		? { position: 'absolute', inset: 0 }
+		: { width: '100%', aspectRatio: mapAspectRatio, maxHeight: mapMaxHeight, position: 'relative' };
+
+	return (
+		<div ref={mapRootRef} className={isPreview ? 'stations-map-preview' : undefined} style={style} tabIndex={isPreview ? -1 : 1}>
+			<div id={idPrefix + 'stationFilterCtrl'} className="ol-control ol-layer-control-ur" style={{ top: 70, fontSize: 20 }}></div>
+			<div id={idPrefix + 'popover'} className="ol-popup"></div>
+			<div id={idPrefix + 'projSwitchCtrl'} className="ol-layer-control ol-layer-control-lr" style={{ zIndex: 99, marginRight: 10, padding: 0 }}></div>
+			<div id={idPrefix + 'layerCtrl'} className="ol-layer-control ol-layer-control-ur"></div>
+			<div id={idPrefix + 'attribution'} className="ol-attribution ol-unselectable ol-control ol-uncollapsible" style={{right: 15}}>
+				<ul>
+					<li>
+						<Copyright />
+					</li>
+				</ul>
+				<ul>
+					<li id={idPrefix + 'baseMapAttribution'} />
+				</ul>
+			</div>
+		</div>
+	);
 }
 
 function stateToProps(state: State) {
