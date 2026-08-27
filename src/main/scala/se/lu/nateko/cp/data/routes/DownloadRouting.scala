@@ -43,9 +43,7 @@ import scala.concurrent.duration.DurationInt
 import scala.util.Failure
 import scala.util.Success
 
-import LicenceRouting.LicenceCookieName
 import LicenceRouting.UriLicenceProfile
-import LicenceRouting.parseLicenceCookie
 import se.lu.nateko.cp.data.api.MetadataObjectNotFound
 import se.lu.nateko.cp.data.Main.metaClient
 
@@ -71,12 +69,6 @@ class DownloadRouting(
 			userOpt{uidOpt =>
 				onComplete(uploadService.meta.lookupObject(hashsum)){
 					case Success(dobj: DataObject) =>
-						licenceCookieHashsums{ hashes =>
-							deleteCookie(LicenceCookieName){
-								if(hashes.contains(dobj.hash)) singleObjRoute(dobj, uidOpt)
-								else reject
-							}
-						} ~
 						onSuccess(downloadService.licenceToAccept(dobj, uidOpt)){
 							case None =>
 								singleObjRoute(dobj, uidOpt)
@@ -111,7 +103,7 @@ class DownloadRouting(
 				val hashes = members.collect:
 					case pso: PlainStaticObject => pso.hash
 
-				val licenceCheck = batchLicenceCheck(hashes, _.contains(hashsum)){licUris =>
+				val licenceCheck = batchLicenceCheck(hashes, false){licUris =>
 					//TODO Make the licence-accept redirect convey the list of licences
 					redirect(new UriLicenceProfile(Seq(hashsum), None, true).licenceUri, StatusCodes.Found)
 				}
@@ -124,18 +116,11 @@ class DownloadRouting(
 	}
 
 	private def batchLicenceCheck(
-		members: Seq[Sha256Sum],
-		extraOkCond: Seq[Sha256Sum] => Boolean
+		members: Seq[Sha256Sum], licenceOk: Boolean
 	)(redirectFactory: Seq[URI] => Route)(using Envri): Directive0 = Directive.apply[Unit]{inner =>
 
-		if(extraOkCond(Nil)) inner(())
-		else licenceCookieHashsums{ hashes =>
-			deleteCookie(LicenceCookieName){
-				if(members.diff(hashes).isEmpty || extraOkCond(hashes)) inner(())
-				else reject
-			}
-		} ~
-		userOpt{uidOpt =>
+		if(licenceOk) inner(())
+		else userOpt{uidOpt =>
 			onSuccess(downloadService.licencesToAccept(members, uidOpt)){licUris =>
 				if(licUris.isEmpty)
 					inner(())
@@ -180,7 +165,7 @@ class DownloadRouting(
 		get{
 			parameters("ids".as[IndexedSeq[Sha256Sum]], "fileName"){(hashes, fileName) =>
 
-				val licenceCheck = batchLicenceCheck(hashes, _ => false){
+				val licenceCheck = batchLicenceCheck(hashes, false){
 					//TODO Make the licence-accept redirect convey the list of licences
 					licUris => redirect(
 						new UriLicenceProfile(hashes, Some(fileName), false).licenceUri,
@@ -197,7 +182,7 @@ class DownloadRouting(
 		post{
 			formFields("fileName", "ids".as[IndexedSeq[Sha256Sum]], "licenceOk".as[Boolean] ? false){(fileName, hashes, licenceOk) =>
 
-				batchLicenceCheck(hashes, _ => licenceOk){licUris =>
+				batchLicenceCheck(hashes, licenceOk){licUris =>
 					//TODO Make the licence-accept page support the list of licences
 					val licProfile = new FormLicenceProfile(hashes.toIndexedSeq, fileName)
 					LicenceRouting.dataLicenceRoute(licProfile, authRouting.userOpt, coreConf.handleProxies)
@@ -332,13 +317,6 @@ object DownloadRouting{
 		s"${batchFileNameTimeFmt.format(Instant.now())}_$base"
 
 	def defaultBatchFileName: String = timestampedBatchFileName("downloaded_data")
-
-	val licenceCookieHashsums: Directive1[Seq[Sha256Sum]] = cookie(LicenceCookieName).flatMap{licCookie =>
-		parseLicenceCookie(licCookie.value) match{
-			case Success(hashes) => provide(hashes)
-			case _ => reject
-		}
-	}
 
 	def getContentType(fileName: String): ContentType = summon[ContentTypeResolver].apply(fileName)
 
