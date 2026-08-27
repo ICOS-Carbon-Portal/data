@@ -13,7 +13,6 @@ import se.lu.nateko.cp.meta.core.data.EnvriConfigs
 import spray.json.*
 import DefaultJsonProtocol.*
 
-import scala.util.Try
 import eu.icoscp.envri.Envri
 
 class LicenceRouting(
@@ -47,7 +46,6 @@ class LicenceRouting(
 
 object LicenceRouting{
 
-	val LicenceCookieName = "CpLicenseAcceptedFor"
 	val LicencePath = "licence"
 	val LicenceAcceptPath = "licence_accept"
 
@@ -80,10 +78,6 @@ object LicenceRouting{
 			Uri(uri).withQuery(Uri.Query(params :_*))
 		}
 
-	}
-
-	def parseLicenceCookie(value: String): Try[Seq[Sha256Sum]] = Try{
-		value.split('|').map(Sha256Sum.fromBase64Url(_).get).toIndexedSeq
 	}
 
 	def dataLicenceRoute(
