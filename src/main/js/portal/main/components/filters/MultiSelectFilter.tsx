@@ -1,6 +1,5 @@
 import React, {Component} from 'react';
-import { RenderItemProp } from 'react-widgets/esm/List';
-import Multiselect from 'react-widgets/Multiselect';
+import { Multiselect } from '@icos-cp/multiselect';
 import HelpButton from "../../containers/help/HelpButton";
 import { ColNames } from '../../models/CompositeSpecTable';
 import { HelpItemName } from '../../models/HelpStorage';
@@ -10,7 +9,6 @@ import { Item } from './MultiselectCtrl';
 type Props = {
 	name: ColNames | 'keywordFilter'
 	shouldUseExternalListEntry: boolean
-	search: Record<string, string>
 	updateFilter: (name: ColNames | 'keywordFilter', values: Value[]) => void
 	placeholder: string
 	data: Item[]
@@ -21,17 +19,10 @@ type State = {
 	open: boolean
 }
 
-type RenderItem = Parameters<RenderItemProp<Item>>[0];
-
 export default class MultiSelectFilter extends Component<Props, State> {
-	private search: Record<ColNames | 'keywordFilter', string>;
-	private itemCount?: number;
 
 	constructor(props: Props){
 		super(props);
-
-		this.search = props.search;
-		this.itemCount = undefined;
 
 		this.state = {
 			open: false
@@ -39,26 +30,17 @@ export default class MultiSelectFilter extends Component<Props, State> {
 	}
 
 	handleChange(name: ColNames | 'keywordFilter', items: Item[]){
-		this.itemCount = items.length;
 		this.props.updateFilter(name, items.map(item => item.value));
 		this.setState({open: false});
 	}
 
-	handleToggle(items: Item[]){
-		const open = this.itemCount === items.length - 1
-			? false
-			: !this.state.open;
-
+	handleToggle(open: boolean){
 		this.setState({open});
 	}
 
-	handleSearch(name: ColNames | 'keywordFilter', value: string){
-		this.search[name] = value;
-	}
-
-	renderListItem(name: ColNames | 'keywordFilter', shouldUseExternalListEntry: boolean, { item }: RenderItem){
+	renderListItem(name: ColNames | 'keywordFilter', shouldUseExternalListEntry: boolean, { item, searchTerm }: {item: Item, searchTerm: string}){
 		const {text} = item;
-		const searchStr = this.search[name] ? this.search[name].toLowerCase() : '';
+		const searchStr = searchTerm.toLowerCase();
 		const start = searchStr === ''
 			? -1
 			: text.toLowerCase().indexOf(searchStr);
@@ -119,12 +101,11 @@ export default class MultiSelectFilter extends Component<Props, State> {
 				open={open}
 				placeholder={placeholder}
 				textField="text"
+				dataKey="value"
 				data={data}
 				value={value}
-				filter="contains"
 				onChange={this.handleChange.bind(this, name)}
-				onSearch={this.handleSearch.bind(this, name)}
-				onToggle={this.handleToggle.bind(this, value)}
+				onToggle={this.handleToggle.bind(this)}
 				renderListItem={this.renderListItem.bind(this, name, shouldUseExternalListEntry)}
 				renderTagValue={this.renderTagValue.bind(this, name, shouldUseExternalListEntry)}
 			/>

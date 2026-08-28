@@ -1,35 +1,24 @@
 import React, { Component } from 'react';
-import Multiselect from 'react-widgets/Multiselect';
-import 'react-widgets/styles.css';
+import { Multiselect } from '@icos-cp/multiselect';
 
+const resolveSelection = (filterValues, ids) =>
+	ids.map(id => filterValues.find(v => v.id === id) ?? { id, label: id });
 
 export default class Filter extends Component {
 	constructor(props) {
 		super(props);
 
-		this.itemCount = undefined;
 		this.state = {
 			open: false
 		}
 	}
 
-	componentDidUpdate(prevProps) {
-		if (this.props.value.length !== prevProps.value.length) {
-			this.itemCount = this.props.value.length;
-		}
-	}
-
 	handleSelectionChange(filter, values) {
-		this.itemCount = values.length;
 		this.props.updateTableWithFilter(filter.name, values.map(value => value.id));
 		this.setState({ open: false });
 	}
 
-	handleToggle(value) {
-		const open = this.itemCount === value.length - 1
-			? false
-			: !this.state.open;
-
+	handleToggle(open) {
 		this.setState({ open });
 	}
 
@@ -48,11 +37,10 @@ export default class Filter extends Component {
 							placeholder={placeholder}
 							dataKey="id"
 							textField="label"
-							data={value == "" ? filter.values.filter(f => f.count > 0) : filter.values}
-							value={value}
-							filter="contains"
+							data={value.length === 0 ? filter.values.filter(f => f.count > 0) : filter.values}
+							value={resolveSelection(filter.values, value)}
 							onChange={this.handleSelectionChange.bind(this, filter)}
-							onToggle={this.handleToggle.bind(this, value)}
+							onToggle={this.handleToggle.bind(this)}
 						/>
 					}
 				</div>

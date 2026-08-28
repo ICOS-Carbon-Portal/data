@@ -15,8 +15,6 @@ interface OurProps {
 	updateFilter: (varName: ColNames | 'keywordFilter', values: Value[]) => void
 }
 
-const search: { [C in CategoryType]?: string } = {}; //values are set by MultiSelectFilter
-
 export type Item = {
 	value: Value
 	text: string
@@ -68,7 +66,6 @@ export const MultiselectCtrl: React.FunctionComponent<OurProps> = props => {
 					<MultiSelectFilter
 						name={name}
 						shouldUseExternalListEntry={shouldUseExternalListEntry}
-						search={search}
 						updateFilter={updateFilter}
 						placeholder={placeholder}
 						data={data}
