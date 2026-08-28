@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, {Component, ReactNode} from 'react';
 import {connect} from 'react-redux';
 import {Value} from "../../models/SpecTable";
 import {State} from "../../models/State";
@@ -19,29 +19,20 @@ type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
 type incommingProps = {
 	tabHeader: string
-	handleFilterReset: () => void
+	stationsMapCtrl: ReactNode
 }
 type OurProps = StateProps & DispatchProps & incommingProps;
 
 class Filters extends Component<OurProps> {
 	render(){
 		const {
-			specTable, filterTemporal, helpStorage, labelLookup, updateFilter, handleFilterReset,
-			setFilterTemporal, filterAdvancedText, filterAdvancedType, setNumberFilter, filterNumbers,
-			scopedKeywords, filterKeywords, setKeywordFilter, countryCodesLookup, spatialRects
+			specTable, filterTemporal, helpStorage, labelLookup, updateFilter,
+			setFilterTemporal, setNumberFilter, filterNumbers,
+			scopedKeywords, filterKeywords, setKeywordFilter, countryCodesLookup, stationsMapCtrl
 		} = this.props;
-
-		const resetBtnEnabled = filterTemporal.hasFilter
-			|| specTable.hasActiveFilters
-			|| filterNumbers.hasFilters
-			|| filterKeywords.length > 0
-			|| filterAdvancedText.length > 0
-			|| (!!spatialRects && spatialRects.length > 0)
 
 		return (
 			<div>
-				<ResetBtn enabled={resetBtnEnabled} resetFiltersAction={handleFilterReset} />
-
 				<PanelsWithFilters
 					filterNumbers={filterNumbers}
 					specTable={specTable}
@@ -56,35 +47,12 @@ class Filters extends Component<OurProps> {
 					filterKeywords={filterKeywords}
 					setKeywordFilter={setKeywordFilter}
 					startCollapsed={false}
+					stationsMapCtrl={stationsMapCtrl}
 				/>
-
 			</div>
 		);
 	}
 }
-
-interface ResetBtn {
-	resetFiltersAction: Function,
-	enabled: boolean
-}
-
-const ResetBtn = ({ resetFiltersAction, enabled }: ResetBtn) => {
-	const onClick = () => enabled ? resetFiltersAction() : {};
-	const baseStyle = {margin: '7px', fontSize: 14};
-	const style = enabled
-		? {...baseStyle, cursor: 'pointer'}
-		: {...baseStyle, opacity: 0.5};
-	const title = enabled ? "Reset all filters" : "No active filters";
-
-	return (
-		<div className="d-flex justify-content-end">
-			<span className="fa-stack fa-1x" onClick={onClick} title={title} style={style}>
-		 		<i className="fas fa-filter fa-stack-1x" />
-	 			<i className="fas fa-ban fa-stack-2x" />
-			</span>
-		</div>
-	);
-};
 
 function stateToProps(state: State){
 	return {
@@ -95,10 +63,7 @@ function stateToProps(state: State){
 		labelLookup: state.labelLookup,
 		countryCodesLookup: state.countryCodesLookup,
 		scopedKeywords: state.scopedKeywords,
-		filterKeywords: state.filterKeywords,
-		filterAdvancedText: state.filterAdvancedText,
-		filterAdvancedType: state.filterAdvancedType,
-		spatialRects: state.mapProps.rects
+		filterKeywords: state.filterKeywords
 	};
 }
 
