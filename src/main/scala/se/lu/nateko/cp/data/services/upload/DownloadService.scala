@@ -92,17 +92,19 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 		}
 	}
 
-	def licencesToAccept(hashes: Seq[Sha256Sum], uidOpt: Option[UserId])(using Envri): Future[Seq[URI]] = {
-		upload.meta.listLicences(hashes).flatMap{allLic =>
-			val toAccept: Seq[URI] = allLic.distinct.filterNot(publicDomainLicences.contains)
-			Future.sequence(
-				toAccept.map{lic =>
-					checkLicenceAcceptance(lic, uidOpt).map(lic -> _)
+	def licencesToAccept(hashes: Seq[Sha256Sum], uidOpt: Option[UserId])(using envri: Envri): Future[Seq[URI]] = {
+		mainLicences.get(envri)
+			.map { mainLicence =>
+				upload.meta.listLicences(hashes).flatMap { allLicences =>
+					if (allLicences.contains(mainLicence)) {
+						checkLicenceAcceptance(mainLicence, uidOpt).map { accepted =>
+							if (accepted) Seq.empty else Seq(mainLicence)
+						}
+						} else {
+							Future.successful(Seq.empty)
+						}
 				}
-			).map{
-				_.collect{case (lic, false) => lic}
-			}
-		}
+			}.getOrElse(Future.successful(Seq.empty))
 	}
 
 	def inaccessibilityReason(dobj: StaticObject)(using Envri): Option[String] =
@@ -128,11 +130,21 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 
 	private def destinyToAuxSourcesFlow(implicit envri: Envri): Flow[FileDestiny, FileEntry, NotUsed] = Flow.apply[FileDestiny]
 		.fold(Vector.empty[FileDestiny])(_ :+ _)
-		.map{dests =>
-			ZipEntry("!TOC.csv") -> destiniesToTocFileSource(dests)
-		}.concat(Source.single(
-			ZipEntry("!LICENCE.pdf") -> licenceSource
-		))
+		.flatMapConcat{dests =>
+			val baseSource = Source.single(ZipEntry("!TOC.csv") -> destiniesToTocFileSource(dests))
+
+			val shouldIncludeLincensePdf = mainLicences.get(envri).exists { expectedUri =>
+				dests.exists { d =>
+					d.obj.references.licence.exists(_.url == expectedUri)
+				}
+			}
+
+			if (shouldIncludeLincensePdf) {
+				baseSource.concat(Source.single(ZipEntry("!LICENCE.pdf") -> licenceSource))
+			} else {
+				baseSource
+			}
+		}
 
 	private def singleObjectSource(obj: StaticObject, downloadLogger: DataObject => Unit): Source[ByteString, NotUsed] = {
 		val file = upload.getFile(obj, true)
@@ -150,7 +162,7 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 	}
 
 	private def destiniesToTocFileSource(dests: immutable.Seq[FileDestiny])(using Envri): Source[ByteString, NotUsed] = {
-		val lines = "Included,File name,PID,Landing page,Omission reason (if any)\n" +: dests.map{dest =>
+		val lines = "Included,File name,PID,Landing page,License,Omission reason (if any)\n" +: dests.map{dest =>
 
 			val presense = if(dest.omissionReason.isEmpty) "Yes" else "No"
 			val omissionReason = dest.omissionReason.getOrElse("")
@@ -163,7 +175,8 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 				val hdlProxy = if(dest.obj.doi.isDefined) prox.doi else prox.basic
 				s"$hdlProxy$pid"
 			}
-			s"$presense,${dest.fileName},${pidOpt.getOrElse("")},$landingPage,$omissionReason\n"
+			val license = dest.obj.references.licence.fold("")(_.name)
+			s"$presense,${dest.fileName},${pidOpt.getOrElse("")},$landingPage,$license,$omissionReason\n"
 		}
 		Source(lines.map(ByteString.apply))
 	}
@@ -227,7 +240,7 @@ private object ZeroDestiny extends Destiny{
 
 object DownloadService:
 
-	val publicDomainLicences = Set(CcMetaVocab.cc0)
+	val publicDomainLicences = Set(CcMetaVocab.cc0, CcMetaVocab.ccbync4)
 
 	val mainLicences: Map[Envri, URI] = Map(
 		Envri.ICOS -> CpMetaVocab.ccby4,
