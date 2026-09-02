@@ -19,21 +19,13 @@ export const placeholders = {
 
 export default function Filters({ filters, downloadStats, resetFilters, updateTableWithFilter, temporalFilterUpdate, grayDownloadFilterUpdate }) {
 	const hasHashIdFilter = downloadStats.getFilter("hashId").length > 0;
-	const showResetBtn = !!filters;
+	const enableResetBtn = downloadStats.hasActiveFilters;
 
 	return (
 		<div className="card">
-			<div className="card-header">
-				<div className="float-start">
-					<h5 style={{display:'inline'}}>Data object specification filter</h5>
-				</div>
-				{showResetBtn
-					? <div className="float-end">
-						<ResetBtn resetFiltersAction={() => resetFilters()} />
-					</div>
-					: null
-				}
-
+			<div className="card-header d-flex justify-content-between align-items-center">
+				<h5 className="mb-0">Data object specification filter</h5>
+				<ResetBtn enabled={enableResetBtn} resetFiltersAction={() => resetFilters()} />
 			</div>
 			<div className="card-body">
 				<PanelBody
@@ -49,35 +41,69 @@ export default function Filters({ filters, downloadStats, resetFilters, updateTa
 	);
 }
 
-const PanelBody = ({ hasHashIdFilter, filters, downloadStats, updateTableWithFilter, temporalFilterUpdate, grayDownloadFilterUpdate }) => {
-	if (filters && filters.length) {
-		const temporalFilters = {
-			name: 'dlDates',
-			values: downloadStats.temporalFilters
-		}
+const LOADING_FILTER_NAMES = [
+	'specification', 'project', 'dataLevel', 'stations',
+	'contributors', 'submitters', 'dlfrom', 'dataOriginCountries'
+];
 
+const PanelBody = ({ hasHashIdFilter, filters, downloadStats, updateTableWithFilter, temporalFilterUpdate, grayDownloadFilterUpdate }) => {
+	if (!filters || !(filters.length > 0)) {
 		return (
 			<>
-				{filters.filter(f => f.values && f.values.length && (!hasHashIdFilter || f.displayFilterForSingleObject)).map((filter, idx) =>
-					<Row key={idx} filter={filter} downloadStats={downloadStats} updateTableWithFilter={updateTableWithFilter} />
-				)}
-				<Filter placeholder="Download dates" filter={temporalFilters} value={[]}>
-					<PickDates filterTemporal={temporalFilters.values} setFilterTemporal={temporalFilterUpdate} />
+				{LOADING_FILTER_NAMES.map(name => (
+					<Filter key={name} placeholder={placeholders[name]} filter={{name}} disabled={true} value={[]} />
+				))}
+				<Filter placeholder={placeholders.dlDates} filter={{name: 'dlDates'}} value={[]}>
+					<div className="row">
+						<div className="col-md-12">
+							<div className="row mb-3">
+								<label className="col-lg-4 col-form-label">From</label>
+								<div className="col-lg-8">
+									<input className="form-control" type="date" disabled />
+								</div>
+							</div>
+							<div className="row mb-3">
+								<label className="col-lg-4 col-form-label">To</label>
+								<div className="col-lg-8">
+									<input className="form-control" type="date" disabled />
+								</div>
+							</div>
+						</div>
+					</div>
 				</Filter>
-				<Filter placeholder="Search options" filter="" value={[]}>
-					<CheckButton
-						name={"includeGrayDl"}
-						grayDownloadFilterUpdate={grayDownloadFilterUpdate}
-						isChecked={downloadStats.grayDownloadFilter}
-						text={'Include gray listed IPs'}
-					/>
+				<Filter placeholder="Search options" filter={{name: 'searchOptions'}} value={[]}>
+					<label className="col-form-label">
+						<input className="form-check-input" type="checkbox" disabled readOnly />
+						<span className="ms-2">Include gray listed IPs</span>
+					</label>
 				</Filter>
 			</>
 		);
-
-	} else {
-		return null;
 	}
+
+	const temporalFilters = {
+		name: 'dlDates',
+		values: downloadStats.temporalFilters
+	};
+
+	return (
+		<>
+			{filters.filter(f => f.values && f.values.length && (!hasHashIdFilter || f.displayFilterForSingleObject)).map((filter, idx) =>
+				<Row key={idx} filter={filter} downloadStats={downloadStats} updateTableWithFilter={updateTableWithFilter} />
+			)}
+			<Filter placeholder="Download dates" filter={temporalFilters} value={[]}>
+				<PickDates filterTemporal={temporalFilters.values} setFilterTemporal={temporalFilterUpdate} />
+			</Filter>
+			<Filter placeholder="Search options" filter="" value={[]}>
+				<CheckButton
+					name={"includeGrayDl"}
+					grayDownloadFilterUpdate={grayDownloadFilterUpdate}
+					isChecked={downloadStats.grayDownloadFilter}
+					text={'Include gray listed IPs'}
+				/>
+			</Filter>
+		</>
+	);
 };
 
 const Row = ({ filter, downloadStats, updateTableWithFilter }) => {
@@ -91,9 +117,14 @@ const Row = ({ filter, downloadStats, updateTableWithFilter }) => {
 	);
 };
 
-const ResetBtn = props => {
+const ResetBtn = ({ enabled, resetFiltersAction }) => {
+	const baseStyle = { fontSize: '150%' };
+	const style = enabled
+		? { ...baseStyle, cursor: 'pointer' }
+		: { ...baseStyle, opacity: 0.65 };
+
 	return (
-		<h5 style={{ display: 'inline', fontSize: '150%', cursor: 'pointer' }} onClick={props.resetFiltersAction}>
+		<h5 className="mb-0" style={style} onClick={enabled ? resetFiltersAction : undefined}>
 			<span className="fas fa-ban" />
 		</h5>
 	);
