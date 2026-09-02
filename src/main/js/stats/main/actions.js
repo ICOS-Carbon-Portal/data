@@ -23,6 +23,8 @@ export const actionTypes = {
 	SET_SPEC_PROJECT_LOOKUP: 'SET_SPEC_PROJECT_LOOKUP',
 	SET_SPEC_LEVEL_LOOKUP: 'SET_SPEC_LEVEL_LOOKUP',
 	VARIOUS_STATS_FETCHED: 'VARIOUS_STATS_FETCHED',
+	FETCH_STARTED: 'FETCH_STARTED',
+	FETCH_FINISHED: 'FETCH_FINISHED',
 }
 
 const failWithError = error => dispatch => {
@@ -30,6 +32,29 @@ const failWithError = error => dispatch => {
 	dispatch({
 		type: actionTypes.ERROR,
 		error
+	});
+};
+
+export const fetchKeys = {
+	results: 'results',
+	resultsPage: 'resultsPage',
+	graph: 'graph'
+};
+
+const resultsKey = isPageStep => isPageStep ? fetchKeys.resultsPage : fetchKeys.results;
+
+const reportPendingAfterMs = 250;
+
+const trackFetch = (dispatch, key, runFetch) => {
+	let isReportedPending = false;
+	const reportTimer = setTimeout(() => {
+		isReportedPending = true;
+		dispatch({ type: actionTypes.FETCH_STARTED, key });
+	}, reportPendingAfterMs);
+
+	return runFetch().finally(() => {
+		clearTimeout(reportTimer);
+		if (isReportedPending) dispatch({ type: actionTypes.FETCH_FINISHED, key });
 	});
 };
 
@@ -48,14 +73,18 @@ export const setViewMode = mode => dispatch => {
 };
 
 const fetchDataForView = viewMode => dispatch => {
-	if (viewMode === "downloads"){
-		dispatch(initDownloads);
+	switch (viewMode) {
+		case "downloads":
+			dispatch(initDownloads);
+			break;
 
-	} else if (viewMode === "previews"){
-		dispatch(initPreviewView);
+		case "previews":
+			dispatch(initPreviewView);
+			break;
 
-	} else if (viewMode === "pylib") {
-		dispatch(initLibraryDownloads);
+		case "pylib":
+			dispatch(initLibraryDownloads);
+			break;
 	}
 };
 
@@ -97,15 +126,15 @@ const limitRadiosByEnvri = (radioConfig) => {
 	};
 };
 
-const fetchPreviewDataFromBackend = (fetchFn, page = 1) => dispatch => {
-	fetchFn(page).then(previewDataResult => {
+const fetchPreviewDataFromBackend = (fetchFn, page = 1, isPageStep = false) => dispatch => {
+	trackFetch(dispatch, resultsKey(isPageStep), () => fetchFn(page).then(previewDataResult => {
 		dispatch({
 			type: actionTypes.PREVIEW_DATA_FETCHED,
 			page,
 			previewDataResult,
 			fetchFn
 		});
-	});
+	}));
 };
 
 const initLibraryDownloads = (dispatch, getState) => {
@@ -146,15 +175,15 @@ const getFetchFn = (viewMode, actionTxt) => {
 	}
 };
 
-const fetchVariousStatsFromBackend = (fetchFn, page = 1) => dispatch => {
-	fetchFn(page).then(variousStats => {
+const fetchVariousStatsFromBackend = (fetchFn, page = 1, isPageStep = false) => dispatch => {
+	trackFetch(dispatch, resultsKey(isPageStep), () => fetchFn(page).then(variousStats => {
 		dispatch({
 			type: actionTypes.VARIOUS_STATS_FETCHED,
 			page,
 			variousStats,
 			fetchFn
 		})
-	});
+	}));
 };
 
 const radioSelected = (radioConfig, isMain, actionTxt) => dispatch => {
@@ -186,25 +215,28 @@ export const resetFilters = () => dispatch => {
 	dispatch(fetchDownloadStats())
 };
 
-export const fetchDownloadStats = (newPage) => (dispatch, getState) => {
+export const fetchDownloadStats = (newPage, isPageStep = false) => (dispatch, getState) => {
 	const { downloadStats, specProjectLookup, specLevelLookup, dateUnit } = getState();
 	const page = newPage || 1;
 
 	const searchParams = getSearchParams(downloadStats.getSearchParamFilters(), specProjectLookup, specLevelLookup);
-	Promise.all([getDownloadStatsApi(page, searchParams), postToApi('downloadsByCountry', searchParams)])
-		.then(([dlStats, countryStats]) => {
-			dispatch({
-				type: actionTypes.DOWNLOAD_STATS_FETCHED,
-				downloadStats: dlStats.stats,
-				countryStats,
-				filters: downloadStats.filters,
-				page,
-				to: dlStats.stats.length,
-				objCount: dlStats.size
-			});
-		},
-		err => dispatch(failWithError(err)));
-	dispatch(fetchDownloadStatsPerDateUnit(dateUnit));
+	trackFetch(dispatch, resultsKey(isPageStep), () =>
+		Promise.all([getDownloadStatsApi(page, searchParams), postToApi('downloadsByCountry', searchParams)])
+			.then(([dlStats, countryStats]) => {
+				dispatch({
+					type: actionTypes.DOWNLOAD_STATS_FETCHED,
+					downloadStats: dlStats.stats,
+					countryStats,
+					filters: downloadStats.filters,
+					page,
+					to: dlStats.stats.length,
+					objCount: dlStats.size
+				});
+			},
+			err => dispatch(failWithError(err)))
+	);
+
+	if (!isPageStep) dispatch(fetchDownloadStatsPerDateUnit(dateUnit));
 };
 
 const fetchFilters = (dispatch, getState) => {
@@ -302,15 +334,17 @@ export const fetchDownloadStatsPerDateUnit = dateUnit => (dispatch, getState) =>
 	const searchParams = getSearchParams(downloadStats.getSearchParamFilters(), specProjectLookup, specLevelLookup);
 	const parser = d => ({ ...d, ...{ date: new Date(d.ts) } })
 
-	postToApi(endpoint, searchParams, parser)
-		.then(downloadsPerDateUnit => {
-			dispatch({
-				type: actionTypes.DOWNLOAD_STATS_PER_DATE_FETCHED,
-				dateUnit,
-				downloadsPerDateUnit
-			});
-		},
-		err => dispatch(failWithError(err)));
+	trackFetch(dispatch, fetchKeys.graph, () =>
+		postToApi(endpoint, searchParams, parser)
+			.then(downloadsPerDateUnit => {
+				dispatch({
+					type: actionTypes.DOWNLOAD_STATS_PER_DATE_FETCHED,
+					dateUnit,
+					downloadsPerDateUnit
+				});
+			},
+			err => dispatch(failWithError(err)))
+	);
 };
 
 export const statsUpdate = (varName, values) => (dispatch) => {
@@ -348,14 +382,17 @@ export const requestPage = page => (dispatch, getState) => {
 	const viewMode = state.view.mode;
 	const mainRadio = state.mainRadio;
 
-	if (viewMode === "downloads"){
-		dispatch(fetchDownloadStats(page));
+	switch (viewMode) {
+		case "downloads":
+			dispatch(fetchDownloadStats(page, true));
+			break;
 
-	} else if (viewMode === "previews"){
-		// dispatch(requestPagePreviews(page));
-		dispatch(fetchPreviewDataFromBackend(getFetchFn(viewMode, mainRadio.actionTxt), page));
+		case "previews":
+			dispatch(fetchPreviewDataFromBackend(getFetchFn(viewMode, mainRadio.actionTxt), page, true));
+			break;
 
-	} else if (viewMode === "pylib") {
-		dispatch(fetchVariousStatsFromBackend(getFetchFn(viewMode, mainRadio.actionTxt), page));
+		case "pylib":
+			dispatch(fetchVariousStatsFromBackend(getFetchFn(viewMode, mainRadio.actionTxt), page, true));
+			break;
 	}
 };

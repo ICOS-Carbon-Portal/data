@@ -46,6 +46,7 @@ const DownloadsView = props => {
 					statsMap={props.statsMap}
 					updateTableWithFilter={props.updateTableWithFilter}
 					downloadStats={props.downloadStats}
+					isFetching={props.isFetchingResults}
 				/>
 
 				<h4 style={{marginTop:25}}>Downloads per time period</h4>
@@ -55,6 +56,7 @@ const DownloadsView = props => {
 					radioAction={props.fetchDownloadStatsPerDateUnit}
 					downloadStats={props.downloadStats}
 					filters={props.filters}
+					isFetching={props.isFetchingGraph}
 				/>
 			</div>
 			<div className="col-md-8">
@@ -66,6 +68,8 @@ const DownloadsView = props => {
 					requestPage={props.requestPage}
 					updateTableWithFilter={props.updateTableWithFilter}
 					hasHashIdFilter={hasHashIdFilter}
+					isFetching={props.isFetchingResults || props.isFetchingResultsPage}
+					isPageStep={props.isFetchingResultsPage}
 				/>
 			</div>
 		</div>
@@ -96,6 +100,8 @@ const PreviewsView = props => {
 					dataList={dataList}
 					paging={props.paging}
 					requestPage={props.requestPage}
+					isFetching={props.isFetchingResults || props.isFetchingResultsPage}
+					isPageStep={props.isFetchingResultsPage}
 				/>
 			</div>
 		</div>
@@ -124,6 +130,8 @@ const LibDownloadsView = props => {
 					dataList={dataList}
 					paging={props.paging}
 					requestPage={props.requestPage}
+					isFetching={props.isFetchingResults || props.isFetchingResultsPage}
+					isPageStep={props.isFetchingResultsPage}
 				/>
 			</div>
 		</div>
