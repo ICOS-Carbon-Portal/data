@@ -55,7 +55,7 @@ export default class Graph extends Component{
 
 	render(){
 		const {blob, fileName, ts} = this.state;
-		const {radioAction, style} = this.props;
+		const {radioAction, style, isFetching} = this.props;
 		const radios = [
 			{txt: 'Per week', isActive: true, actionTxt: 'week'},
 			{txt: 'Per month', isActive: false, actionTxt: 'month'},
@@ -71,8 +71,10 @@ export default class Graph extends Component{
 					action={radioAction}
 				/>
 
-				<div ref={div => this.chartDiv = div} style={style} />
-				<div ref={div => this.labelsDiv = div} style={{marginTop:5}} />
+				<div className={isFetching ? 'opacity-50' : undefined}>
+					<div ref={div => this.chartDiv = div} style={style} />
+					<div ref={div => this.labelsDiv = div} style={{marginTop:5}} />
+				</div>
 
 				<button
 					className="btn btn-primary"

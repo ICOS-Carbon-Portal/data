@@ -32,11 +32,25 @@ export const initState = {
 	subRadio: undefined,
 	variousStats: undefined,
 	toasterData: undefined,
+	pendingFetches: {},
 };
+
+export const isFetching = (state, fetchKey) => (state.pendingFetches[fetchKey] ?? 0) > 0;
+
+const withFetchDelta = (pendingFetches, fetchKey, delta) => ({
+	...pendingFetches,
+	[fetchKey]: (pendingFetches[fetchKey] ?? 0) + delta
+});
 
 export default function(state = initState, action){
 
 	switch(action.type){
+
+		case actionTypes.FETCH_STARTED:
+			return update({ pendingFetches: withFetchDelta(state.pendingFetches, action.key, 1) });
+
+		case actionTypes.FETCH_FINISHED:
+			return update({ pendingFetches: withFetchDelta(state.pendingFetches, action.key, -1) });
 
 		case actionTypes.ERROR:
 			return update({

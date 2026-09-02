@@ -35,15 +35,19 @@ export default class DobjTable extends Component {
 	}
 
 	render() {
-		const { dataList, paging, requestPage, panelTitle, tableHeaders, disablePaging, hasHashIdFilter, updateTableWithFilter } = this.props;
-		const isLoading = dataList === undefined;
-		const rowCount = disablePaging ? 5 : paging.pagesize;
+		const { dataList, paging, requestPage, panelTitle, tableHeaders, disablePaging, hasHashIdFilter, updateTableWithFilter, isFetching, isPageStep } = this.props;
+		const showPlaceholderRows = dataList === undefined || isFetching;
+		const rowCount = dataList && dataList.length > 0
+			? dataList.length
+			: (disablePaging ? 5 : paging.pagesize);
 		const RowSwitch = dataList && dataList.length ? getRowSwitch(dataList[0], updateTableWithFilter) : undefined;
 
 		return (
 			<div className="card">
 				<Paging
-					isLoading={isLoading}
+					isLoading={dataList === undefined}
+					isFetching={isFetching}
+					isPageStep={isPageStep}
 					hasHashIdFilter={hasHashIdFilter}
 					disablePaging={disablePaging}
 					paging={paging}
@@ -51,11 +55,11 @@ export default class DobjTable extends Component {
 					panelTitle={panelTitle}
 				/>
 
-				<div className={`card-body table-responsive${isLoading ? ' placeholder-glow' : ''}`}>
+				<div className={`card-body table-responsive${showPlaceholderRows ? ' placeholder-glow' : ''}`}>
 					<table className="table">
 						<tbody>
 							<TableHeaders tableHeaders={tableHeaders} />
-							{isLoading
+							{showPlaceholderRows
 								? <PlaceholderRows colCount={tableHeaders.length} rowCount={rowCount} />
 								: RowSwitch && dataList.map((stat, idx) => <RowSwitch key={'row-' + idx} dobj={stat} onFileNameClick={this.onFileNameClick.bind(this)} />)
 							}
@@ -67,7 +71,7 @@ export default class DobjTable extends Component {
 	}
 }
 
-const Paging = ({ isLoading, hasHashIdFilter, disablePaging, paging, requestPage, panelTitle }) => {
+const Paging = ({ isLoading, isFetching, isPageStep, hasHashIdFilter, disablePaging, paging, requestPage, panelTitle }) => {
 	if (hasHashIdFilter) {
 		return (
 			<div className="card-header">
@@ -76,7 +80,7 @@ const Paging = ({ isLoading, hasHashIdFilter, disablePaging, paging, requestPage
 		);
 	}
 
-	if (isLoading) {
+	if (isLoading || (isFetching && !isPageStep)) {
 		return (
 			<div className="card-header placeholder-glow d-flex justify-content-between align-items-center">
 				<h5 className="mb-0 d-flex align-items-center" style={{gap:'5px'}}>
@@ -106,8 +110,8 @@ const Paging = ({ isLoading, hasHashIdFilter, disablePaging, paging, requestPage
 			<h5 className="mb-0">{panelTitle} {start + 1} to {end} of {paging.objCount.toLocaleString()}</h5>
 			{!disablePaging
 				? <div>
-					<StepButton direction="step-backward" enabled={start > 0} onStep={() => requestPage(paging.page - 1)} />
-					<StepButton direction="step-forward" enabled={end < paging.objCount} onStep={() => requestPage(paging.page + 1)} />
+					<StepButton direction="step-backward" enabled={!isFetching && start > 0} onStep={() => requestPage(paging.page - 1)} />
+					<StepButton direction="step-forward" enabled={!isFetching && end < paging.objCount} onStep={() => requestPage(paging.page + 1)} />
 				</div>
 				: null
 			}
