@@ -19,21 +19,13 @@ export const placeholders = {
 
 export default function Filters({ filters, downloadStats, resetFilters, updateTableWithFilter, temporalFilterUpdate, grayDownloadFilterUpdate }) {
 	const hasHashIdFilter = downloadStats.getFilter("hashId").length > 0;
-	const showResetBtn = !!filters;
+	const enableResetBtn = downloadStats.hasActiveFilters;
 
 	return (
 		<div className="card">
-			<div className="card-header">
-				<div className="float-start">
-					<h5 style={{display:'inline'}}>Data object specification filter</h5>
-				</div>
-				{showResetBtn
-					? <div className="float-end">
-						<ResetBtn resetFiltersAction={() => resetFilters()} />
-					</div>
-					: null
-				}
-
+			<div className="card-header d-flex justify-content-between align-items-center">
+				<h5 className="mb-0">Data object specification filter</h5>
+				<ResetBtn enabled={enableResetBtn} resetFiltersAction={() => resetFilters()} />
 			</div>
 			<div className="card-body">
 				<PanelBody
@@ -125,9 +117,14 @@ const Row = ({ filter, downloadStats, updateTableWithFilter }) => {
 	);
 };
 
-const ResetBtn = props => {
+const ResetBtn = ({ enabled, resetFiltersAction }) => {
+	const baseStyle = { fontSize: '150%' };
+	const style = enabled
+		? { ...baseStyle, cursor: 'pointer' }
+		: { ...baseStyle, opacity: 0.65 };
+
 	return (
-		<h5 style={{ display: 'inline', fontSize: '150%', cursor: 'pointer' }} onClick={props.resetFiltersAction}>
+		<h5 className="mb-0" style={style} onClick={enabled ? resetFiltersAction : undefined}>
 			<span className="fas fa-ban" />
 		</h5>
 	);

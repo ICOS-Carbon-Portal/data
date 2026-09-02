@@ -51,7 +51,7 @@ export default class DobjTable extends Component {
 					panelTitle={panelTitle}
 				/>
 
-				<div className={`card-body table-responsive${isLoading ? ' placeholder-glow' : ''}`} style={{ clear: 'both' }}>
+				<div className={`card-body table-responsive${isLoading ? ' placeholder-glow' : ''}`}>
 					<table className="table">
 						<tbody>
 							<TableHeaders tableHeaders={tableHeaders} />
@@ -78,8 +78,8 @@ const Paging = ({ isLoading, hasHashIdFilter, disablePaging, paging, requestPage
 
 	if (isLoading) {
 		return (
-			<div className="card-header placeholder-glow">
-				<h5 className="d-flex align-items-center" style={{gap:'5px'}}>
+			<div className="card-header placeholder-glow d-flex justify-content-between align-items-center">
+				<h5 className="mb-0 d-flex align-items-center" style={{gap:'5px'}}>
 					{panelTitle}
 					<span className="placeholder" style={{width:'1ch'}} />
 					to
@@ -87,6 +87,13 @@ const Paging = ({ isLoading, hasHashIdFilter, disablePaging, paging, requestPage
 					of
 					<span className="placeholder" style={{width:'6ch'}} />
 				</h5>
+				{!disablePaging
+					? <div>
+						<StepButton direction="step-backward" enabled={false} />
+						<StepButton direction="step-forward" enabled={false} />
+					</div>
+					: null
+				}
 			</div>
 		);
 	}
@@ -95,12 +102,10 @@ const Paging = ({ isLoading, hasHashIdFilter, disablePaging, paging, requestPage
 	const end = paging.objCount === 0 ? 0 : start + paging.to;
 
 	return (
-		<div className="card-header">
-			<span className="float-start">
-				<h5 style={{display:'inline'}}>{panelTitle} {start + 1} to {end} of {paging.objCount.toLocaleString()}</h5>
-			</span>
+		<div className="card-header d-flex justify-content-between align-items-center">
+			<h5 className="mb-0">{panelTitle} {start + 1} to {end} of {paging.objCount.toLocaleString()}</h5>
 			{!disablePaging
-				? <div className="float-end">
+				? <div>
 					<StepButton direction="step-backward" enabled={start > 0} onStep={() => requestPage(paging.page - 1)} />
 					<StepButton direction="step-forward" enabled={end < paging.objCount} onStep={() => requestPage(paging.page + 1)} />
 				</div>
@@ -119,15 +124,13 @@ const TableHeaders = ({tableHeaders}) => {
 };
 
 const StepButton = props => {
-	const disabled = !props.enabled;
 	const baseStyle = {display: 'inline', paddingLeft: 4, fontSize: '150%'};
 	const style = props.enabled
 		? Object.assign(baseStyle, {cursor: 'pointer'})
 		: Object.assign(baseStyle, {opacity: 0.65});
-	// const style = { display: 'inline', cursor: 'pointer', fontSize: '150%', position: 'relative', top: -4, borderWidth: 0, padding: 0, paddingLeft: 4, backgroundColor: 'transparent' };
 
 	return (
-		<h5 style={style} onClick={props.onStep} disabled={disabled}>
+		<h5 style={style} onClick={props.enabled ? props.onStep : undefined}>
 			<span className={'fas fa-' + props.direction} />
 		</h5>
 	);
