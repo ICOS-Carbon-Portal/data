@@ -135,7 +135,7 @@ class DownloadRouting(
 	)(using Envri): Route = userOpt{uidOpt =>
 
 		getClientIp{ip =>
-			respondWithAttachment(fileName + ".zip"){
+			respondWithAttachment(zipAttachmentFileName(fileName)){
 				val src = downloadService.getZipSource(
 					hashes,
 					logDownload(_, ip, uidOpt)
@@ -144,6 +144,14 @@ class DownloadRouting(
 				completeWithSource(src, ContentType(MediaTypes.`application/zip`))
 			}
 		}
+	}
+
+	private def validatedBatchDownload(
+		hashes: IndexedSeq[Sha256Sum], fileName: String, extraLog: ExtraBatchLog = noopBatchLog
+	)(using Envri): Route = onComplete(Future.sequence(hashes.map(uploadService.meta.lookupObject))){
+		case Success(_) => batchDownload(hashes, fileName, extraLog)
+		case Failure(MetadataLookupNotFound(msg)) => complete(StatusCodes.NotFound -> msg)
+		case Failure(err) => failWith(err)
 	}
 
 	def licenceAcceptedBatchDownload(
@@ -155,11 +163,13 @@ class DownloadRouting(
 			batchDownload(memberHashes, timestampedBatchFileName(fileOpt.getOrElse(coll.title)), logCollDownload(coll))
 		}
 		else fileOpt match
-			case Some(fileName) => batchDownload(hashes, timestampedBatchFileName(fileName))
-			case None if hashes.size == 1 => onSuccess(uploadService.meta.lookupObject(hashes.head)){obj =>
-				batchDownload(hashes, timestampedBatchFileName(obj.fileName))
+			case Some(fileName) => validatedBatchDownload(hashes, timestampedBatchFileName(fileName))
+			case None if hashes.size == 1 => onComplete(uploadService.meta.lookupObject(hashes.head)){
+				case Success(obj) => batchDownload(hashes, timestampedBatchFileName(obj.fileName))
+				case Failure(MetadataLookupNotFound(msg)) => complete(StatusCodes.NotFound -> msg)
+				case Failure(err) => failWith(err)
 			}
-			case None => batchDownload(hashes, defaultBatchFileName)
+			case None => validatedBatchDownload(hashes, defaultBatchFileName)
 
 	private val batchObjectDownload: Route = pathEnd { extractEnvri{
 		get{
@@ -317,6 +327,15 @@ object DownloadRouting{
 		s"${batchFileNameTimeFmt.format(Instant.now())}_$base"
 
 	def defaultBatchFileName: String = timestampedBatchFileName("downloaded_data")
+
+	def zipAttachmentFileName(fileName: String): String =
+		val trimmed = fileName.trim
+		if(trimmed.toLowerCase.endsWith(".zip")) trimmed else s"$trimmed.zip"
+
+	object MetadataLookupNotFound:
+		def unapply(err: Throwable): Option[String] = err match
+			case e: MetadataObjectNotFound => Some(e.getMessage)
+			case _ => None
 
 	def getContentType(fileName: String): ContentType = summon[ContentTypeResolver].apply(fileName)
 
