@@ -22,7 +22,7 @@ class NetcdfRoutes(netcdfDobjsFolder: Path, dataDemoFolder: Path, config: NetCdf
 
 	private val netcdfPreviewFolder = config.previewFolder.map(Path.of(_))
 	private val dobjViewFactory = ViewServiceFactory(netcdfDobjsFolder, config, netcdfPreviewFolder)
-	private val demoFactory = ViewServiceFactory(dataDemoFolder, config)
+	private val demoFactory = ViewServiceFactory(dataDemoFolder, config, netcdfPreviewFolder)
 
 	private val netCdfDataObjService:  Directive1[NetCdfViewService] =
 		import StatsRouting.{given Unmarshaller[String, Sha256Sum]}
