@@ -40,9 +40,12 @@ class ViewServiceFactory(folder: Path, config: NetCdfViewServiceConfig, previewF
 
 	private def resolveNetCdfFile(fileName: String): Path =
 		previewFolder
-			.map(_.resolve(s"$fileName.nc"))
+			.map(_.resolve(previewFileName(fileName)))
 			.filter(p => Files.isRegularFile(p))
 			.getOrElse(folder.resolve(fileName))
+
+	private def previewFileName(fileName: String): String =
+		if fileName.endsWith(".nc") then fileName else s"$fileName.nc"
 
 
 def fail(msg: String): Nothing = throw new Error(msg) with NoStackTrace
