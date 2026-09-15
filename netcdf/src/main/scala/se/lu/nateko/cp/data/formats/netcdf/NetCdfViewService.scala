@@ -12,6 +12,7 @@ import ucar.nc2.time.Calendar
 import ucar.nc2.time.CalendarDate
 
 import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.Path
 import scala.collection.mutable.Buffer
 import scala.util.Failure
@@ -27,7 +28,7 @@ trait NetCdfViewServiceConfig:
 	def latitudeVars: Seq[String]
 	def longitudeVars: Seq[String]
 
-class ViewServiceFactory(folder: Path, config: NetCdfViewServiceConfig):
+class ViewServiceFactory(folder: Path, config: NetCdfViewServiceConfig, previewFolder: Option[Path] = None):
 	def getNetCdfFiles(): IndexedSeq[String] =
 		val file = folder.toFile
 		if !file.exists() || !file.isDirectory()
@@ -35,7 +36,13 @@ class ViewServiceFactory(folder: Path, config: NetCdfViewServiceConfig):
 		file.list((_, fn) => fn.endsWith(".nc")).toIndexedSeq
 
 	def getNetCdfViewService(fileName: String) =
-		NetCdfViewService(folder.resolve(fileName), config)
+		NetCdfViewService(resolveNetCdfFile(fileName), config)
+
+	private def resolveNetCdfFile(fileName: String): Path =
+		previewFolder
+			.map(_.resolve(s"$fileName.nc"))
+			.filter(p => Files.isRegularFile(p))
+			.getOrElse(folder.resolve(fileName))
 
 
 def fail(msg: String): Nothing = throw new Error(msg) with NoStackTrace
