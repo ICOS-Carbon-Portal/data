@@ -17,6 +17,7 @@ import {
 	BaseMapId, Copyright, countryBorderStyle, countryStyle,
 	EpsgCode, getLayerWrapper,
 	esriBaseMapNames,
+	getAvailableBaseMaps,
 	getBaseMapLayers,
 	getDefaultControls,
 	getESRICopyRight, getLayerIcon, getLayerVisibility,
@@ -98,8 +99,10 @@ export default class InitMap {
 			hitTolerance: 5
 		};
 
-		const selectedBaseMap = persistedMapProps.baseMap ?? olMapSettings.defaultBaseMap;
-		const tileLayers = getBaseMapLayers(selectedBaseMap, olMapSettings.baseMapFilter);
+		const availableBaseMaps = getAvailableBaseMaps(this.appEPSGCode, olMapSettings.baseMapFilter);
+		const persistedBaseMap = availableBaseMaps.find(bm => bm.id === persistedMapProps.baseMap);
+		const selectedBaseMap = persistedBaseMap?.id ?? olMapSettings.defaultBaseMap;
+		const tileLayers = getBaseMapLayers(selectedBaseMap, this.appEPSGCode, olMapSettings.baseMapFilter);
 		this.popup = new Popup('popover');
 
 		const controls: Control[] = getDefaultControls(projection);
