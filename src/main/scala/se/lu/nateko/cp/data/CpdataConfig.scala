@@ -23,6 +23,7 @@ case class AuthConfig(pub: Map[Envri, PublicAuthConfig], userSecretSalt: String)
 
 case class NetCdfConfig(
 	folder: String,
+	previewFolder: Option[String],
 	dateVars: Seq[String],
 	latitudeVars: Seq[String],
 	longitudeVars: Seq[String],
@@ -119,7 +120,7 @@ object ConfigReader extends CommonJsonSupport{
 	import se.lu.nateko.cp.meta.core.etcupload.JsonSupport.given
 	import DefaultJsonProtocol.*
 
-	given RootJsonFormat[NetCdfConfig] = jsonFormat5(NetCdfConfig.apply)
+	given RootJsonFormat[NetCdfConfig] = jsonFormat6(NetCdfConfig.apply)
 	given RootJsonFormat[B2SafeConfig] = jsonFormat5(B2SafeConfig.apply)
 	given RootJsonFormat[CredentialsConfig] = jsonFormat2(CredentialsConfig.apply)
 	given RootJsonFormat[IRODSConfig] = jsonFormat6(IRODSConfig.apply)

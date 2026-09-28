@@ -20,8 +20,9 @@ class NetcdfRoutes(netcdfDobjsFolder: Path, dataDemoFolder: Path, config: NetCdf
 	import se.lu.nateko.cp.data.CpdataJsonProtocol.varInfoFormat
 	private given ToResponseMarshaller[Raster] = RasterMarshalling.marshaller
 
-	private val dobjViewFactory = ViewServiceFactory(netcdfDobjsFolder, config)
-	private val demoFactory = ViewServiceFactory(dataDemoFolder, config)
+	private val netcdfPreviewFolder = config.previewFolder.map(Path.of(_))
+	private val dobjViewFactory = ViewServiceFactory(netcdfDobjsFolder, config, netcdfPreviewFolder)
+	private val demoFactory = ViewServiceFactory(dataDemoFolder, config, netcdfPreviewFolder)
 
 	private val netCdfDataObjService:  Directive1[NetCdfViewService] =
 		import StatsRouting.{given Unmarshaller[String, Sha256Sum]}
