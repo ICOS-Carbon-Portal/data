@@ -8,8 +8,10 @@ import {
 	setViewMode,
 	resetFilters,
 	temporalFilterUpdate,
-	grayDownloadFilterUpdate
+	grayDownloadFilterUpdate,
+	fetchKeys
 } from '../actions';
+import { isFetching } from '../reducer';
 import Radio from "../components/Radio.jsx";
 import {ViewSwitcher} from "../components/ViewSwitcher.jsx";
 import config from '../config';
@@ -67,7 +69,10 @@ function stateToProps(state) {
 		mainRadio: state.mainRadio,
 		subRadio: state.subRadio,
 		variousStats: state.variousStats,
-		toasterData: state.toasterData
+		toasterData: state.toasterData,
+		isFetchingResults: isFetching(state, fetchKeys.results),
+		isFetchingResultsPage: isFetching(state, fetchKeys.resultsPage),
+		isFetchingGraph: isFetching(state, fetchKeys.graph)
 	};
 }
 

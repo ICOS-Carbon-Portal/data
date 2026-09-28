@@ -108,7 +108,7 @@ export default class Map extends Component {
 
 	render(){
 		return (
-			<div>
+			<div className={this.props.isFetching ? 'opacity-50' : undefined}>
 				<div
 					ref={div => this._mapElement = div} id="map"
 					style={{

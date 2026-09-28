@@ -27,6 +27,12 @@ export default class StatsTable {
 		return this._grayDownloadFilter;
 	}
 
+	get hasActiveFilters() {
+		return Object.values(this._filters).some(values => values.length > 0)
+			|| this._temporalFilters.hasFilter
+			|| !!this._grayDownloadFilter;
+	}
+
 	update(stats, filters, page) {
 		return new StatsTable(stats, filters, page, this._stationCountryCodes, this._temporalFilters, this._grayDownloadFilter);
 	}

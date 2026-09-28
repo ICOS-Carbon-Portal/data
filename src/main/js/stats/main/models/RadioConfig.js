@@ -4,13 +4,13 @@ const configs = [
 		config: [
 			{
 				envri: ['ICOS', 'SITES'],
-				txt: 'Popular Timeserie variables',
+				txt: 'Popular Timeseries variables',
 				parentTo: "popularTSVars",
 				actionTxt: 'getPopularTimeserieVars'
 			},
 			{
 				envri: ['ICOS', 'SITES'],
-				txt: 'Timeserie',
+				txt: 'Timeseries',
 				actionTxt: 'getPreviewTimeserie'
 			},
 			{
