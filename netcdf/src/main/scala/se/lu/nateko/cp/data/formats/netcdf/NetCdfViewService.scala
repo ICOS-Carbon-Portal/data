@@ -45,7 +45,7 @@ class ViewServiceFactory(folder: Path, config: NetCdfViewServiceConfig, previewF
 			.getOrElse(folder.resolve(fileName))
 
 	private def previewFileName(fileName: String): String =
-		if fileName.endsWith(".nc") then fileName else s"$fileName.nc"
+		s"${fileName.stripSuffix(".nc")}_preview.nc"
 
 
 def fail(msg: String): Nothing = throw new Error(msg) with NoStackTrace
