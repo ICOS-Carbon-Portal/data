@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {ReactNode} from 'react';
 import config, {filters, CategoryType, NumberFilterCategories, FilterName} from "../../config";
 import CompositeSpecTable, {ColNames} from "../../models/CompositeSpecTable";
 import {Value} from "../../models/SpecTable";
@@ -31,13 +31,15 @@ interface PanelsWithMultiselects extends CommonProps {
 	filterKeywords: string[]
 	setKeywordFilter: (filterKeywords: string[]) => void
 	startCollapsed?: boolean
+	stationsMapCtrl?: ReactNode
 }
 
 const availableFilters = filters[config.envri];
 
 export const PanelsWithFilters: React.FunctionComponent<PanelsWithMultiselects> = props => {
 	const {specTable, labelLookup, helpStorage, updateFilter, setNumberFilter, filterNumbers, startCollapsed = false,
-		filterTemporal, setFilterTemporal, scopedKeywords, filterKeywords, setKeywordFilter, countryCodesLookup} = props;
+		filterTemporal, setFilterTemporal, scopedKeywords, filterKeywords, setKeywordFilter, countryCodesLookup,
+		stationsMapCtrl} = props;
 
 	return (
 		<>
@@ -59,6 +61,7 @@ export const PanelsWithFilters: React.FunctionComponent<PanelsWithMultiselects> 
 					filterKeywords={filterKeywords}
 					setKeywordFilter={setKeywordFilter}
 					startCollapsed={startCollapsed}
+					stationsMapCtrl={i === 0 ? stationsMapCtrl : undefined}
 				/>
 			)}
 		</>
@@ -74,15 +77,19 @@ interface Panel extends CommonProps {
 	filterKeywords: string[]
 	setKeywordFilter: (filterKeywords: string[]) => void
 	startCollapsed?: boolean
+	stationsMapCtrl?: ReactNode
 }
 
 const Panel: React.FunctionComponent<Panel> = props => {
 	const { header, filterList, specTable, labelLookup, helpStorage, updateFilter, setNumberFilter, filterNumbers, countryCodesLookup,
-		startCollapsed = false, filterTemporal, setFilterTemporal, scopedKeywords, filterKeywords, setKeywordFilter } = props;
+		startCollapsed = false, filterTemporal, setFilterTemporal, scopedKeywords, filterKeywords, setKeywordFilter,
+		stationsMapCtrl } = props;
 	if (filterList.length === 0) return null;
 
 	return (
 		<FilterPanel header={header} startCollapsed={startCollapsed}>
+			{stationsMapCtrl}
+
 			{filterList.map((filterName, i) =>
 				<FilterCtrl
 					key={'i' + i}
@@ -162,12 +169,14 @@ const FilterCtrl: React.FunctionComponent<FilterCtrl> = props => {
 	}
 };
 
+export function getCategoryValueText(filterName: FilterName, value: string | number, countryCodesLookup: Record<string, string>, labelLookup: LabelLookup) {
+	return filterName === 'countryCode'
+		? countryCodesLookup[value]
+		: labelLookup[value]?.label;
+}
+
 function getDataValue(filterName: FilterName, specTable: CompositeSpecTable, countryCodesLookup: Record<string,string>, labelLookup: LabelLookup){
-	const getText = (value: string | number) => {
-		return filterName === 'countryCode'
-			? countryCodesLookup[value]
-			: labelLookup[value]?.label;
-	};
+	const getText = (value: string | number) => getCategoryValueText(filterName, value, countryCodesLookup, labelLookup);
 
 	const name = filterName as CategoryType;
 	const filterUris = specTable.getFilter(name)?.filter(isDefined) ?? [];

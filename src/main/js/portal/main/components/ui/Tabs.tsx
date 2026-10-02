@@ -52,8 +52,8 @@ export default class Tabs extends Component<Props>{
 
 		return (
 			<div className="card">
-				<div className="card-header">
-					<ul className="nav nav-tabs card-header-tabs">{
+				<div className="card-header aligned-card-header-with-tabs d-flex align-items-end">
+					<ul className="nav nav-tabs card-header-tabs flex-grow-1">{
 						this.tabState.map(tab =>
 							<li key={'tabHeader' + tab.id} className={'nav-item'}>
 								<a style={{cursor: 'pointer'}} className={tab.isActive ? 'nav-link active' : 'nav-link'} onClick={this.onTabClick.bind(this, tab.id)}>{

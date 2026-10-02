@@ -38,6 +38,10 @@ export const failWithError: (dispatch: PortalDispatch) => (error: Error) => void
 	dispatch(logError(error));
 };
 
+export const showWarning: (dispatch: PortalDispatch) => (message: string) => void = dispatch => message => {
+	dispatch(new Payloads.MiscWarning(message));
+};
+
 function logError(error: Error): PortalThunkAction<void> {
 	return (_, getState) => {
 		const state = getState();
