@@ -7,7 +7,7 @@
 		@pageHeader
 	}(pageBody)
 } else {
-	@CpCommonPage(pageTitle)(pageHeader)(pageBody)
+	@CommonPage(pageTitle)(pageHeader)(pageBody)
 }
 
 @pageTitle = @{"NetCDF Viewer"}
@@ -26,8 +26,6 @@
 	<meta charset="UTF-8">
 	<title>NetCDF</title>
 
-	<link rel="shortcut icon" type="image/png" href="https://static.icos-cp.eu/images/favicon.png"/>
-
 	<style type="text/css">
 			body {
 				padding: 0;
@@ -37,6 +35,9 @@
 				height: 100%;
 				width: 100%;
 				/*overflow: hidden;*/
+			}
+			#main {
+				isolation: isolate;
 			}
 			#map-container {
 				padding-top: 5px;
