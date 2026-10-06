@@ -1,91 +1,105 @@
-import React, { Component } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { connect } from 'react-redux';
 import { State } from "../../models/State";
 import InitMap, { PersistedMapPropsExtended, UpdateMapSelectedSRID } from '../../models/InitMap';
 import { PortalDispatch } from '../../store';
-import { failWithError } from '../../actions/common';
+import { failWithError, showWarning } from '../../actions/common';
 import { Value } from '../../models/SpecTable';
 import { Copyright } from 'icos-cp-copyright';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
-type incommingProps = {
+type incomingProps = {
 	tabHeader: string
 	persistedMapProps: PersistedMapPropsExtended
 	updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void
 	updateMapSelectedSRID: UpdateMapSelectedSRID
 }
-type OurProps = StateProps & DispatchProps & incommingProps
+type OurProps = StateProps & DispatchProps & incomingProps
 
-class SearchResultMap extends Component<OurProps> {
-	private initMap?: InitMap = undefined;
+function StationsMap(props: OurProps) {
+	const {allStations, mapProps, selectedStations, failWithError} = props;
 
-	constructor(props: OurProps) {
-		super(props);
-	}
+	const initMapRef = useRef<InitMap | undefined>(undefined);
+	const mapRootRef = useRef<HTMLDivElement>(null);
+	const latestPropsRef = useRef(props);
+	latestPropsRef.current = props;
 
-	componentDidUpdate(){
-		if (this.initMap === undefined) return;
+	useEffect(() => {
+		let initMap: InitMap | undefined;
+		let isUnmounted = false;
 
-		this.initMap.incomingPropsUpdated({
-			allStations: this.props.allStations,
-			mapProps: this.props.mapProps,
-			selectedStations: this.props.selectedStations
-		});
-	}
-
-	render() {
-		return (
-			<div id="map" style={{ width: '100%', height: '90vh', position:'relative' }} tabIndex={1}>
-				<div id="stationFilterCtrl" className="ol-control ol-layer-control-ur" style={{ top: 70, fontSize: 20 }}></div>
-				<div id="popover" className="ol-popup"></div>
-				<div id="projSwitchCtrl" className="ol-layer-control ol-layer-control-lr" style={{ zIndex: 99, marginRight: 10, padding: 0 }}></div>
-				<div id="layerCtrl" className="ol-layer-control ol-layer-control-ur"></div>
-				<div id="attribution" className="ol-attribution ol-unselectable ol-control ol-uncollapsible" style={{right: 15}}>
-					<ul>
-						<li>
-							<Copyright />
-						</li>
-					</ul>
-					<ul>
-						<li id="baseMapAttribution" />
-					</ul>
-				</div>
-			</div>
-		);
-	}
-
-	componentDidMount() {
 		(async () => {
 			const { default: InitMap } = await import(
 				/* webpackMode: "lazy" */
 				/* webpackChunkName: "init-map" */
 				'../../models/InitMap'
 			);
-			this.initMap = new InitMap({
-				mapRootElement: document.getElementById('map')!,
-				allStations: this.props.allStations,
-				stationPos4326Lookup: this.props.stationPos4326Lookup,
-				persistedMapProps: this.props.persistedMapProps,
-				mapProps: this.props.mapProps,
-				updateMapSelectedSRID: this.props.updateMapSelectedSRID,
-				updatePersistedMapProps: this.props.updatePersistedMapProps,
-				labelLookup: this.props.labelLookup,
-				selectedStations: this.props.selectedStations
-			})
+
+			if (isUnmounted || mapRootRef.current === null) {
+				return;
+			}
+
+			// Read props after the await, since the store may have changed while the chunk was loading
+			const {persistedMapProps, allStations, mapProps, selectedStations, stationPos4326Lookup,
+				updateMapSelectedSRID, updatePersistedMapProps, showWarning, labelLookup} = latestPropsRef.current;
+
+			initMap = new InitMap({
+				mapRootElement: mapRootRef.current,
+				allStations,
+				stationPos4326Lookup,
+				persistedMapProps,
+				mapProps,
+				updateMapSelectedSRID,
+				updatePersistedMapProps,
+				showWarning,
+				labelLookup,
+				selectedStations
+			});
+
+			initMapRef.current = initMap;
 		})()
 			.catch(error => {
-				this.props.failWithError(error);
+				failWithError(error);
 			});
-	}
 
-	componentWillUnmount() {
-		if (this.initMap) {
-			this.initMap.olWrapper.destroyMap();
-			this.initMap = undefined;
-		}
-	}
+		return () => {
+			isUnmounted = true;
+			initMap?.olWrapper.destroyMap();
+			initMapRef.current = undefined;
+		};
+	}, []);
+
+	useEffect(() => {
+		const initMap = initMapRef.current;
+		if (initMap === undefined) return;
+
+		initMap.incomingPropsUpdated({
+			allStations,
+			mapProps,
+			selectedStations
+		});
+	});
+
+	return (
+		<div ref={mapRootRef} style={{ width: '100%', height: '90vh', position: 'relative' }} tabIndex={1}>
+			<div id="stationFilterCtrl" className="ol-control ol-layer-control-ur" style={{ top: 70, fontSize: 20 }}></div>
+			<div id="popover" className="ol-popup"></div>
+			<div id="projSwitchCtrl" className="ol-layer-control ol-layer-control-lr" style={{ zIndex: 99, marginRight: 10, padding: 0 }}></div>
+			<div id="layerCtrl" className="ol-layer-control ol-layer-control-ur"></div>
+			<div id="attribution" className="ol-attribution ol-unselectable ol-control ol-uncollapsible" style={{right: 15}}>
+				<ul>
+					<li>
+						<Copyright />
+					</li>
+				</ul>
+				<ul>
+					<li id="baseMapAttribution" />
+				</ul>
+			</div>
+		</div>
+	);
 }
 
 function stateToProps(state: State) {
@@ -102,7 +116,8 @@ function stateToProps(state: State) {
 function dispatchToProps(dispatch: PortalDispatch) {
 	return {
 		failWithError: (error: Error) => failWithError(dispatch)(error),
+		showWarning: (message: string) => showWarning(dispatch)(message),
 	};
 }
 
-export default connect(stateToProps, dispatchToProps)(SearchResultMap);
+export default connect(stateToProps, dispatchToProps)(StationsMap);

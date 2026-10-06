@@ -88,12 +88,16 @@ class Search extends Component<OurProps, OurState> {
 
 	updateMapSelectedSRID(srid: SupportedSRIDs) {
 		const { isStationFilterCtrlActive, baseMap, visibleToggles } = this.persistedMapProps;
-		this.persistedMapProps = { 
+		this.updatePersistedMapProps({
 			isStationFilterCtrlActive,
 			baseMap,
 			visibleToggles,
-			srid
-		};
+			srid,
+			center: undefined,
+			zoom: undefined,
+			drawFeatures: []
+		});
+
 		// Using srid as key for StationsMap forces React to recreate the component when it changes
 		this.setState({ srid });
 	}

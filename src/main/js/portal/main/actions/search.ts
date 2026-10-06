@@ -33,7 +33,9 @@ import Paging from "../models/Paging";
 import { listFilteredDataObjects } from '../sparqlQueries';
 import { sparqlFetchBlob } from "../backend";
 import {PersistedMapPropsExtended} from "../models/InitMap";
+import {deriveMapProps, geoFilterChanged} from "../models/MapProps";
 import scopedKeywords from "../backend/scopedKeywords";
+import deepEqual from 'deep-equal';
 
 
 export default function bootstrapSearch(user: WhoAmI): PortalThunkAction<void> {
@@ -306,10 +308,18 @@ export function switchTab(tabName: string, selectedTabId: number): PortalThunkAc
 }
 
 export function setMapProps(persistedMapProps: PersistedMapPropsExtended): PortalThunkAction<void> {
-	return (dispatch) => {
+	return (dispatch, getState) => {
 		savePersistedMapProps(persistedMapProps)
-		dispatch(new Payloads.MiscUpdateMapProps(persistedMapProps));
-		dispatch(getOriginsThenDobjList);
+
+		const prevMapProps = getState().mapProps;
+		const mapProps = deriveMapProps(persistedMapProps, prevMapProps);
+
+		if (deepEqual(mapProps, prevMapProps)) return;
+
+		dispatch(new Payloads.MiscUpdateMapProps(mapProps));
+
+		if (geoFilterChanged(prevMapProps, mapProps))
+			dispatch(getOriginsThenDobjList);
 	};
 }
 
