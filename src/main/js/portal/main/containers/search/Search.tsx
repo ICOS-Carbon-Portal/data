@@ -12,7 +12,7 @@ import {addToCart, updateRoute} from "../../actions/common";
 import Filters from "./Filters";
 import SearchResultCompact from "./SearchResultCompact";
 import Advanced from "./Advanced";
-import SearchResultMap from './SearchResultMap';
+import StationsMap from './StationsMap';
 import { SupportedSRIDs } from 'icos-cp-ol';
 import config from '../../config';
 import { PersistedMapPropsExtended } from '../../models/InitMap';
@@ -94,7 +94,7 @@ class Search extends Component<OurProps, OurState> {
 			visibleToggles,
 			srid
 		};
-		// Using srid as key for SearchResultMap forces React to recreate the component when it changes
+		// Using srid as key for StationsMap forces React to recreate the component when it changes
 		this.setState({ srid });
 	}
 
@@ -145,7 +145,7 @@ class Search extends Component<OurProps, OurState> {
 							tabHeader="Compact view"
 							handlePreview={this.handlePreview.bind(this)}
 						/>
-						<SearchResultMap
+						<StationsMap
 							key={srid}
 							tabHeader="Stations map"
 							persistedMapProps={this.persistedMapProps}
