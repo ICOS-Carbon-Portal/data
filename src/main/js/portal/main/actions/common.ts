@@ -133,27 +133,26 @@ function getGeoFilter(mapProps: MapProps): GeoFilterRequest | null {
 	}
 }
 
-// Straight edges in the map projection are not straight in EPSG:4326, so long edges must be split
-// before transforming. The limit is in map units, i.e. metres for the metric projections.
-const maxEdgeSegmentLength = 100_000
-
+// Ensure straight edges in projected map are properly represented in lat/lon
 function addEdgePoints(ring: Coordinate[]): Coordinate[] {
-	const result: Coordinate[] = []
+	const maxEdgeSegmentLength = 100000;
+	const result: Coordinate[] = [];
 
 	for (let i = 0; i < ring.length - 1; i++) {
-		const [startX, startY] = ring[i]
-		const [endX, endY] = ring[i + 1]
-		const edgeLength = Math.hypot(endX - startX, endY - startY)
-		const segmentCount = Math.max(1, Math.ceil(edgeLength / maxEdgeSegmentLength))
+		const [startX, startY] = ring[i];
+		const [endX, endY] = ring[i + 1];
+		const edgeLength = Math.hypot(endX - startX, endY - startY);
+		const segmentCount = Math.max(1, Math.ceil(edgeLength / maxEdgeSegmentLength));
+		const stepX = (endX - startX) / segmentCount;
+		const stepY = (endY - startY) / segmentCount;
 
 		for (let segment = 0; segment < segmentCount; segment++) {
-			const fraction = segment / segmentCount
-			result.push([startX + (endX - startX) * fraction, startY + (endY - startY) * fraction])
+			result.push([startX + stepX * segment, startY + stepY * segment]);
 		}
 	}
 
-	result.push(ring[ring.length - 1])
-	return result
+	result.push(ring[ring.length - 1]);
+	return result;
 }
 
 export const varNameAffectingCategs: ReadonlyArray<ColNames> = ['variable', 'valType'];
