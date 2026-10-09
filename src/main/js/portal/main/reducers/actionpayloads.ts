@@ -3,7 +3,6 @@ import {
 	AdvancedFilter,
 	KnownDataObject,
 	LabelLookup,
-	MapProps,
 	MetaData,
 	MetaDataWStats,
 	StateSerialized,
@@ -23,6 +22,7 @@ import Cart from "../models/Cart";
 import FilterTemporal from "../models/FilterTemporal";
 import {SearchOption} from "../actions/types";
 import {FilterNumber} from "../models/FilterNumbers";
+import {PersistedMapPropsExtended} from "../models/InitMap";
 
 
 export abstract class ActionPayload{}
@@ -145,7 +145,7 @@ export class MiscUpdateSearchOption extends MiscPayload{
 }
 
 export class MiscUpdateMapProps extends MiscPayload{
-	constructor(readonly mapProps: MapProps){super();}
+	constructor(readonly persistedMapProps: PersistedMapPropsExtended){super();}
 }
 
 export class MiscWarning extends MiscPayload{

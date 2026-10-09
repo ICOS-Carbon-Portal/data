@@ -32,7 +32,6 @@ import {
 } from "icos-cp-ol";
 import VectorSource from 'ol/source/Vector';
 import Geometry from 'ol/geom/Geometry';
-import deepEqual from 'deep-equal';
 
 
 export type UpdateMapSelectedSRID = (srid: SupportedSRIDs) => void
@@ -74,7 +73,6 @@ export default class InitMap {
 	private readonly stationFilterControl: StationFilterControl;
 	private allStations: UrlStr[]
 	private selectedStations: UrlStr[]
-	private mapProps: MapProps
 	private stationPosLookup: StationPosLookup
 	private countriesTopo?: CountriesTopo;
 	private persistedMapProps: PersistedMapPropsExtended<BaseMapId | 'Countries'>;
@@ -88,7 +86,6 @@ export default class InitMap {
 
 		this.allStations = props.allStations
 		this.selectedStations = props.selectedStations
-		this.mapProps = props.mapProps
 
 		const srid = persistedMapProps.srid === undefined
 			? olMapSettings.defaultSRID
@@ -130,7 +127,6 @@ export default class InitMap {
 			element: document.getElementById('stationFilterCtrl') ?? undefined,
 			isActive: persistedMapProps.isStationFilterCtrlActive ?? false,
 			updatePersistedMapProps,
-			srid,
 			onDrawRejected: props.showWarning
 		});
 		controls.push(this.stationFilterControl);
@@ -171,17 +167,15 @@ export default class InitMap {
 			updatePersistedMapProps({ center: view.getCenter(), zoom: view.getZoom() });
 		});
 
+		this.updatePoints(props.mapProps)
+
 		const minWidth = 600;
-		const bodyWidth = document.getElementsByTagName('body')[0].getBoundingClientRect().width;
+		const width = document.getElementsByTagName('body')[0].getBoundingClientRect().width;
+		if (width < minWidth) return;
 
-		// Copyright hides itself below minWidth anyway, so on narrow screens skip the fetch
-		if (bodyWidth >= minWidth) {
-			getESRICopyRight(esriBaseMapNames).then(attributions => {
-				this.olWrapper.attributionUpdater = new Copyright(attributions, projection, 'baseMapAttribution', minWidth);
-			});
-		}
-
-		this.updatePoints()
+		getESRICopyRight(esriBaseMapNames).then(attributions => {
+			this.olWrapper.attributionUpdater = new Copyright(attributions, projection, 'baseMapAttribution', minWidth);
+		});
 	}
 
 	private async fetchCountriesTopo() {
@@ -218,7 +212,7 @@ export default class InitMap {
 
 	private toggleLayerVisibility(layerId: string): boolean {
 		const visibleToggles = this.persistedMapProps.visibleToggles;
-		return visibleToggles === undefined || visibleToggles.includes(layerId);
+		return visibleToggles === undefined || visibleToggles.includes(layerId)
 	}
 
 	private createProjectionControl(persistedMapProps: PersistedMapPropsExtended, updateMapSelectedSRID: UpdateMapSelectedSRID) {
@@ -230,8 +224,8 @@ export default class InitMap {
 		});
 	}
 
-	private updatePoints() {
-		const excludedUris = difference(this.allStations, this.selectedStations);
+	private updatePoints(mapProps: MapProps) {
+		const excludedUris = difference(this.allStations, this.selectedStations)
 		const excludedStations = createPointData(excludedUris, this.stationPosLookup, {[isIncludedStation]: false});
 		const includedStations = createPointData(this.selectedStations, this.stationPosLookup, {[isIncludedStation]: true});
 
@@ -258,7 +252,7 @@ export default class InitMap {
 
 		this.olWrapper.addToggleLayers([includedStationsToggle, excludedStationsToggle]);
 		this.layerControl.updateCtrl();
-		this.stationFilterControl.reDrawFeaturesFromMapProps(this.mapProps);
+		this.stationFilterControl.reDrawFeaturesFromMapProps(mapProps)
 	}
 
 	getLayerWrapper({id, label, layerType, geoType, data, style, zIndex, interactive}: Omit<LayerWrapperArgs, 'visible'>): LayerWrapper {
@@ -280,27 +274,19 @@ export default class InitMap {
 	}
 
 	incomingPropsUpdated(props: UpdateProps): void {
-		const stationListIsSame = Filter.areEqual(this.allStations, props.allStations);
-		const spatFilterIsSame = Filter.areEqual(this.selectedStations, props.selectedStations);
-		const mapPropsIsSame = deepEqual(this.mapProps, props.mapProps);
+		const stationListIsSame = Filter.areEqual(this.allStations, props.allStations)
+		const spatFilterIsSame = Filter.areEqual(this.selectedStations, props.selectedStations)
 
-		if (stationListIsSame && spatFilterIsSame && mapPropsIsSame) {
-			return;
+		if(stationListIsSame && spatFilterIsSame) return
+
+		this.allStations = props.allStations
+		this.selectedStations = props.selectedStations
+
+		if(!stationListIsSame){
+			this.stationPosLookup = this.getStationPosLookup()
 		}
 
-		this.allStations = props.allStations;
-		this.selectedStations = props.selectedStations;
-		this.mapProps = props.mapProps;
-
-		if (!stationListIsSame){
-			this.stationPosLookup = this.getStationPosLookup();
-		}
-
-		if (stationListIsSame && spatFilterIsSame) {
-			this.stationFilterControl.reDrawFeaturesFromMapProps(this.mapProps);
-		} else {
-			this.updatePoints();
-		}
+		this.updatePoints(props.mapProps)
 	}
 
 	updateLayerCtrl(self: LayerControl): () => void {

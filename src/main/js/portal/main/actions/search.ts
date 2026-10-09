@@ -33,7 +33,6 @@ import Paging from "../models/Paging";
 import { listFilteredDataObjects } from '../sparqlQueries';
 import { sparqlFetchBlob } from "../backend";
 import {PersistedMapPropsExtended} from "../models/InitMap";
-import {deriveMapProps, geoFilterChanged} from "../models/MapProps";
 import scopedKeywords from "../backend/scopedKeywords";
 import deepEqual from 'deep-equal';
 
@@ -312,13 +311,9 @@ export function setMapProps(persistedMapProps: PersistedMapPropsExtended): Porta
 		savePersistedMapProps(persistedMapProps)
 
 		const prevMapProps = getState().mapProps;
-		const mapProps = deriveMapProps(persistedMapProps, prevMapProps);
+		dispatch(new Payloads.MiscUpdateMapProps(persistedMapProps));
 
-		if (deepEqual(mapProps, prevMapProps)) return;
-
-		dispatch(new Payloads.MiscUpdateMapProps(mapProps));
-
-		if (geoFilterChanged(prevMapProps, mapProps))
+		if (!deepEqual(prevMapProps, getState().mapProps))
 			dispatch(getOriginsThenDobjList);
 	};
 }

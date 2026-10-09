@@ -2,7 +2,7 @@ import {
 	MiscError, MiscPayload, MiscUpdateSearchOption, MiscResetFilters, MiscRestoreFromHistory,
 	MiscLoadError, MiscRestoreFilters, MiscUpdateMapProps, MiscUpdateAddToCart, MiscWarning
 } from "./actionpayloads";
-import stateUtils, {CategFilters, defaultState, State} from "../models/State";
+import stateUtils, {CategFilters, defaultState, DrawRectBbox, MapProps, State} from "../models/State";
 import * as Toaster from 'icos-cp-toaster';
 import {getObjCount} from "./utils";
 import Paging from "../models/Paging";
@@ -11,6 +11,8 @@ import config, {CategoryType, numberFilterKeys} from "../config";
 import CompositeSpecTable from "../models/CompositeSpecTable";
 import {getNewPaging} from "./backendReducer";
 import {FilterNumber, FilterNumbers} from "../models/FilterNumbers";
+import {DrawFeature} from "../models/StationFilterControl";
+import {round} from "../utils";
 
 export default function(state: State, payload: MiscPayload): State{
 
@@ -38,7 +40,7 @@ export default function(state: State, payload: MiscPayload): State{
 	}
 
 	if (payload instanceof MiscUpdateMapProps){
-		return stateUtils.update(state, { mapProps: payload.mapProps });
+		return stateUtils.update(state, handleUpdateMapProps(state, payload));
 	}
 
 	if (payload instanceof MiscWarning){
@@ -57,6 +59,26 @@ export default function(state: State, payload: MiscPayload): State{
 
 	return state;
 
+};
+
+const handleUpdateMapProps = (state: State, payload: MiscUpdateMapProps): Partial<State> => {
+	const persistedMapProps = payload.persistedMapProps;
+	const srid = persistedMapProps.srid ?? config.olMapSettings.defaultSRID;
+	const rounder = srid === '4326'
+		? (val: number) => round(val, 5)
+		: (val: number) => Math.round(val);
+	const coordHandler = (df: DrawFeature): DrawRectBbox => {
+		const rect = df.coords[0];
+		return rect[0].concat(rect[2]).map(rounder) as DrawRectBbox;
+	};
+	const mapProps: MapProps = {
+		srid,
+		rects: persistedMapProps.drawFeatures?.map(coordHandler) ?? state.mapProps.rects ?? []
+	};
+
+	return {
+		mapProps
+	};
 };
 
 const handleMiscUpdateSearchOption = (state: State, payload: MiscUpdateSearchOption): Partial<State> => {
