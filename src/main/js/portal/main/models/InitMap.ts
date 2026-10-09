@@ -51,6 +51,7 @@ interface Props extends UpdateProps {
 	persistedMapProps: PersistedMapPropsExtended
 	updatePersistedMapProps: (persistedMapProps: PersistedMapPropsExtended) => void
 	updateMapSelectedSRID: UpdateMapSelectedSRID
+	showWarning: (message: string) => void
 }
 interface UpdateProps {
 	allStations: UrlStr[]
@@ -125,7 +126,8 @@ export default class InitMap {
 		this.stationFilterControl = new StationFilterControl({
 			element: document.getElementById('stationFilterCtrl') ?? undefined,
 			isActive: persistedMapProps.isStationFilterCtrlActive ?? false,
-			updatePersistedMapProps
+			updatePersistedMapProps,
+			onDrawRejected: props.showWarning
 		});
 		controls.push(this.stationFilterControl);
 
@@ -165,6 +167,8 @@ export default class InitMap {
 			updatePersistedMapProps({ center: view.getCenter(), zoom: view.getZoom() });
 		});
 
+		this.updatePoints(props.mapProps)
+
 		const minWidth = 600;
 		const width = document.getElementsByTagName('body')[0].getBoundingClientRect().width;
 		if (width < minWidth) return;
@@ -172,8 +176,6 @@ export default class InitMap {
 		getESRICopyRight(esriBaseMapNames).then(attributions => {
 			this.olWrapper.attributionUpdater = new Copyright(attributions, projection, 'baseMapAttribution', minWidth);
 		});
-
-		this.updatePoints(props.mapProps)
 	}
 
 	private async fetchCountriesTopo() {

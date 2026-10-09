@@ -16,6 +16,7 @@ import Polygon from 'ol/geom/Polygon';
 import { Coordinate } from 'ol/coordinate';
 import { MapProps} from './State';
 import { drawRectBoxToCoords } from '../utils';
+import { intersects } from 'ol/extent';
 
 export interface DrawFeature {
 	id: Symbol
@@ -26,6 +27,7 @@ export interface DrawFeature {
 export interface StationFilterControlOptions extends Options {
 	isActive: boolean
 	updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void
+	onDrawRejected: (message: string) => void
 }
 
 enum DrawEventType {
@@ -60,6 +62,7 @@ export class StationFilterControl extends Control {
 	private selects: Record<string, Select> = {};
 	private drawFeatures: DrawFeature[] = [];
 	private updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void;
+	private readonly onDrawRejected: (message: string) => void;
 
 	constructor(options: StationFilterControlOptions) {
 
@@ -70,6 +73,7 @@ export class StationFilterControl extends Control {
 
 		this.isActive = options.isActive;
 		this.updatePersistedMapProps = options.updatePersistedMapProps;
+		this.onDrawRejected = options.onDrawRejected;
 
 		this.controlButton = this.drawCtrlBtn();
 		this.setTooltip();
@@ -83,7 +87,6 @@ export class StationFilterControl extends Control {
 		this.drawSource = new VectorSource({ wrapX: false });
 		this.drawLayer = new VectorLayer({ source: this.drawSource, zIndex: 400 });
 		this.draw = new Draw({
-			source: this.drawSource,
 			type: 'Circle',
 			geometryFunction: createBox(),
 		});
@@ -169,7 +172,6 @@ export class StationFilterControl extends Control {
 		mapProps.rects.forEach(rect => {
 			const geometry = new Polygon([drawRectBoxToCoords(rect)]);
 			const feature = new Feature({ geometry });
-			this.drawSource.addFeature(feature);
 			this.addDrawFeature(new DrawEvent(DrawEventType.DRAWEND, feature));
 		});
 
@@ -178,14 +180,31 @@ export class StationFilterControl extends Control {
 
 	private addDrawFeature(ev: DrawEvent) {
 		ev.feature.setProperties({ id: Symbol(), type: 'stationFilterRect' });
+		this.drawSource.addFeature(ev.feature);
 		this.addDeleteFilterRectBtn(ev.feature);
 		const drawFeature = featureToDrawFeature(ev.feature);
 		this.drawFeatures.push(drawFeature);
 	}
 
 	private addDrawFeatureAndUpdate(ev: DrawEvent) {
+		if (this.overlapsExistingRect(ev.feature)) {
+			this.onDrawRejected('Filter rectangles cannot overlap');
+			return;
+		}
+
 		this.addDrawFeature(ev);
 		this.updateApp();
+	}
+
+	private overlapsExistingRect(newRect: Feature<Geometry>): boolean {
+		const newRectExtent = newRect.getGeometry()!.getExtent();
+
+		return this.drawSource.getFeatures().some(existingRect =>
+			intersects(
+				newRectExtent,
+				existingRect.getGeometry()!.getExtent()
+			)
+		);
 	}
 
 	private removeAllDeleteRectBtns() {
