@@ -313,8 +313,9 @@ export function setMapProps(persistedMapProps: PersistedMapPropsExtended): Porta
 		const prevMapProps = getState().mapProps;
 		dispatch(new Payloads.MiscUpdateMapProps(persistedMapProps));
 
-		if (!deepEqual(prevMapProps, getState().mapProps))
+		if (!deepEqual(prevMapProps, getState().mapProps)) {
 			dispatch(getOriginsThenDobjList);
+		}
 	};
 }
 

@@ -124,6 +124,10 @@ export class MiscError extends MiscPayload{
 	constructor(readonly error: Error){super();}
 }
 
+export class MiscWarning extends MiscPayload{
+	constructor(readonly message: string){super();}
+}
+
 export class MiscLoadError extends MiscPayload{
 	constructor(readonly state: StateSerialized, readonly cart: Cart){super();}
 }
@@ -146,10 +150,6 @@ export class MiscUpdateSearchOption extends MiscPayload{
 
 export class MiscUpdateMapProps extends MiscPayload{
 	constructor(readonly persistedMapProps: PersistedMapPropsExtended){super();}
-}
-
-export class MiscWarning extends MiscPayload{
-	constructor(readonly message: string){super();}
 }
 
 export class MiscUpdateAddToCart extends MiscPayload {

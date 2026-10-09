@@ -1,6 +1,6 @@
 import {
-	MiscError, MiscPayload, MiscUpdateSearchOption, MiscResetFilters, MiscRestoreFromHistory,
-	MiscLoadError, MiscRestoreFilters, MiscUpdateMapProps, MiscUpdateAddToCart, MiscWarning
+	MiscError, MiscWarning, MiscPayload, MiscUpdateSearchOption, MiscResetFilters, MiscRestoreFromHistory,
+	MiscLoadError, MiscRestoreFilters, MiscUpdateMapProps, MiscUpdateAddToCart
 } from "./actionpayloads";
 import stateUtils, {CategFilters, defaultState, DrawRectBbox, MapProps, State} from "../models/State";
 import * as Toaster from 'icos-cp-toaster';
@@ -27,6 +27,12 @@ export default function(state: State, payload: MiscPayload): State{
 		});
 	}
 
+	if (payload instanceof MiscWarning){
+		return stateUtils.update(state, {
+			toasterData: new Toaster.ToasterData(Toaster.TOAST_WARNING, payload.message)
+		});
+	}
+
 	if (payload instanceof MiscUpdateSearchOption){
 		return stateUtils.update(state, handleMiscUpdateSearchOption(state, payload));
 	}
@@ -41,12 +47,6 @@ export default function(state: State, payload: MiscPayload): State{
 
 	if (payload instanceof MiscUpdateMapProps){
 		return stateUtils.update(state, handleUpdateMapProps(state, payload));
-	}
-
-	if (payload instanceof MiscWarning){
-		return stateUtils.update(state, {
-			toasterData: new Toaster.ToasterData(Toaster.TOAST_WARNING, payload.message)
-		});
 	}
 
 	if (payload instanceof MiscLoadError){

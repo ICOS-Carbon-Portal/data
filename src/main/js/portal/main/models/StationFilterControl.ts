@@ -196,10 +196,15 @@ export class StationFilterControl extends Control {
 		this.updateApp();
 	}
 
-	private overlapsExistingRect(feature: Feature<Geometry>): boolean {
-		const extent = feature.getGeometry()!.getExtent();
+	private overlapsExistingRect(newRect: Feature<Geometry>): boolean {
+		const newRectExtent = newRect.getGeometry()!.getExtent();
 
-		return this.drawSource.getFeatures().some(existing => intersects(extent, existing.getGeometry()!.getExtent()));
+		return this.drawSource.getFeatures().some(existingRect =>
+			intersects(
+				newRectExtent,
+				existingRect.getGeometry()!.getExtent()
+			)
+		);
 	}
 
 	private removeAllDeleteRectBtns() {
