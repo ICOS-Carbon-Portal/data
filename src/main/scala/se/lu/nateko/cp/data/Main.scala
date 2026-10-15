@@ -20,6 +20,7 @@ import se.lu.nateko.cp.data.services.fetch.FromBinTableFetcher
 import se.lu.nateko.cp.data.services.fetch.IntegrityControlService
 import se.lu.nateko.cp.data.services.upload.DownloadService
 import se.lu.nateko.cp.data.services.upload.UploadService
+import se.lu.nateko.cp.data.utils.ErrorReporting
 import se.lu.nateko.cp.meta.core.data.EnvriConfig
 
 import scala.concurrent.Await
@@ -150,6 +151,7 @@ object Main extends App:
 		val dsn = config.sentry.backendDsn.trim
 		if dsn.nonEmpty then
 			Sentry.init(options => options.setDsn(dsn))
+		ErrorReporting.registerService("meta", config.meta.baseUrl)
 
 	private def shutdownPostgis(): Unit =
 		postgisWriter.close()
