@@ -18,12 +18,15 @@ import se.lu.nateko.cp.data.api.Utils.iterateChildren
 import se.lu.nateko.cp.data.api.dataFail
 import se.lu.nateko.cp.data.formats.TimeSeriesStreams
 import se.lu.nateko.cp.data.formats.zip
+import se.lu.nateko.cp.data.services.upload.HashsumCheckFailure
 import se.lu.nateko.cp.data.services.upload.UploadResult
 import se.lu.nateko.cp.data.services.upload.UploadAlreadyInProgress
 import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.data.streams.ZipEntryFlow
 import se.lu.nateko.cp.data.streams.ZipEntrySource
+import se.lu.nateko.cp.data.utils.ErrorReporting
+import se.lu.nateko.cp.data.utils.ErrorReporting.ErrorSite
 import se.lu.nateko.cp.data.utils.akka.Debouncer
 import se.lu.nateko.cp.data.utils.akka.done
 import se.lu.nateko.cp.meta.core.crypto.Md5Sum
@@ -54,6 +57,7 @@ import scala.util.Success
 import scala.util.Try
 import scala.util.Using
 import scala.util.control.NonFatal
+import scala.util.control.NoStackTrace
 
 /**
  * Encodes the behaviour and logic of the ETC logger data upload facade.
@@ -74,7 +78,12 @@ import scala.util.control.NonFatal
  * previously-uploaded files (if any, and only by files from half-hourly slots not represented in staging), packaged and uploaded.
  * Forced checks bypass the debounce delay, while remaining sequential and coordinated with live uploads.
  * Upon successful upload, the corresponding half-hourly files are purged unless replaced during the upload.
- * 	3) After the daily forced EC upload, old files (older than {@code FacadeService.OldFileMaxAge}) are purged from staging.
+ * 	3) After the daily forced EC upload, files that are still in staging after {@code FacadeService.OldFileMaxAge}
+ * (i.e. were never uploaded successfully) are moved to the station's quarantine folder, where they are no longer retried.
+ * Test station files are deleted instead.
+ *
+ * Internal objects whose content does not match their registered hash sum are quarantined immediately,
+ * as retrying their upload can never succeed.
  */
 class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using mat: Materializer):
 	import FacadeService._
@@ -149,7 +158,11 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 	end getFileSink
 
 	def cleanupVeryOldFiles(station: StationId): Unit = stagingRevisions.synchronized{
-		deleteOldEtcFiles(getStationFolder(station))
+		val expired = findExpiredFiles(getStationFolder(station), Instant.now())
+		if station == config.testStation then expired.foreach(Files.deleteIfExists)
+		else expired.foreach{file =>
+			quarantine(station, file, "cleanup", "expired", s"not uploaded successfully within ${OldFileMaxAge.toDays} days")
+		}
 		stagingRevisions.forgetDeleted()
 	}
 
@@ -166,7 +179,9 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 
 		fn.toDaily.fold(performEtcUpload(file, fn, None)){ daily =>
 			def packageAndUpload(): Future[Done] =
-				getUploadedHalfHourlies(daily).flatMap{uploaded =>
+				inStage("package-daily", "lookup of previously uploaded half-hourly files failed"){
+					getUploadedHalfHourlies(daily)
+				}.flatMap{uploaded =>
 
 					val stationFolder = getStationFolder(fn.station)
 					val (fresh, revisions) = stagingRevisions.synchronized{
@@ -206,7 +221,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 				}
 			if forceDaily then debouncer.runNow(daily)(packageAndUpload())
 			else debouncer.debounce(daily)(packageAndUpload())
-		}.andThen(handleErrors(fn.toString))
+		}.andThen(handleErrors(fn.station, fn.toString))
 
 
 	private def performEtcUpload(
@@ -222,7 +237,11 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 			.run()
 		)
 		.map(getUploadMeta(fn, _))
-		.flatMap(etcMeta => metaClient.registerEtcUpload(etcMeta).map(_ => etcMeta))
+		.flatMap(etcMeta =>
+			inStage("register-upload", "ETC metadata registration failed"){
+				metaClient.registerEtcUpload(etcMeta).map(_ => etcMeta)
+			}
+		)
 		.flatMap{etcMeta =>
 			val srcPath = getObjectSource(fn.station, etcMeta.hashSum)
 			Files.move(file, srcPath, REPLACE_EXISTING)
@@ -241,7 +260,13 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 		.flatMap(FileIO.fromPath(srcPath).runWith)
 		.flatMap{res =>
 			res.makeReport.fold(
-				errMsg => dataFail(errMsg),
+				errMsg =>
+					val hashMismatch = res.taskResults.exists(_.isInstanceOf[HashsumCheckFailure])
+					if hashMismatch && quarantine(
+						station, srcPath, "internal-upload", "hash-mismatch", s"content does not match hash sum: $errMsg"
+					)
+					then Future.failed(new ObjectQuarantined(srcPath))
+					else dataFail(errMsg),
 				_ => done
 			)
 		}
@@ -249,14 +274,19 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 			ok => {Files.delete(srcPath); ok},
 			{
 				case err: UploadAlreadyInProgress => err
-				case err => new Exception(s"ETC facade failure during internal object upload. source=${source.name} station=$station, object $hash", err)
+				case err: ObjectQuarantined => err
+				case err => new EtcStageFailure(
+					"internal-upload",
+					s"ETC facade failure during internal object upload. source=${source.name} station=$station, object $hash",
+					err
+				)
 			}
 		)
 
 	private[etcfacade] def uploadDataObjectHandleErrors(station: StationId, hash: Sha256Sum): Future[Done] =
 		val srcPath = getObjectSource(station, hash)
 		uploadDataObject(srcPath, station, hash, UploadSource.Retry).andThen(
-			handleErrors(hash.base64Url)
+			handleErrors(station, hash.base64Url)
 		)
 
 	private def getUploadedHalfHourlies(daily: EtcFilename): Future[DailyPackage] =
@@ -293,12 +323,44 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 		catch case NonFatal(err) =>
 			log.error(err, s"Could not append ETC facade message to $fileName")
 
-	private def handleErrors(uploadedObj: String): PartialFunction[Try[Done], Unit] =
+	/** Moves a staged file out of the retry loop, reporting it once. Returns false if the move failed. */
+	private def quarantine(station: StationId, file: Path, operation: String, failure: String, reason: String): Boolean =
+		try
+			moveToQuarantine(file)
+			val msg = s"Quarantined ${file.getFileName} from ${station.id}, no further retries: $reason"
+			appendError(msg)
+			log.warning(msg)
+			ErrorReporting.report(
+				new ObjectQuarantined(file),
+				ErrorSite(SentryComponent, operation),
+				ErrorReporting.Failure(failure, transient = false),
+				groupBy = Seq("station" -> station.id),
+				tags = Seq("file" -> file.getFileName.toString)
+			)
+			true
+		catch case NonFatal(err) =>
+			log.error(err, s"Could not quarantine ETC facade file $file")
+			false
+
+	private def handleErrors(station: StationId, uploadedObj: String): PartialFunction[Try[Done], Unit] =
 		case Failure(_: UploadAlreadyInProgress) =>
 			log.info(s"ETC facade upload for $uploadedObj is already in progress, skipping duplicate attempt")
+		case Failure(_: ObjectQuarantined) =>
+			() // already reported by quarantine()
 		case Failure(err) =>
-			appendError(s"Error while uploading $uploadedObj : " + UploadResult.extractMessage(err))
-			log.error(err, s"ETC facade error while uploading $uploadedObj")
+			val errMsg = UploadResult.extractMessage(err)
+			appendError(s"Error while uploading $uploadedObj : $errMsg")
+			// not log.error, which would make a second, ungrouped Sentry event via the logback appender
+			log.warning(s"ETC facade error while uploading $uploadedObj : $errMsg")
+			val failure = classifyFailure(err)
+			ErrorReporting.report(
+				err,
+				ErrorSite(SentryComponent, stageOf(err).getOrElse("upload")),
+				failure,
+				// transient failures (e.g. meta unreachable) are not station-specific, so one issue for all stations
+				groupBy = if failure.transient then Nil else Seq("station" -> station.id),
+				tags = Seq("station" -> station.id, "file" -> uploadedObj)
+			)
 
 end FacadeService
 
@@ -310,6 +372,32 @@ object FacadeService:
 
 	val ForceEcUploadTime = LocalTime.of(4, 0) //is to be interpreted as UTC time
 	val OldFileMaxAge = Duration.ofDays(30)
+	val QuarantineFolderName = "quarantine"
+
+	private[etcfacade] final class ObjectQuarantined(file: Path)
+		extends Exception(s"$file was quarantined") with NoStackTrace
+
+	val SentryComponent = "etc-facade"
+
+	/** Marks which step of the upload failed, for error reporting */
+	private[etcfacade] final class EtcStageFailure(val operation: String, msg: String, cause: Throwable)
+		extends Exception(msg, cause)
+
+	private def inStage[T](operation: String, description: String)(fut: Future[T])(using ExecutionContext): Future[T] =
+		fut.recoverWith{case NonFatal(err) => Future.failed(new EtcStageFailure(operation, description, err))}
+
+	private def causeChain(err: Throwable): Iterator[Throwable] =
+		Iterator.iterate(err)(_.getCause).takeWhile(_ != null).take(20)
+
+	def stageOf(err: Throwable): Option[String] =
+		causeChain(err).collectFirst{case stage: EtcStageFailure => stage.operation}
+
+	def classifyFailure(err: Throwable): ErrorReporting.Failure =
+		val metadataNotFound = causeChain(err).exists(
+			e => Option(e.getMessage).exists(_.contains("Could not find ETC file metadata"))
+		)
+		if metadataNotFound then ErrorReporting.Failure("metadata-not-found", transient = false)
+		else ErrorReporting.classify(err)
 
 	private enum UploadSource(val name: String):
 		case Live extends UploadSource("live")
@@ -337,12 +425,25 @@ object FacadeService:
 		.toVector
 	}
 
-	private def deleteOldEtcFiles(folder: Path): Unit =
-		val now = Instant.now()
-		getEtcFiles(folder).foreach: (path, filename) =>
-			val fileLmt = Files.readAttributes(path, classOf[BasicFileAttributes]).creationTime().toInstant
-			val age = Duration.between(fileLmt, now)
-			if(age.compareTo(OldFileMaxAge) > 0) Files.deleteIfExists(path)
+	/** ETC files and internal objects (named by hash) that the retry logic picks up from a station folder */
+	def isStagedFile(path: Path): Boolean =
+		val name = path.getFileName.toString
+		Files.isRegularFile(path) &&
+			(EtcFilename.parse(name, true).isSuccess || Sha256Sum.fromBase64Url(name).isSuccess)
+
+	def findExpiredFiles(folder: Path, now: Instant): Vector[Path] = iterateChildren(folder){_
+		.filter(isStagedFile)
+		.filter{path =>
+			val created = Files.readAttributes(path, classOf[BasicFileAttributes]).creationTime().toInstant
+			Duration.between(created, now).compareTo(OldFileMaxAge) > 0
+		}
+		.toVector
+	}
+
+	def moveToQuarantine(file: Path): Path =
+		val folder = file.getParent.resolve(QuarantineFolderName)
+		Files.createDirectories(folder)
+		Files.move(file, folder.resolve(file.getFileName), REPLACE_EXISTING)
 
 	def getZippableDailies(folder: Path, dailyFile: EtcFilename): DailyPackage =
 		getEtcFiles(folder).collect{
