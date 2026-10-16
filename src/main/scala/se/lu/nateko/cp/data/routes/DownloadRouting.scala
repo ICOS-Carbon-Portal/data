@@ -35,15 +35,15 @@ import se.lu.nateko.cp.data.api.*
 
 import java.net.URI
 import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.util.Failure
 import scala.util.Success
 
-import LicenceRouting.LicenceCookieName
 import LicenceRouting.UriLicenceProfile
-import LicenceRouting.parseLicenceCookie
 import se.lu.nateko.cp.data.api.MetadataObjectNotFound
 import se.lu.nateko.cp.data.Main.metaClient
 
@@ -69,12 +69,6 @@ class DownloadRouting(
 			userOpt{uidOpt =>
 				onComplete(uploadService.meta.lookupObject(hashsum)){
 					case Success(dobj: DataObject) =>
-						licenceCookieHashsums{ hashes =>
-							deleteCookie(LicenceCookieName){
-								if(hashes.contains(dobj.hash)) singleObjRoute(dobj, uidOpt)
-								else reject
-							}
-						} ~
 						onSuccess(downloadService.licenceToAccept(dobj, uidOpt)){
 							case None =>
 								singleObjRoute(dobj, uidOpt)
@@ -109,7 +103,7 @@ class DownloadRouting(
 				val hashes = members.collect:
 					case pso: PlainStaticObject => pso.hash
 
-				val licenceCheck = batchLicenceCheck(hashes, _.contains(hashsum)){licUris =>
+				val licenceCheck = batchLicenceCheck(hashes, false){licUris =>
 					//TODO Make the licence-accept redirect convey the list of licences
 					redirect(new UriLicenceProfile(Seq(hashsum), None, true).licenceUri, StatusCodes.Found)
 				}
@@ -122,18 +116,11 @@ class DownloadRouting(
 	}
 
 	private def batchLicenceCheck(
-		members: Seq[Sha256Sum],
-		extraOkCond: Seq[Sha256Sum] => Boolean
+		members: Seq[Sha256Sum], licenceOk: Boolean
 	)(redirectFactory: Seq[URI] => Route)(using Envri): Directive0 = Directive.apply[Unit]{inner =>
 
-		if(extraOkCond(Nil)) inner(())
-		else licenceCookieHashsums{ hashes =>
-			deleteCookie(LicenceCookieName){
-				if(members.diff(hashes).isEmpty || extraOkCond(hashes)) inner(())
-				else reject
-			}
-		} ~
-		userOpt{uidOpt =>
+		if(licenceOk) inner(())
+		else userOpt{uidOpt =>
 			onSuccess(downloadService.licencesToAccept(members, uidOpt)){licUris =>
 				if(licUris.isEmpty)
 					inner(())
@@ -148,7 +135,7 @@ class DownloadRouting(
 	)(using Envri): Route = userOpt{uidOpt =>
 
 		getClientIp{ip =>
-			respondWithAttachment(fileName + ".zip"){
+			respondWithAttachment(zipAttachmentFileName(fileName)){
 				val src = downloadService.getZipSource(
 					hashes,
 					logDownload(_, ip, uidOpt)
@@ -159,11 +146,36 @@ class DownloadRouting(
 		}
 	}
 
+	private def validatedBatchDownload(
+		hashes: IndexedSeq[Sha256Sum], fileName: String, extraLog: ExtraBatchLog = noopBatchLog
+	)(using Envri): Route = onComplete(Future.sequence(hashes.map(uploadService.meta.lookupObject))){
+		case Success(_) => batchDownload(hashes, fileName, extraLog)
+		case Failure(MetadataLookupNotFound(msg)) => complete(StatusCodes.NotFound -> msg)
+		case Failure(err) => failWith(err)
+	}
+
+	def licenceAcceptedBatchDownload(
+		hashes: IndexedSeq[Sha256Sum], fileOpt: Option[String], isColl: Boolean
+	)(using Envri): Route =
+		if(hashes.isEmpty) complete(StatusCodes.BadRequest -> "Expected at least one SHA-256 hash in 'ids' URL parameter")
+		else if(isColl) onSuccess(metaClient.lookupCollection(hashes.head)){(coll, members) =>
+			val memberHashes = members.collect{case obj: PlainStaticObject => obj.hash}
+			batchDownload(memberHashes, timestampedBatchFileName(fileOpt.getOrElse(coll.title)), logCollDownload(coll))
+		}
+		else fileOpt match
+			case Some(fileName) => validatedBatchDownload(hashes, timestampedBatchFileName(fileName))
+			case None if hashes.size == 1 => onComplete(uploadService.meta.lookupObject(hashes.head)){
+				case Success(obj) => batchDownload(hashes, timestampedBatchFileName(obj.fileName))
+				case Failure(MetadataLookupNotFound(msg)) => complete(StatusCodes.NotFound -> msg)
+				case Failure(err) => failWith(err)
+			}
+			case None => validatedBatchDownload(hashes, defaultBatchFileName)
+
 	private val batchObjectDownload: Route = pathEnd { extractEnvri{
 		get{
 			parameters("ids".as[IndexedSeq[Sha256Sum]], "fileName"){(hashes, fileName) =>
 
-				val licenceCheck = batchLicenceCheck(hashes, _ => false){
+				val licenceCheck = batchLicenceCheck(hashes, false){
 					//TODO Make the licence-accept redirect convey the list of licences
 					licUris => redirect(
 						new UriLicenceProfile(hashes, Some(fileName), false).licenceUri,
@@ -180,7 +192,7 @@ class DownloadRouting(
 		post{
 			formFields("fileName", "ids".as[IndexedSeq[Sha256Sum]], "licenceOk".as[Boolean] ? false){(fileName, hashes, licenceOk) =>
 
-				batchLicenceCheck(hashes, _ => licenceOk){licUris =>
+				batchLicenceCheck(hashes, licenceOk){licUris =>
 					//TODO Make the licence-accept page support the list of licences
 					val licProfile = new FormLicenceProfile(hashes.toIndexedSeq, fileName)
 					LicenceRouting.dataLicenceRoute(licProfile, authRouting.userOpt, coreConf.handleProxies)
@@ -307,12 +319,23 @@ object DownloadRouting{
 	type ExtraBatchLog = (String, Option[UserId]) => Unit
 	val noopBatchLog: ExtraBatchLog = (_, _) => ()
 
-	val licenceCookieHashsums: Directive1[Seq[Sha256Sum]] = cookie(LicenceCookieName).flatMap{licCookie =>
-		parseLicenceCookie(licCookie.value) match{
-			case Success(hashes) => provide(hashes)
-			case _ => reject
-		}
-	}
+	private val batchFileNameTimeFmt = DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmm").withZone(ZoneOffset.UTC)
+
+	def timestampedBatchFileName(fileName: String): String =
+		val trimmed = fileName.trim
+		val base = if(trimmed.isEmpty) "downloaded_data" else trimmed
+		s"${batchFileNameTimeFmt.format(Instant.now())}_$base"
+
+	def defaultBatchFileName: String = timestampedBatchFileName("downloaded_data")
+
+	def zipAttachmentFileName(fileName: String): String =
+		val trimmed = fileName.trim
+		if(trimmed.toLowerCase.endsWith(".zip")) trimmed else s"$trimmed.zip"
+
+	object MetadataLookupNotFound:
+		def unapply(err: Throwable): Option[String] = err match
+			case e: MetadataObjectNotFound => Some(e.getMessage)
+			case _ => None
 
 	def getContentType(fileName: String): ContentType = summon[ContentTypeResolver].apply(fileName)
 
