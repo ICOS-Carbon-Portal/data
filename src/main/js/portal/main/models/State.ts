@@ -76,6 +76,7 @@ export interface User extends WhoAmI {
 export type KnownDataObject = {
 	dobj: string
 	hasNextVersion: boolean
+	hasExternalLandingPage?: boolean
 	hasVarInfo?: boolean
 	dataset: string
 	fileName: string
@@ -109,6 +110,7 @@ export type ExtendedDobjInfo = {
 	columnNames: string[] | undefined
 	site: string | undefined
 	hasVarInfo: boolean | undefined
+	hasExternalLandingPage: boolean | undefined
 	dois: UrlStr[] | undefined
 	biblioInfo: References | undefined
 }

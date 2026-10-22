@@ -184,6 +184,10 @@ export function addingToCartProhibition(dobj: KnownDataObject | undefined): Cart
 		return { allowCartAdd: false, uiMessage: "This data object is under moratorium" }
 	}
 
+	if (dobj.hasExternalLandingPage) {
+		return { allowCartAdd: false, uiMessage: "This data object is hosted by another data portal, see its landing page" };
+	}
+
 	if (dobj.level === 0 && dobj.theme === themeUris.atmospheric) {
 		return { allowCartAdd: false, uiMessage: "Raw atmospheric data are only available on request at the moment" };
 	}
