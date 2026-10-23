@@ -70,7 +70,7 @@ class Search extends Component<OurProps, OurState> {
 			this.props.updateCheckedObjects([]);
 		} else {
 			const checkedObjects = this.props.objectsTable
-				.filter(o => addingToCartProhibition(o).allowCartAdd)
+				.filter(o => addingToCartProhibition(o, this.props.extendedDobjInfo.find(ext => ext.dobj === o.dobj)).allowCartAdd)
 				.map(o => o.dobj);
 			this.props.updateCheckedObjects(checkedObjects);
 		}
@@ -163,6 +163,7 @@ function stateToProps(state: State){
 	return {
 		checkedObjectsInSearch: state.checkedObjectsInSearch,
 		objectsTable: state.objectsTable,
+		extendedDobjInfo: state.extendedDobjInfo,
 		tabs: state.tabs
 	};
 }

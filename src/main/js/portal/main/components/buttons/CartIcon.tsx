@@ -1,12 +1,13 @@
 import React, { Component, CSSProperties } from 'react';
 import { UrlStr } from '../../backend/declarations';
 import { addingToCartProhibition } from '../../models/CartItem';
-import { KnownDataObject } from '../../models/State';
+import { ExtendedDobjInfo, KnownDataObject } from '../../models/State';
 import { styles } from '../styles';
 
 type Props = {
 	style: CSSProperties
 	objInfo: KnownDataObject
+	extendedInfo: ExtendedDobjInfo | undefined
 	addToCart: (ids: UrlStr[]) => void
 	removeFromCart: (ids: UrlStr[]) => void
 	isAddedToCart: boolean
@@ -28,8 +29,8 @@ export default class CartIcon extends Component<Props> {
 	}
 
 	render(){
-		const {isAddedToCart, objInfo, style} = this.props;
-		const {allowCartAdd, uiMessage} = addingToCartProhibition(objInfo);
+		const {isAddedToCart, objInfo, extendedInfo, style} = this.props;
+		const {allowCartAdd, uiMessage} = addingToCartProhibition(objInfo, extendedInfo);
 
 		return(
 			<span style={style}>{allowCartAdd

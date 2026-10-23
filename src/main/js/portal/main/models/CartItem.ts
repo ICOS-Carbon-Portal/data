@@ -1,6 +1,6 @@
 import {IdxSig, UrlStr} from "../backend/declarations";
 import { PreviewType, themeUris } from "../config";
-import { KnownDataObject} from "./State";
+import { ExtendedDobjInfo, KnownDataObject} from "./State";
 
 export interface CartItemSerialized {
 	id: string
@@ -175,13 +175,17 @@ export type CartProhibition = {
 	uiMessage?: string
 }
 
-export function addingToCartProhibition(dobj: KnownDataObject | undefined): CartProhibition {
+export function addingToCartProhibition(dobj: KnownDataObject | undefined, extendedInfo: ExtendedDobjInfo | undefined): CartProhibition {
 	if(dobj === undefined) {
 		return { allowCartAdd: false, uiMessage: "This data object has not yet been loaded" }
 	}
 
 	if(dobj.submTime.getTime() > Date.now()) {
 		return { allowCartAdd: false, uiMessage: "This data object is under moratorium" }
+	}
+
+	if (extendedInfo?.hasExternalLandingPage) {
+		return { allowCartAdd: false, uiMessage: "This data object is hosted by another data portal, see its landing page" };
 	}
 
 	if (dobj.level === 0 && dobj.theme === themeUris.atmospheric) {
