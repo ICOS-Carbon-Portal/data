@@ -224,21 +224,19 @@ const standardDobjPropsDef = `
 	${timeStartDef}
 	${timeEndDef}`;
 
-export type ObjInfoQuery = Query<"dobj" | "hasNextVersion" | "hasExternalLandingPage" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd" | "hasVarInfo" | "hasNextVersion", never>
+export type ObjInfoQuery = Query<"dobj" | "hasNextVersion" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd" | "hasVarInfo" | "hasNextVersion", never>
 
 export const listKnownDataObjects = (dobjs: string[]): ObjInfoQuery => {
 	const values = dobjs.map(d => `<${config.cpmetaObjectUri}${d}>`).join(' ');
 	const text = `# listKnownDataObjects
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-select ?dobj ?hasNextVersion ?hasExternalLandingPage ?spec ?fileName ?size ?submTime ?timeStart ?timeEnd ?hasVarInfo
+select ?dobj ?hasNextVersion ?spec ?fileName ?size ?submTime ?timeStart ?timeEnd ?hasVarInfo
 where {
 	VALUES ?dobj { ${values} }
 	?dobj cpmeta:hasObjectSpec ?spec .
 ${standardDobjPropsDef}
 	BIND(EXISTS{[] cpmeta:isNextVersionOf ?dobj} AS ?hasNextVersion)
-	BIND(EXISTS{?dobj rdfs:seeAlso ?externalLandingPage} AS ?hasExternalLandingPage)
 	BIND(EXISTS{?dobj cpmeta:hasActualVariable [] } AS ?hasVarInfo)
 }`;
 

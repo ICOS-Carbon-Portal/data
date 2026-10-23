@@ -106,23 +106,16 @@ export default function(state: State, payload: BackendPayload): State {
 
 };
 
-const handleExtendedDataObjInfo = (state: State, payload: BackendExtendedDataObjInfo): Pick<State, 'extendedDobjInfo' | 'previewLookup' | 'objectsTable'> => {
+const handleExtendedDataObjInfo = (state: State, payload: BackendExtendedDataObjInfo): Pick<State, 'extendedDobjInfo' | 'previewLookup'> => {
 	const varInfo = payload.extendedDobjInfo
 		.reduce<IdxSig<boolean>>((acc, ext) => {
 			acc[ext.dobj] = ext.hasVarInfo ?? false;
 			return acc;
 		}, {});
 
-	const externalLandingPages = new Set(payload.extendedDobjInfo
-		.filter(ext => ext.hasExternalLandingPage)
-		.map(ext => ext.dobj));
-
 	return {
 		extendedDobjInfo: payload.extendedDobjInfo,
-		previewLookup: state.previewLookup?.withVarInfo(varInfo),
-		objectsTable: state.objectsTable.map(o =>
-			externalLandingPages.has(o.dobj) ? {...o, hasExternalLandingPage: true} : o
-		)
+		previewLookup: state.previewLookup?.withVarInfo(varInfo)
 	};
 };
 
