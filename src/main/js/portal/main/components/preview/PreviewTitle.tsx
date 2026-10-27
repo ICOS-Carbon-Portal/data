@@ -23,7 +23,7 @@ function PreviewTitle(props: OurProps) {
 	const metadataButton = items.length == 1 ? getUrlWithEnvironmentPrefix(items[0].dobj) : '';
 
 	const allowCartAdd = items
-		.map((cartItem) => addingToCartProhibition(cartItem.knownDataObject))
+		.map((cartItem) => addingToCartProhibition(cartItem.knownDataObject, extendedDobjInfo.find(ext => ext.dobj === cartItem.dobj)))
 		.every(cartProhibition => cartProhibition.allowCartAdd);
 	const uiMessage = allowCartAdd ? "" : "One or more data objects in this preview cannot be downloaded";
 

@@ -485,7 +485,7 @@ function getVarFilter(filter: VariableFilterRequest): string {
 	}`;
 }
 
-export const extendedDataObjectInfo = (dobjs: UrlStr[]): Query<"dobj", "station" | "stationId" | "samplingHeight" | "samplingPoint" | "theme" | "themeIcon" | "title" | "description" | "specComments" | "columnNames" | "site" | "hasVarInfo" | "dois" | "biblioInfo"> => {
+export const extendedDataObjectInfo = (dobjs: UrlStr[]): Query<"dobj", "station" | "stationId" | "samplingHeight" | "samplingPoint" | "theme" | "themeIcon" | "title" | "description" | "specComments" | "columnNames" | "site" | "hasVarInfo" | "hasExternalLandingPage" | "dois" | "biblioInfo"> => {
 	const dobjsList = dobjs.map(dobj => `<${dobj}>`).join(' ');
 	const text = `# extendedDataObjectInfo
 prefix cpmeta: <${config.cpmetaOntoUri}>
@@ -493,7 +493,7 @@ prefix prov: <http://www.w3.org/ns/prov#>
 prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 prefix xsd: <http://www.w3.org/2001/XMLSchema#>
 prefix dcterms: <http://purl.org/dc/terms/>
-select distinct ?dobj ?station ?stationId ?samplingHeight ?samplingPoint ?theme ?themeIcon ?title ?specComments ?description ?columnNames ?site ?hasVarInfo ?dois ?biblioInfo where{
+select distinct ?dobj ?station ?stationId ?samplingHeight ?samplingPoint ?theme ?themeIcon ?title ?specComments ?description ?columnNames ?site ?hasVarInfo ?hasExternalLandingPage ?dois ?biblioInfo where{
 	{
 		select ?dobj (min(?station0) as ?station) (sample(?stationId0) as ?stationId) (sample(?samplingHeight0) as ?samplingHeight)
 			(sample(?samplingPoint0) as ?samplingPoint) (sample(?site0) as ?site)
@@ -533,6 +533,7 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?samplingPoint ?theme 
 	OPTIONAL{ ?dobj dcterms:description ?description }
 	OPTIONAL{ ?dobj cpmeta:hasActualColumnNames ?columnNames }
 	BIND(EXISTS{?dobj cpmeta:hasActualVariable [] } AS ?hasVarInfo)
+	BIND(EXISTS{?dobj rdfs:seeAlso ?externalLandingPage} AS ?hasExternalLandingPage)
 	OPTIONAL{ ?dobj cpmeta:hasBiblioInfo ?biblioInfo}
 }`;
 
