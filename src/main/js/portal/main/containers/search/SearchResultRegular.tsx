@@ -65,7 +65,7 @@ function SearchResultRegular(props: OurProps) {
 							checkCount={checkedObjectsInSearch.length}
 							totalCount={paging.pageCount}
 							onChange={handleAllCheckboxesChange}
-							disabled={objectsTable.every(o => !addingToCartProhibition(o).allowCartAdd)} />
+							disabled={objectsTable.every(o => !addingToCartProhibition(o, extendedDobjInfo.find(ext => ext.dobj === o.dobj)).allowCartAdd)} />
 
 						<Dropdown
 							isSorter={true}

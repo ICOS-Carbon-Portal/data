@@ -52,7 +52,7 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 				: { ...props.extendedInfo, theme: 'Other data', themeIcon: 'https://static.icos-cp.eu/images/themes/oth.svg' }
 		const title = extendedInfo.title ?? extendedInfo.biblioInfo?.title ?? objInfo.fileName;
 		const samplingHeight = extendedInfo.samplingHeight ? extendedInfo.samplingHeight + ' meters' : undefined;
-		const {allowCartAdd, uiMessage} = addingToCartProhibition(objInfo);
+		const {allowCartAdd, uiMessage} = addingToCartProhibition(objInfo, props.extendedInfo);
 		const checkBtnTitle = uiMessage ?? `Select to preview or download`;
 		const level = `Level ${objInfo.level}`
 

@@ -41,6 +41,7 @@ export default class SearchResultCompactRow extends Component<Props> {
 					<CartIcon
 						style={{ marginRight: 10 }}
 						objInfo={objInfo}
+						extendedInfo={props.extendedDobjInfo?.find(ext => ext?.dobj === objInfo.dobj)}
 						{...pick(props, 'addToCart', 'removeFromCart', 'isAddedToCart')}
 					/>
 				}
