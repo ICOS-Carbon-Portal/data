@@ -38,6 +38,10 @@ export const failWithError: (dispatch: PortalDispatch) => (error: Error) => void
 	dispatch(logError(error));
 };
 
+export const showWarning: (dispatch: PortalDispatch) => (message: string) => void = dispatch => message => {
+	dispatch(new Payloads.MiscWarning(message));
+};
+
 function logError(error: Error): PortalThunkAction<void> {
 	return (_, getState) => {
 		const state = getState();
@@ -115,7 +119,7 @@ function getGeoFilter(mapProps: MapProps): GeoFilterRequest | null {
 	const coordTransformer = (c: Coordinate) => pointTransformer(c[0], c[1]).join(' ')
 
 	const wktPolygons: string[] = rects.map(bbox => {
-		const coords = drawRectBoxToCoords(bbox).map(coordTransformer).join(', ')
+		const coords = addEdgePoints(drawRectBoxToCoords(bbox)).map(coordTransformer).join(', ')
 		return '((' + coords + '))'
 	});
 
@@ -127,6 +131,28 @@ function getGeoFilter(mapProps: MapProps): GeoFilterRequest | null {
 		category: 'geo',
 		wktGeo
 	}
+}
+
+// Ensure straight edges in projected map are properly represented in lat/lon
+function addEdgePoints(ring: Coordinate[]): Coordinate[] {
+	const maxEdgeSegmentLength = 100000;
+	const result: Coordinate[] = [];
+
+	for (let i = 0; i < ring.length - 1; i++) {
+		const [startX, startY] = ring[i];
+		const [endX, endY] = ring[i + 1];
+		const edgeLength = Math.hypot(endX - startX, endY - startY);
+		const segmentCount = Math.max(1, Math.ceil(edgeLength / maxEdgeSegmentLength));
+		const stepX = (endX - startX) / segmentCount;
+		const stepY = (endY - startY) / segmentCount;
+
+		for (let segment = 0; segment < segmentCount; segment++) {
+			result.push([startX + stepX * segment, startY + stepY * segment]);
+		}
+	}
+
+	result.push(ring[ring.length - 1]);
+	return result;
 }
 
 export const varNameAffectingCategs: ReadonlyArray<ColNames> = ['variable', 'valType'];
