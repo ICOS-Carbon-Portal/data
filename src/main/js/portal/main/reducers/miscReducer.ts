@@ -1,5 +1,5 @@
 import {
-	MiscError, MiscPayload, MiscUpdateSearchOption, MiscResetFilters, MiscRestoreFromHistory,
+	MiscError, MiscWarning, MiscPayload, MiscUpdateSearchOption, MiscResetFilters, MiscRestoreFromHistory,
 	MiscLoadError, MiscRestoreFilters, MiscUpdateMapProps, MiscUpdateAddToCart
 } from "./actionpayloads";
 import stateUtils, {CategFilters, defaultState, DrawRectBbox, MapProps, State} from "../models/State";
@@ -24,6 +24,12 @@ export default function(state: State, payload: MiscPayload): State{
 		console.log(payload.error);
 		return stateUtils.update(state, {
 			toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, payload.error.message.split('\n')[0])
+		});
+	}
+
+	if (payload instanceof MiscWarning){
+		return stateUtils.update(state, {
+			toasterData: new Toaster.ToasterData(Toaster.TOAST_WARNING, payload.message)
 		});
 	}
 
