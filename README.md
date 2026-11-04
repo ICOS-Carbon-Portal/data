@@ -231,7 +231,7 @@ The example reports download of two data objects (PIDs are separated with `\n`) 
 - Install `Node.js 8.x` as instructed [here](https://github.com/nodesource/distributions)
 - Clone this repository: `git clone git@github.com:ICOS-Carbon-Portal/data.git`
 - `cd data`
-- Run sbt
+- Run `sbt`
 - In the sbt console, run `cpFrontendApps` to list the apps available
 - Run `~cpFrontend build <jsApp>` for continuous build of the app
 
@@ -239,5 +239,5 @@ The example reports download of two data objects (PIDs are separated with `\n`) 
 
 - Make a copy of `src/main/resources/application.conf` file in the project root and edit it to suit your environment. You only need to override the properties whose defaults are not suitable. For example, `cpdata.netcdf.folder` likely needs to be overridden. For deployment, make sure there is a relevant `application.conf` in the JVM's working directory.
 - Run sbt (from this project's root)
-- In the sbt console, run `~re-start` for continuous local rebuilds and server restarts
+- In the sbt console, run `~reStart` for continuous local rebuilds and server restarts
 - For most of the operations (except, temporarily, the NetCDF service) you will also need [meta](https://github.com/ICOS-Carbon-Portal/meta) project running on your machine
