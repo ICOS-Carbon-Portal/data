@@ -237,7 +237,6 @@ The example reports download of two data objects (PIDs are separated with `\n`) 
 
 ### Getting started with the back-end part
 
-- Check out the [data](https://github.com/ICOS-Carbon-Portal/data) project.
 - Make a copy of `src/main/resources/application.conf` file in the project root and edit it to suit your environment. You only need to override the properties whose defaults are not suitable. For example, `cpdata.netcdf.folder` likely needs to be overridden. For deployment, make sure there is a relevant `application.conf` in the JVM's working directory.
 - Run sbt (from this project's root)
 - In the sbt console, run `~re-start` for continuous local rebuilds and server restarts
