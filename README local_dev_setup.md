@@ -147,7 +147,6 @@ metacore.envriConfigs.ICOS.dataHost = "localhost"
 ## 1.6 Build the frontend and start the backend
 
 ```bash
-nvm use 22    # or fnm/volta; any Node >= 20.19 / >= 22.12
 cd /path/to/data
 sbt
 ```
