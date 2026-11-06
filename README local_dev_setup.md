@@ -254,8 +254,6 @@ docker compose down -v   # wipe Postgres/Mongo volumes
 
 ## 2.3 Not verified yet
 
-This guide comes from reading the code, the configs and the sbt plugin bytecode. These parts have **not** been run end-to-end yet:
-
 - The RestHeart 8 docker setup (`RHO` keys, `mongo-mounts` override, and whether data's aggregation definitions are accepted by RestHeart 8).
 - Starting the backend with `skipInit = true` and no Postgres at all. The DBCP pools should connect lazily.
 - Side effects of `dataHost = "localhost"` beyond absolute links in the HTML templates.
