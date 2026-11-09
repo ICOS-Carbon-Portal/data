@@ -9,6 +9,8 @@ Data service for:
 
 ---
 
+*(To set up a local development environment, see the [Information for developers](https://github.com/ICOS-Carbon-Portal/data/tree/master#information-for-developers) section)*
+
 ## Instruction for uploading ICOS data objects
 
 In HTTP protocol terms, the upload is performed by HTTP-PUTing the contents of the data object with chunked transfer encoding and cookie authentication to a URL of the form `https://data.icos-cp.eu/objects/<data object id>`, where `<data object id>` is either [base64url](https://en.wikipedia.org/wiki/Base64#URL_applications)- or hex-encoded representation of the first 18 bytes of a SHA-256 hashsum of the data object's contents. The complete 32-byte representations are also accepted. You will have obtained the data object id by the time you have completed the [first step](https://github.com/ICOS-Carbon-Portal/meta#registering-the-metadata-package) of the [2-step upload procedure](https://github.com/ICOS-Carbon-Portal/meta#data-object-registration-and-upload-instructions). The authentication cookie can be obtained from [CPauth](https://cpauth.icos-cp.eu) as described [here](https://github.com/ICOS-Carbon-Portal/meta#authentication).
@@ -226,4 +228,184 @@ The example reports download of two data objects (PIDs are separated with `\n`) 
 
 ## Information for developers
 
-To set up a local dev environment, see the associated [README](README%20local_dev_setup.md) 
+**Local development setup for `data`**
+
+### 1. Overview
+
+```mermaid
+flowchart LR
+	Browser -->|"http://localhost:9011"| Data["data backend (sbt ~reStart, :9011)"]
+	Browser -->|"SPARQL, auth, profiles (hard-coded https)"| Prod["production meta / cpauth / restheart"]
+	Data -->|"SPARQL + upload API"| Meta["local meta (:9094)"]
+	Data -->|"download stats"| PG["PostgreSQL + PostGIS (:5438)"]
+	Data -->|"portal usage, user profiles"| RH["RestHeart (:8088)"]
+	RH --> Mongo["MongoDB"]
+```
+
+> [!NOTE]
+> The **browser-side** apps (portal and the others) don't talk to your local meta. `src/main/js/common/main/config.js` builds `https://<metaHost>/sparql` and `https://<authHost>/…`, and hard-codes `restheart.icos-cp.eu`. With the default `metaHost = meta.icos-cp.eu`, the portal searches **production metadata**. Only the **Scala backend** uses your local meta (for uploads, downloads, landing-page metadata and collections).
+
+### 2. Prerequisites
+
+| Tool | Version | Notes |
+|---|---|---|
+| JDK | **21** | CI uses Temurin 21. `-Xtarget:11`, so 11+ compiles, but stick to 21. |
+| sbt | any launcher | The build pins `sbt.version=1.10.6` and the launcher downloads it. With an sbt **2.x** launcher, use `sbt --no-client` if the shell behaves oddly. |
+| Node.js | **22 or 24 LTS** | Minimum is `^20.19 \|\| >=22.12` (Vite 8 in `portal`). **Not** the Node 8 the README says. Very new Node versions (25+) may break the older webpack/karma tooling. |
+| Docker + Compose | recent | Runs PostgreSQL/PostGIS and RestHeart/MongoDB. |
+| Network | `repo.icos-cp.eu` reachable | `.sbtopts` forces **all** dependency resolution through ICOS's repos (see [Part 2](#22-other-things-that-can-go-wrong)). |
+| meta | running on `:9094` | Default `cpdata.meta.baseUrl = "http://127.0.0.1:9094/"`. |
+
+### 3. Check ports and meta
+
+```bash
+# Ports data needs: 9011 (data), 5438 (Postgres), 8088 (RestHeart); 9094 should be meta
+ss -ltnp | grep -E ':(9011|5438|8088|9094)\b'
+
+# meta's SPARQL endpoint should answer
+curl -s -H 'Accept: text/csv' --data-urlencode 'query=SELECT * WHERE { ?s ?p ?o } LIMIT 1' \
+  http://127.0.0.1:9094/sparql
+```
+
+> [!TIP]
+> If your meta setup **already** gives you a PostGIS on `5438` or a RestHeart on `8088`, reuse it. You only need to create the databases and roles from §4. Otherwise, the containers below will clash on those ports.
+
+### 4. Start PostgreSQL/PostGIS and RestHeart/MongoDB
+
+At startup the backend **refuses to bind its port** unless both of these succeed: the Postgres log-table init and the RestHeart DB/collection init ([Main.scala](src/main/scala/se/lu/nateko/cp/data/Main.scala#L139-L160)). Put the two files below in a folder **outside** the repo (for example `~/cpdata-dev/`).
+
+`pg-init.sql`: the databases and roles the init script expects ([initLogTables.sql](src/main/resources/sql/logging/initLogTables.sql)):
+
+```sql
+CREATE ROLE reader LOGIN;
+CREATE ROLE writer LOGIN;
+CREATE DATABASE cplog;     -- ICOS
+CREATE DATABASE siteslog;  -- SITES
+CREATE DATABASE paullog;   -- ICOS Cities
+```
+
+`docker-compose.yml`:
+
+```yaml
+services:
+  postgis:
+	image: postgis/postgis:16-3.4
+	ports: ["5438:5432"]                 # data expects 5438, not 5432
+	environment:
+	  POSTGRES_HOST_AUTH_METHOD: trust   # data's default passwords are empty; local dev only!
+	volumes:
+	  - ./pg-init.sql:/docker-entrypoint-initdb.d/pg-init.sql
+	  - pgdata:/var/lib/postgresql/data
+
+  mongo:
+	image: mongo:7
+	volumes:
+	  - mongodata:/data/db
+
+  restheart:
+	image: softinstigate/restheart:8
+	depends_on: [mongo]
+	ports: ["8088:8080"]
+	environment:
+	  # connect to the mongo container and expose ALL databases at the root
+	  # (data uses /db, /sitesdb, /pauldb as database paths)
+	  RHO: >-
+		/mclient/connection-string->"mongodb://mongo";
+		/mongo/mongo-mounts->[{"what":"*","where":"/"}]
+
+volumes:
+  pgdata:
+  mongodata:
+```
+
+```bash
+cd ~/cpdata-dev && docker compose up -d
+
+# sanity checks
+docker compose exec postgis psql -U postgres -c '\l' | grep -E 'cplog|siteslog|paullog'
+curl -s -u admin:secret http://127.0.0.1:8088/ | head -c 300; echo
+```
+
+> [!NOTE]
+> `pg-init.sql` only runs on the **first** start, while the `pgdata` volume is empty. If you change it later, run `docker compose down -v` to recreate the volume.
+
+> [!WARNING]
+> RestHeart 7/8 **requires authentication** (default user `admin` / `secret`). `data` supports Basic auth through optional `username` / `password` fields on each RestHeart DB entry, which is why they appear in the config below. RestHeart 8 and its configuration keys (`RHO`, `mongo-mounts`) differ from the older RestHeart that production historically ran. If the RestHeart init fails, check the `data` log for the failing request. As a fallback, set `restheart.base.skipInit = true` (see §1.8).
+
+### 5. Create the root `application.conf`
+
+**Duplicate `example.application.conf` and rename it into `application.conf`.**
+
+The backend reads `./application.conf` from its working directory (the repo root when you use sbt). It's layered on top of the bundled [src/main/resources/application.conf](src/main/resources/application.conf), so keep it small and only override what you need ([CpdataConfig.scala](src/main/scala/se/lu/nateko/cp/data/CpdataConfig.scala#L155-L163)). This file is gitignored.
+
+### 6. Build the frontend and start the backend
+
+```bash
+cd /path/to/data
+sbt
+```
+
+In the sbt shell:
+
+```text
+cpFrontendApps                 # lists: dygraph-light, map-graph, netcdf, portal, stats, dashboard
+cpFrontend install common      # npm ci for the shared code
+cpFrontend install portal      # npm ci; repeat for every app you'll work on (first time / after lockfile changes)
+cpFrontend build portal        # starts a resident watcher in the background; NO "~" in front
+~reStart                       # backend on http://localhost:9011, restarts on Scala/Twirl changes
+```
+
+- Start the frontend watcher **before** `~reStart`, because `~reStart` takes over the shell. Press Enter to leave watch mode.
+- Only **one** frontend watcher runs at a time. Running `cpFrontend build stats` replaces the portal watcher.
+- Built JS goes to `target/scala-3.3.4/classes/frontendapps/` and is served from there, so frontend changes show up after a browser reload without restarting the backend.
+- If the frontend complains that `metacore.ts` is missing, run `cpFrontendDoJarImports`. It copies the generated file out of the `meta-core` jar.
+
+### Verify
+
+| Check | Expected |
+|---|---|
+| sbt log | `Started data: ServerBinding(/127.0.0.1:9011)`. If it says `Could not start 'data' service`, the error above it names the Postgres or RestHeart step that failed. |
+| `curl http://localhost:9011/buildInfo` | Build info text. This route doesn't depend on the ENVRI. |
+| http://localhost:9011/portal/ | Portal loads and shows search results (from **production** meta, see §1.1). |
+| http://localhost:9011/netcdf/ | NetCDF demo viewer listing the `.nc` files from `src/test/resources/`. |
+| `docker compose exec postgis psql -U postgres -d cplog -c '\dt'` | Tables `downloads`, `dobjs_extended`, … |
+| `curl -s -u admin:secret http://127.0.0.1:8088/db` | Database `db` exists, with collections `users`, `portaluse`. |
+
+Testing authenticated endpoints such as uploads: browser login won't work on `localhost`, because CP auth cookies are scoped to `.icos-cp.eu`. Instead, copy your `cpauthToken` from your profile at https://cpauth.icos-cp.eu/ and send it explicitly. Tokens are verified against the public keys bundled in `cpauth-core`.
+
+```bash
+curl -v -H "Cookie: cpauthToken=<token>" -H "Transfer-Encoding: chunked" \
+  --upload-file <file> http://localhost:9011/objects/<data object id>
+```
+
+Upload permissions and metadata are looked up in your **local** meta, so the metadata package has to be registered there first.
+
+### Lighter variant: no Docker
+
+If you're only working on the frontend or on Scala code that doesn't touch download stats or user profiles, you can skip §4. entirely:
+
+```hocon
+cpdata {
+	netcdf.folder = "./src/test/resources/"
+	restheart.base.skipInit = true   # backend starts without RestHeart
+	postgis.skipInit = true          # backend starts without Postgres (stats endpoints and download logging will error)
+}
+metacore.envriConfigs.ICOS.dataHost = "localhost"
+```
+
+## Day-to-day
+
+In `sbt` :
+
+```bash
+cpFrontend stop          # stop the frontend watcher
+reStop                   # stop the backend
+```
+
+```bash
+docker compose stop      # keep data
+docker compose down -v   # wipe Postgres/Mongo volumes
+```
+
+> [!CAUTION]
+> `sbt clean` deletes `target/`, **including the built frontend**. Run `cpFrontend build <app>` again afterwards.
