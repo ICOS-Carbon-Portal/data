@@ -72,7 +72,8 @@ import scala.util.control.NonFatal
  * the half-hourly files are removed.
  * 	2) At {@code FacadeService.ForceEcUploadTime} time of day, all half-hourly EC files in staging are suplemented with latest
  * previously-uploaded files (if any, and only by files from half-hourly slots not represented in staging), packaged and uploaded.
- * Upon successful upload, the corresponding half-hourly files are purged from staging.
+ * Forced checks bypass the debounce delay, while remaining sequential and coordinated with live uploads.
+ * Upon successful upload, the corresponding half-hourly files are purged unless replaced during the upload.
  * 	3) After the daily forced EC upload, old files (older than {@code FacadeService.OldFileMaxAge}) are purged from staging.
  */
 class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using mat: Materializer):
@@ -81,7 +82,10 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 
 	private val debouncer =
 		val scheduler = upload.meta.system.scheduler
-		Debouncer[EtcFilename, Done](10.minutes, scheduler, "Daily package upload")
+		Debouncer[EtcFilename, Done](10.minutes, scheduler)
+
+	// Coordinate receipt and cleanup so an upload cannot delete a newly received replacement.
+	private val stagingRevisions = new StagingRevisions
 
 	private val metaClient = upload.meta
 	private val log = upload.log
@@ -104,7 +108,9 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 		Files.createDirectories(targetFile.getParent)
 
 		def transactUpload(): Done =
-			Files.move(tmpPath, targetFile, REPLACE_EXISTING)
+			def move(): Unit = Files.move(tmpPath, targetFile, REPLACE_EXISTING): Unit
+			if fn.toDaily.isDefined then stagingRevisions.replace(targetFile)(move())
+			else move()
 			Done
 
 		val preprocessing: Flow[ByteString, ByteString, NotUsed] = fn.dataType match
@@ -142,8 +148,10 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 			}
 	end getFileSink
 
-	def cleanupVeryOldFiles(station: StationId): Unit =
+	def cleanupVeryOldFiles(station: StationId): Unit = stagingRevisions.synchronized{
 		deleteOldEtcFiles(getStationFolder(station))
+		stagingRevisions.forgetDeleted()
+	}
 
 	def logFilenameParseError(fileName: String, station: StationId, err: Throwable): Unit =
 		val msg = Option(err.getMessage).getOrElse(err.toString)
@@ -157,11 +165,18 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 	private def performUpload(file: Path, fn: EtcFilename, forceDaily: Boolean): Future[Done] =
 
 		fn.toDaily.fold(performEtcUpload(file, fn, None)){ daily =>
-			debouncer.debounce(daily){
+			def packageAndUpload(): Future[Done] =
 				getUploadedHalfHourlies(daily).flatMap{uploaded =>
 
 					val stationFolder = getStationFolder(fn.station)
-					val fresh = getZippableDailies(stationFolder, daily)
+					val (fresh, revisions) = stagingRevisions.synchronized{
+						val files = getZippableDailies(stationFolder, daily)
+						val revisions = files.keysIterator.map{hhFn =>
+							val path = stationFolder.resolve(hhFn.toString)
+							path -> stagingRevisions.current(path)
+						}.toMap
+						files -> revisions
+					}
 
 					val filePackage = uploaded ++ fresh
 					val isFullPackage: Boolean = packageIsComplete(filePackage)
@@ -178,7 +193,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 									case Success(_) =>
 										fresh.foreach{(hhFn, _) =>
 											val hhFile = stationFolder.resolve(hhFn.toString)
-											Files.deleteIfExists(hhFile)
+											stagingRevisions.deleteIfUnchanged(hhFile, revisions(hhFile))
 										}
 
 									case Failure(_) =>
@@ -189,7 +204,8 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 						}
 					else done //no uploads for incomplete or previously incomplete packages, unless forced
 				}
-			}
+			if forceDaily then debouncer.runNow(daily)(packageAndUpload())
+			else debouncer.debounce(daily)(packageAndUpload())
 		}.andThen(handleErrors(fn.toString))
 
 
