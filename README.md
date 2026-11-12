@@ -262,7 +262,16 @@ Both services come from the [infrastructure](https://github.com/ICOS-Carbon-Port
 ```bash
 # sanity checks
 docker exec postgis psql -U postgres -c '\l' | grep -E 'cplog|siteslog|paullog'
+docker exec postgis psql -U postgres -c '\du' | grep -E 'reader|writer'
 curl -s http://127.0.0.1:8088/db | head -c 300; echo
+```
+
+If the `reader` and `writer` roles are missing (startup fails with `role "reader" does not exist`), create them with the `postgis_reader_pass` and `postgis_writer_pass` values from infrastructure's `passwords.yml`:
+
+```bash
+docker exec postgis psql -U postgres \
+  -c "CREATE ROLE reader LOGIN PASSWORD '<postgis_reader_pass>'" \
+  -c "CREATE ROLE writer LOGIN PASSWORD '<postgis_writer_pass>'"
 ```
 
 ### 3. Create the root `application.conf`
