@@ -9,6 +9,8 @@ Data service for:
 
 ---
 
+*(To set up a local development environment, see the [Information for developers](https://github.com/ICOS-Carbon-Portal/data/tree/master#information-for-developers) section)*
+
 ## Instruction for uploading ICOS data objects
 
 In HTTP protocol terms, the upload is performed by HTTP-PUTing the contents of the data object with chunked transfer encoding and cookie authentication to a URL of the form `https://data.icos-cp.eu/objects/<data object id>`, where `<data object id>` is either [base64url](https://en.wikipedia.org/wiki/Base64#URL_applications)- or hex-encoded representation of the first 18 bytes of a SHA-256 hashsum of the data object's contents. The complete 32-byte representations are also accepted. You will have obtained the data object id by the time you have completed the [first step](https://github.com/ICOS-Carbon-Portal/meta#registering-the-metadata-package) of the [2-step upload procedure](https://github.com/ICOS-Carbon-Portal/meta#data-object-registration-and-upload-instructions). The authentication cookie can be obtained from [CPauth](https://cpauth.icos-cp.eu) as described [here](https://github.com/ICOS-Carbon-Portal/meta#authentication).
@@ -226,19 +228,120 @@ The example reports download of two data objects (PIDs are separated with `\n`) 
 
 ## Information for developers
 
-### Getting started with the front-end part
+Local development setup :
 
-- Install `Node.js 8.x` as instructed [here](https://github.com/nodesource/distributions)
-- Clone this repository: `git clone git@github.com:ICOS-Carbon-Portal/data.git`
-- `cd data`
-- Run sbt
-- In the sbt console, run `cpFrontendApps` to list the apps available
-- Run `~cpFrontend build <jsApp>` for continuous build of the app
+### Overview
 
-### Getting started with the back-end part
+```mermaid
+flowchart LR
+	Browser -->|"http://localhost:9011"| Data["data backend (sbt ~reStart, :9011)"]
+	Browser -->|"SPARQL, auth, profiles (hard-coded https)"| Prod["production meta / cpauth / restheart"]
+	Data -->|"SPARQL + upload API"| Meta["local meta (:9094)"]
+	Data -->|"download stats"| PG["PostgreSQL + PostGIS (:5438)"]
+	Data -->|"portal usage, user profiles"| RH["RestHeart (:8088)"]
+	RH --> Mongo["MongoDB"]
+```
 
-- Check out the [data](https://github.com/ICOS-Carbon-Portal/data) project.
-- Make a copy of `src/main/resources/application.conf` file in the project root and edit it to suit your environment. You only need to override the properties whose defaults are not suitable. For example, `cpdata.netcdf.folder` likely needs to be overridden. For deployment, make sure there is a relevant `application.conf` in the JVM's working directory.
-- Run sbt (from this project's root)
-- In the sbt console, run `~re-start` for continuous local rebuilds and server restarts
-- For most of the operations (except, temporarily, the NetCDF service) you will also need [meta](https://github.com/ICOS-Carbon-Portal/meta) project running on your machine
+### 1. Check ports and meta
+
+```bash
+# Ports data needs: 9011 (data), 5438 (Postgres), 8088 (RestHeart), 9094 (meta)
+ss -ltnp | grep -E ':(9011|5438|8088|9094)\b'
+
+# meta's SPARQL endpoint should answer
+curl -s -H 'Accept: text/csv' --data-urlencode 'query=SELECT * WHERE { ?s ?p ?o } LIMIT 1' \
+  http://127.0.0.1:9094/sparql
+```
+
+### 2. PostgreSQL/PostGIS and RestHeart/MongoDB (from infrastructure)
+
+At startup the backend refuses to bind its port unless both of these succeed: the Postgres log-table init and the RestHeart DB/collection init.
+
+Both services come from the [infrastructure](https://github.com/ICOS-Carbon-Portal/infrastructure) repo's Ansible dev inventory. If you already set up meta, you should have already followed infrastructure's [postgis](https://github.com/ICOS-Carbon-Portal/infrastructure#postgis) and [restheart](https://github.com/ICOS-Carbon-Portal/infrastructure#restheart) sections.
+
+```bash
+# sanity checks
+docker exec postgis psql -U postgres -c '\l' | grep -E 'cplog|siteslog|paullog'
+docker exec postgis psql -U postgres -c '\du' | grep -E 'reader|writer'
+curl -s http://127.0.0.1:8088/db | head -c 300; echo
+```
+
+If the `reader` and `writer` roles are missing (startup fails with `role "reader" does not exist`), create them with the `postgis_reader_pass` and `postgis_writer_pass` values from infrastructure's `passwords.yml`:
+
+```bash
+docker exec postgis psql -U postgres \
+  -c "CREATE ROLE reader LOGIN PASSWORD '<postgis_reader_pass>'" \
+  -c "CREATE ROLE writer LOGIN PASSWORD '<postgis_writer_pass>'"
+```
+
+### 3. Create the root `application.conf`
+
+**Duplicate `example.application.conf` and rename it into `application.conf`.**
+
+Then set `cpdata.postgis.admin.password`, `cpdata.postgis.reader.password` and `cpdata.postgis.writer.password` to the `postgis_admin_pass`, `postgis_reader_pass` and `postgis_writer_pass` values from infrastructure's `passwords.yml`.
+
+The backend reads `./application.conf` from its working directory (the repo root when you use sbt). It's layered on top of the bundled [src/main/resources/application.conf](src/main/resources/application.conf), so keep it small and only override what you need. This file is gitignored.
+
+### 4. Build the frontend and start the backend
+
+```bash
+cd /path/to/data
+sbt
+```
+
+In the sbt shell:
+
+```text
+cpFrontendApps                 # lists: dygraph-light, map-graph, netcdf, portal, stats, dashboard
+cpFrontend install common
+cpFrontend install portal
+cpFrontend build portal        # starts a resident watcher in the background
+~reStart                       # backend on http://localhost:9011, restarts on changes
+```
+
+- Start the frontend watcher **before** `~reStart`, because `~reStart` takes over the shell. Press Enter to leave watch mode.
+- Only **one** frontend watcher runs at a time. Running `cpFrontend build stats` replaces the portal watcher.
+- If the frontend complains that `metacore.ts` is missing, run `cpFrontendDoJarImports`. It copies the generated file out of the `meta-core` jar.
+
+### Verify
+
+| Check | Expected |
+|---|---|
+| (in sbt console) | `Started data: ServerBinding(/127.0.0.1:9011)`. If it says `Could not start 'data' service`, the error above it names the Postgres or RestHeart step that failed. |
+| `curl http://localhost:9011/buildInfo` | Build info text. |
+| http://localhost:9011/portal/ | Portal loads and shows search results (from **production** meta, see §1). |
+| http://localhost:9011/netcdf/ | NetCDF demo viewer listing the `.nc` files from `src/test/resources/`. |
+| `docker exec postgis psql -U postgres -d cplog -c '\dt'` | Tables `downloads`, `dobjs_extended`, … |
+| `curl -s http://127.0.0.1:8088/db` | Database `db` exists, with collections `users`, `portaluse`. |
+
+### Lighter variant: without PostGIS/RestHeart
+
+If you're only working on the frontend or on Scala code that doesn't touch download stats or user profiles, you can skip §4 entirely:
+
+```hocon
+cpdata {
+	netcdf.folder = "./src/test/resources/"
+	restheart.base.skipInit = true   # backend starts without RestHeart
+	postgis.skipInit = true          # backend starts without Postgres (stats endpoints and download logging will error)
+}
+metacore.envriConfigs.ICOS.dataHost = "localhost"
+```
+
+## Day-to-day
+
+In `sbt` :
+
+```bash
+cpFrontend stop          # stop the frontend watcher
+reStop                   # stop the backend
+```
+
+PostGIS and RestHeart are infrastructure's containers. To stop them (while keeping their data):
+
+```bash
+docker stop postgis
+cd /docker/restheart && docker compose stop
+```
+
+> [!CAUTION]
+> `sbt clean` deletes `target/`, **including the built frontend**. Run `cpFrontend build <app>` again afterwards.
