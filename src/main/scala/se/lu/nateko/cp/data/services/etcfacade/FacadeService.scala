@@ -341,7 +341,7 @@ object FacadeService:
 		val fileEntries: Seq[FileEntry] = files.values.toSeq.sortBy(_._1.getName)
 
 		val alreadyCompressed = fileEntries.forall{ (zentry, _) =>
-			val ext = zentry.getName.split(".").lastOption.map(_.toLowerCase)
+			val ext = zentry.getName.split('.').lastOption.map(_.toLowerCase)
 			ext.fold(false)(compressedExtensions.contains)
 		}
 
