@@ -120,7 +120,7 @@ export default class InitMap {
 		const persistedBaseMap = availableBaseMaps.find(bm => bm.id === persistedMapProps.baseMap);
 		const selectedBaseMap = persistedBaseMap?.id ?? olMapSettings.defaultBaseMap;
 		const tileLayers = getBaseMapLayers(selectedBaseMap, this.appEPSGCode, olMapSettings.baseMapFilter);
-		this.popup = new Popup('popover');
+		this.popup = new Popup(this.idPrefix + 'popover');
 
 		const controls: Control[] = getDefaultControls(projection);
 
