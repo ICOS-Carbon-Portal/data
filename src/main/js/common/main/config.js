@@ -12,7 +12,7 @@ const metaBaseUri = `https://${window.envriConfig.metaHost}`;
 const authBaseUri = `https://${window.envriConfig.authHost}`;
 const restheartDbUrls = {
 	ICOS: '//restheart.icos-cp.eu/db/',
-	SITES: '//restheart.icos-cp.eu/sitesdb/',
+	SITES: '//restheart.fieldsites.se/sitesdb/',
 	ICOSCities: '//cityrestheart.icos-cp.eu/pauldb/'
 };
 
