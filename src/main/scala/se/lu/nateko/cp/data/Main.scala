@@ -78,7 +78,7 @@ object Main extends App:
 	import downloadRouting.extractEnvri
 	val integrityRoute = new IntegrityRouting(authRouting, config.upload, extractEnvri).route(integrityService)
 
-	val licenceRoute = new LicenceRouting(authRouting.userOpt, ConfigReader.metaCore.handleProxies).route
+	val licenceRoute = new LicenceRouting(authRouting.userOpt, ConfigReader.metaCore.handleProxies, downloadRouting).route
 	val staticRoute = new StaticRouting(config.sentry.portalDsn).route
 	val etcUploadRoute = new EtcUploadRouting(authRouting, config.etcFacade, uploadService).route
 
